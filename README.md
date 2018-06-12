@@ -7,11 +7,12 @@ Overview:
 Requirements:
 - directory with fmriprep output named 'fmriprep'
 - func directories (with preprocessed functional files) should be under the subject folder (if there are no sessions) or under the appropriate session folder
-- anat directories (with preprocessed anatomical files) should be under each subject folder (not at the same level as the func directory if there are sessions) (which is how the output of fmriprep should be organized)
+- anat directories (with preprocessed anatomical files) should be under each subject folder (not at the same level as the func directory if there are sessions) (which is how the output of fmriprep should be organized) (see File Structure below)
 - EV files (see step 1 below)
-- TR should be specified in a JSON file called task-\<taskname>_bold.json under a directory named 'raw' at the same level as the fmriprep directory (the 'raw' directory should store the raw data files)
-- task contrasts (not required) may be specified under the model00\<N> directory as task_contrasts.json or task_contrasts.txt (see step 2 below)
+- TR should be specified in a JSON file called task-\<taskname>_bold.json under a directory named 'raw' at the same level as the fmriprep directory (the 'raw' directory should store the raw data files). "RepetitionTime" should be the key.
+- model params must be specified under the model00\<N> directory (see step 2 below)
 - condition key must be specified under the model00\<N> directory as condition_key.json or condition_key.txt (see step 3 below)
+- task contrasts (not required) may be specified under the model00\<N> directory as task_contrasts.json or task_contrasts.txt (see step 4 below)
 
 Steps:
 1. Run setup.py to create the model directory and all necessary sub-directories. This will also create empty/sample *.json files (model_params.json, condition_key.json, task_contrasts.json) and EVs files for you to fill in. 
@@ -44,9 +45,9 @@ basedir
     │
     └───model
         │
-        └───level1
+        └───level<N>
 	    │
-	    └───model001
+	    └───model00<N>
 	    	│   model_params.json
 		│   condition_key.json
 		│   task_contrasts.json
