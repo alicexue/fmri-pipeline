@@ -21,7 +21,7 @@ def parse_command_line(argv):
     parser.add_argument('-A','--account',dest='account',
     	required=True,help='Slurm account')
     parser.add_argument('-t', '--time',dest='time',
-    	default="02:00:00",help='Estimated time to run each job - hh:mm:ss')
+    	default="00:30:00",help='Estimated time to run each job - hh:mm:ss')
     parser.add_argument('-N', '--nodes',dest='nodes',type=int,
     	default=1,help='Number of nodes')
     parser.add_argument('--studyid', dest='studyid',
@@ -68,7 +68,7 @@ def main(argv=None):
 	with open('run_level2.sbatch', 'w') as qsubfile:
 		qsubfile.write('#!/bin/sh\n')
 		qsubfile.write('#\n')
-		qsubfile.write('#SBATCH -J run_level1_feat\n')
+		qsubfile.write('#SBATCH -J run_level2_feat\n')
 		qsubfile.write('#SBATCH -A %s\n'%(account))
 		qsubfile.write('#SBATCH -N %d\n'%(nodes))
 		qsubfile.write('#SBATCH -c 1\n')

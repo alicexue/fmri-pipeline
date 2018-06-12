@@ -10,11 +10,13 @@ Called by run_level1_feat.py
 from directory_struct_utils import *
 #from mk_level1_fsf_bbr import mk_level1_fsf_bbr
 import mk_level1_fsf_bbr
+import setup_utils
 import os
 import sys
 import subprocess
 import argparse
 import json
+import copy
 
 def parse_command_line(argv):
     parser = argparse.ArgumentParser(description='setup_jobs')
@@ -25,38 +27,17 @@ def parse_command_line(argv):
         required=True,help='Study ID')
     parser.add_argument('--basedir', dest='basedir',
         required=True,help='Base directory (above studyid directory)')
-    parser.add_argument('-s', '--specificruns', dest='specificruns', type=json.loads,
-        default={},help="""
-            JSON object in a string that details which runs to create fsf's for. 
-            Ex: If there are sessions: \'{"sub-01": {"ses-01": {"flanker": ["1", "2"]}}, "sub-02": {"ses-01": {"flanker": ["1", "2"]}}}\' where flanker is a task name and ["1", "2"] is a list of the runs.
-            If there aren't sessions: \'{"sub-01":{"flanker":["1"]},"sub-02":{"flanker":["1","2"]}}\'. Make sure this describes the fmriprep folder, which should be in BIDS format.
-            Make sure to have single quotes around the JSON object and double quotes within."""
-            )
-    parser.add_argument('--smoothing', dest='smoothing',type=int,
-        default=0,help='Smoothing (mm FWHM)')
-    parser.add_argument('--use_inplane', dest='use_inplane', type=int,
-        default=0,help='Use inplane image')
-    parser.add_argument('--nonlinear', dest='nonlinear', action='store_true',
-        default=False,help='Use nonlinear registration')
-    parser.add_argument('--nohpf', dest='hpf', action='store_false',
-        default=True,help='Turn off high pass filtering')
-    parser.add_argument('--nowhiten', dest='whiten', action='store_false',
-        default=True,help='Turn off prewhitening')
-    parser.add_argument('--noconfound', dest='confound', action='store_false',
-        default=True,help='Omit motion/confound modeling')
     parser.add_argument('--modelnum', dest='modelnum',type=int,
-        default=1,help='Model number')
-    parser.add_argument('--anatimg', dest='anatimg',
-        default='',help='Anatomy image (should be _brain)')
-    parser.add_argument('--doreg', dest='doreg', action='store_true',
-        default=False,help='Do registration')
-    parser.add_argument('--spacetag', dest='spacetag',
-        default='',help='Space tag for preprocessed data')
-    parser.add_argument('--altBETmask', dest='altBETmask', action='store_true',
-        default=False,help='Use brainmask from fmriprep')
+		default=1,help='Model number')
     parser.add_argument('-i', '--slurm_array_task_id', dest='slurm_array_task_id', type=int,
         default=-1,help='index of job array in slurm')
-
+    parser.add_argument('-s', '--specificruns', dest='specificruns', type=json.loads,
+		default={},help="""
+			JSON object in a string that details which runs to create fsf's for. If specified, ignores specificruns specified in model_params.json.
+			Ex: If there are sessions: \'{"sub-01": {"ses-01": {"flanker": ["1", "2"]}}, "sub-02": {"ses-01": {"flanker": ["1", "2"]}}}\' where flanker is a task name and ["1", "2"] is a list of the runs.
+			If there aren't sessions: \'{"sub-01":{"flanker":["1"]},"sub-02":{"flanker":["1","2"]}}\'. Make sure this describes the fmriprep folder, which should be in BIDS format.
+			Make sure to have single quotes around the JSON object and double quotes within."""
+			)
     args = parser.parse_args(argv)
     return args
 
@@ -71,13 +52,20 @@ def add_args(args,sub,task,run):
 	return args
 
 def main(argv=None):
-	args=parse_command_line(argv)
+	sys_args=parse_command_line(argv)
+	print sys_args
+
+	studyid=sys_args.studyid
+	basedir=sys_args.basedir
+	modelnum=sys_args.modelnum
+	slurm_array_task_id=sys_args.slurm_array_task_id
+	specificruns=sys_args.specificruns
+
+	args=setup_utils.model_params_json_to_namespace(studyid,basedir,modelnum)
 	print args
 
-	studyid=args.studyid
-	basedir=args.basedir
-	specificruns=args.specificruns
-	modelnum=args.modelnum
+	if specificruns == {}: # if specificruns from sys.argv is empty (default), use specificruns from model_param
+		specificruns=args.specificruns
 	smoothing=args.smoothing
 	use_inplane=args.use_inplane
 	nonlinear=args.nonlinear
@@ -88,7 +76,7 @@ def main(argv=None):
 	doreg=args.doreg
 	spacetag=args.spacetag
 	altBETmask=args.altBETmask
-	slurm_array_task_id=args.slurm_array_task_id
+	
 
 	study_info=specificruns
 	hasSessions=False
@@ -104,19 +92,13 @@ def main(argv=None):
 		l2=study_info[l1[0]].keys()[0]
 		if l2.startswith('ses-'):
 			hasSessions=True
-
 	print study_info
 
-	sys_argv=sys.argv[:]
-	#params_to_remove=['--subs','--tasks','--sessions','-i','--slurm_array_task_id']
-	params_to_remove=['-s','--specificruns','-i','--slurm_array_task_id']
-	for param in params_to_remove:
-		if param in sys_argv:
-			i=sys_argv.index(param)
-			del sys_argv[i]
-			del sys_argv[i]
-	del sys_argv[0]
+	sys_argv=setup_utils.model_params_json_to_list(studyid,basedir,modelnum)
 
+	study_info_copy=copy.deepcopy(study_info)
+
+	existing_feat_files=[]
 	jobs = []
 	subs=study_info.keys()
 	list.sort(subs)
@@ -133,11 +115,22 @@ def main(argv=None):
 					runs=study_info[subid][ses][task]
 					list.sort(runs)
 					for run in runs:
-						args=sys_argv[:]
-						args=add_args(args,sub,task,run)
-						args.append('--ses')
-						args.append(sesname)
-						jobs.append(args)
+						model_subdir='%s/model/level1/model%03d/%s/%s/task-%s_run-%s'%(os.path.join(basedir,studyid),modelnum,subid,sesname,task,run)
+						feat_file="%s/%s_%s_task-%s_run-%s.feat"%(model_subdir,subid,sesname,task,run)
+						if sys_args.specificruns=={} and os.path.exists(feat_file):
+							existing_feat_files.append(feat_file)
+							runs_copy=study_info_copy[subid][ses][task]
+							runs_copy.remove(run)
+						else:
+							if os.path.exists(feat_file):
+								print "WARNING: Existing feat file found: %s"%feat_file
+							args=sys_argv[:]
+							args=add_args(args,sub,task,run)
+							args.append('--ses')
+							args.append(sesname)
+							jobs.append(args)
+					if len(study_info_copy[subid][ses][task])==0:
+						del study_info_copy[subid]
 		else:
 			tasks=study_info[subid].keys()
 			list.sort(tasks)
@@ -145,11 +138,31 @@ def main(argv=None):
 				runs=study_info[subid][task]
 				list.sort(runs)
 				for run in runs:
-					args=sys_argv[:]
-					args=add_args(args,sub,task,run)
-					jobs.append(args)
+					model_subdir='%s/model/level1/model%03d/%s/task-%s_run-%s'%(os.path.join(basedir,studyid),modelnum,subid,task,run)
+					feat_file="%s/%s_task-%s_run-%s.feat"%(model_subdir,subid,task,run)
+					if sys_args.specificruns=={} and os.path.exists(feat_file):
+						existing_feat_files.append(feat_file)
+						runs_copy=study_info_copy[subid][task]
+						runs_copy.remove(run)
+					else:
+						if os.path.exists(feat_file):
+							print "WARNING: Existing feat file found: %s"%feat_file
+						args=sys_argv[:]
+						args=add_args(args,sub,task,run)
+						jobs.append(args)
+				if len(study_info_copy[subid][task])==0:
+					del study_info_copy[subid]
 
-	if slurm_array_task_id != -1:
+	print jobs
+
+	if len(study_info_copy.keys()) == 0:
+		print "ERROR: All runs for all subjects have been run on this model. Remove the feat files if you want to rerun them."
+		sys.exit(-1)
+	elif slurm_array_task_id > -1 and sys_args.specificruns=={} and len(existing_feat_files)!=0:
+		print "ERROR: Some subjects' runs have already been run on this model. If you want to rerun these subjects, remove their feat directories first. To run the remaining subjects, rerun run_level1.py and add:"
+		print "-s \'%s\'"%(json.dumps(study_info_copy))
+		sys.exit(-1)
+	elif slurm_array_task_id > -1:
 		print jobs[slurm_array_task_id]
 		mk_level1_fsf_bbr.main(argv=jobs[slurm_array_task_id])
 	else:

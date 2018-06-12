@@ -11,6 +11,7 @@ import sys
 import argparse
 import json
 import warnings
+import setup_utils
 
 def parse_command_line(argv):
 	parser = argparse.ArgumentParser(description='setup_jobs')
@@ -25,39 +26,21 @@ def parse_command_line(argv):
 		default="02:00:00",help='Estimated time to run each job - hh:mm:ss')
 	parser.add_argument('-N', '--nodes',dest='nodes',type=int,
 		default=1,help='Number of nodes')
+	
 	parser.add_argument('--studyid', dest='studyid',
 		required=True,help='Study ID')
 	parser.add_argument('--basedir', dest='basedir',
 		required=True,help='Base directory (above studyid directory)')
+	parser.add_argument('--modelnum', dest='modelnum',type=int,
+		default=1,help='Model number')
+
 	parser.add_argument('-s', '--specificruns', dest='specificruns', type=json.loads,
 		default={},help="""
-			JSON object in a string that details which runs to create fsf's for. 
+			JSON object in a string that details which runs to create fsf's for. If specified, ignores specificruns specified in model_params.json.
 			Ex: If there are sessions: \'{"sub-01": {"ses-01": {"flanker": ["1", "2"]}}, "sub-02": {"ses-01": {"flanker": ["1", "2"]}}}\' where flanker is a task name and ["1", "2"] is a list of the runs.
 			If there aren't sessions: \'{"sub-01":{"flanker":["1"]},"sub-02":{"flanker":["1","2"]}}\'. Make sure this describes the fmriprep folder, which should be in BIDS format.
 			Make sure to have single quotes around the JSON object and double quotes within."""
 			)
-	parser.add_argument('--smoothing', dest='smoothing',type=int,
-		default=0,help='Smoothing (mm FWHM)')
-	parser.add_argument('--use_inplane', dest='use_inplane', type=int,
-		default=0,help='Use inplane image')
-	parser.add_argument('--nonlinear', dest='nonlinear', action='store_true',
-		default=False,help='Use nonlinear regristration')
-	parser.add_argument('--nohpf', dest='hpf', action='store_false',
-		default=True,help='Turn off high pass filtering')
-	parser.add_argument('--nowhiten', dest='whiten', action='store_false',
-		default=True,help='Turn off prewhitening')
-	parser.add_argument('--noconfound', dest='confound', action='store_false',
-		default=True,help='Omit motion/confound modeling')
-	parser.add_argument('--modelnum', dest='modelnum',type=int,
-		default=1,help='Model number')
-	parser.add_argument('--anatimg', dest='anatimg',
-		default='',help='Anatomy image (should be _brain)')
-	parser.add_argument('--doreg', dest='doreg', action='store_true',
-		default=False,help='Do registration')
-	parser.add_argument('--spacetag', dest='spacetag',
-		default='',help='Space tag for preprocessed data')
-	parser.add_argument('--altBETmask', dest='altBETmask', action='store_true',
-        default=False,help='Use brainmask from fmriprep')
 
 	args = parser.parse_args(argv)
 	return args
@@ -69,6 +52,9 @@ def main(argv=None):
 	account=args.account
 	time=args.time
 	nodes=args.nodes
+	studyid=args.studyid
+	basedir=args.basedir
+	modelnum=args.modelnum
 	specificruns=args.specificruns
 
 	sys_argv=sys.argv[:]
@@ -81,6 +67,9 @@ def main(argv=None):
 			del sys_argv[i]
 	del sys_argv[0]
 
+	#njobs=len(mk_all_level1_fsf_bbr.main(argv=sys_argv[:]))
+	#sys_argv=setup_utils.model_params_to_command_string(studyid,basedir,modelnum)
+	#print sys_argv
 	njobs=len(mk_all_level1_fsf_bbr.main(argv=sys_argv[:]))
 	commands=['python','mk_all_level1_fsf_bbr.py'] + sys_argv
 	commands+=['--slurm_array_task_id', '$SLURM_ARRAY_TASK_ID']
