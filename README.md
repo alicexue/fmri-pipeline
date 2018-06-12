@@ -1,11 +1,6 @@
 # fmri-pipeline
 
 Overview:
-- Makes .fsf files for level 1 and level 2 analysis
-- Runs fsl's feat on .fsf files in a slurm job array (run_level1.py and run_level2.py)
-- These scripts can be run on habanero (which can create job arrays). If these scripts aren't run on a cluster, multiple jobs are run sequentially instead.
-
-Overview:
 - Creates *.fsf files for level 1, level 2, and level 3 analysis of fmri data.
 - Runs fsl's feat on the created *.fsf files in a slurm job array (or runs feat serially if not running on a cluster).
 
@@ -52,7 +47,7 @@ Terminology and abbreviations:
 - spacetag: space tag for prepreprocessed data (if the functional or anatomical data was preprocessed in multiple spaces, you can specify the space here) (the script will tell you if multiple preprocessed files were found and you need to specify this tag)
 - altBETmask: use brainmask from fmriprep (*_brainmask.nii.gz)
 - callfeat: automatically calls feat on the *.fsf file that is created by the script
-- specificruns: 
+- specificruns: JSON object in a string that details which runs to create fsf's for.If specified, ignores specificruns specified in model_params.json. Ex: If there are sessions: '{"sub-01": {"ses-01": {"flanker": ["1", "2"]}}, "sub-02": {"ses-01": {"flanker": ["1", "2"]}}}' where flanker is a task name and ["1", "2"] is a list of the runs. If there aren't sessions: '{"sub-01":{"flanker":["1"]},"sub-02":{"flanker":["1","2"]}}'. Make sure this describes the fmriprep folder, which should be in BIDS format. Make sure to have single quotes around the JSON object and double quotes within.
 
 Note on file types:
 - The EV files can be *.tsv or *.txt files. Just make sure the file is named according to the specification above.
@@ -64,5 +59,5 @@ Notes:
 - The slurm output is out of order (I think because I call feat in a subprocess) but I think the log should still be clear.
 
 To do:
-- Check that program doesn't break a task is missing in task_conditions.json
+- Check that program doesn't break if a task is missing in task_conditions.json
 - Integrate with flywheel
