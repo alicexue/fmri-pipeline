@@ -91,7 +91,4 @@ Notes:
 - The slurm output is out of order (I think because feat is called in a subprocess). The log should still be clear.
 
 To do:
-- Check that program doesn't break if a task is missing in condition_key
-.json
-- Be able to specify subjects for level 3
 - Integrate with flywheel
