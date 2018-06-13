@@ -33,22 +33,47 @@ import os
 import subprocess as sub
 import json
 from collections import OrderedDict
+import argparse
 from openfmri_utils import *
 from directory_struct_utils import *
 
+def parse_command_line(argv):
+    parser = argparse.ArgumentParser(argv, description='setup_task')
+    #parser.add_argument('integers', metavar='N', type=int, nargs='+',help='an integer for the accumulator')
+    # set up boolean flags
 
-def main():
-    if len(sys.argv)<6:
-        print "usage: python mk_level3_fsf.py <studyid> <basedir> <taskname> <sesname> <modelnum>"
-        sys.exit(-1)
-    studyid=sys.argv[1]
-    basedir=sys.argv[2]
-    taskname=sys.argv[3]
-    sesname=sys.argv[4]
-    modelnum=int(sys.argv[5])
-    mk_level3_fsf(studyid,basedir,taskname,sesname,modelnum)
+    parser.add_argument('--studyid', dest='studyid',
+        required=True,help='Study ID')
+    parser.add_argument('--subs', dest='subids', nargs='+',
+        default=[],help='subject identifiers (not including prefix "sub-")')
+    parser.add_argument('--taskname', dest='taskname',
+        required=True,help='Task name')
+    parser.add_argument('--basedir', dest='basedir',
+        required=True,help='Base directory (above studyid directory)')
+    parser.add_argument('--modelnum', dest='modelnum',type=int,
+        default=1,help='Model number')
+    parser.add_argument('--sesname', dest='sesname',
+        default='',help='Name of session (not including "ses-")')
+    
+    args = parser.parse_args(argv)
+    return args
 
-def mk_level3_fsf(studyid,basedir,taskname,sesname,modelnum):
+def main(argv=None):
+    args=parse_command_line(argv)
+    print args
+    
+    studyid=args.studyid
+    subids=args.subids
+    taskname=args.taskname
+    basedir=args.basedir
+    modelnum=args.modelnum
+    sesname=args.sesname
+      
+    mk_level3_fsf(studyid,subids,taskname,basedir,modelnum,sesname)
+
+
+def mk_level3_fsf(studyid,subids,taskname,basedir,modelnum,sesname):
+    print subids
     _thisDir = os.path.dirname(os.path.abspath(__file__)).decode(sys.getfilesystemencoding())
     studydir=os.path.join(basedir,studyid)
 
@@ -141,7 +166,10 @@ def mk_level3_fsf(studyid,basedir,taskname,sesname,modelnum):
         outfile.write('set fmri(outputdir) "%s/cope-%03d.gfeat"\n'%(modeldir,copenum))
 
         ngoodsubs=0
-        sublist=get_all_subs(studydir)
+        if len(subids)==0:
+            sublist=get_all_subs(studydir)
+        else:
+            sublist=subids
         
         for sub in sublist:
             subid_ses="sub-"+sub

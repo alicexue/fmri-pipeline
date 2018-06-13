@@ -24,6 +24,8 @@ def parse_command_line(argv):
         required=True,help='Base directory (above studyid directory)')
     parser.add_argument('--modelnum', dest='modelnum',type=int,
         default=1,help='Model number')
+    parser.add_argument('--subs', dest='subids', nargs='+',
+        default=[],help='subject identifiers (not including prefix "sub-")')
     parser.add_argument('--sessions', dest='sessions', nargs='+',
         default=[],help='Name of session (not including prefix "sub-"')
     parser.add_argument('-i', '--slurm_array_task_id', dest='slurm_array_task_id', type=int,
@@ -39,6 +41,7 @@ def main(argv=None):
 	studyid=args.studyid
 	basedir=args.basedir
 	modelnum=args.modelnum
+	subids=args.subids
 	slurm_array_task_id=args.slurm_array_task_id
 
 	hasSessions=False
@@ -52,7 +55,12 @@ def main(argv=None):
 	print study_info
 
 	jobs = []
-	subs=study_info.keys()
+	if len(subids)==0:
+		subs=study_info.keys()
+	else:
+		subs=[]
+		for sub in subids:
+			subs.append('sub-'+sub)
 	list.sort(subs)
 	# iterate through runs based on the runs the first subject did
 	subid=subs[0]
@@ -65,20 +73,20 @@ def main(argv=None):
 			tasks=study_info[subid][ses].keys()
 			list.sort(tasks)
 			for task in tasks:
-				args=[studyid,basedir,task,sesname,modelnum]
+				args=[studyid,subids,task,basedir,modelnum,sesname]
 				jobs.append(args)
 	else:
 		sesname=''
 		tasks=study_info[subid].keys()
 		list.sort(tasks)
 		for task in tasks:
-			args=[studyid,basedir,task,sesname,modelnum]
+			args=[studyid,subids,task,basedir,modelnum,sesname]
 			jobs.append(args)
 
 	all_copes=[]
 	for job_args in jobs:
 		args=job_args
-		copes=mk_level3_fsf.mk_level3_fsf(studyid=args[0],basedir=args[1],taskname=args[2],sesname=args[3],modelnum=args[4])
+		copes=mk_level3_fsf.mk_level3_fsf(studyid=args[0],subids=args[1],taskname=args[2],basedir=args[3],modelnum=args[4],sesname=args[5])
 		all_copes+=copes
 
 	if slurm_array_task_id != -1:

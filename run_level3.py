@@ -30,7 +30,9 @@ def parse_command_line(argv):
         required=True,help='Base directory (above studyid directory)')
     parser.add_argument('--modelnum', dest='modelnum',type=int,
         default=1,help='Model number')
-    
+    parser.add_argument('--subs', dest='subids', nargs='+',
+        default=[],help='subject identifiers (not including prefix "sub-")')
+
     args = parser.parse_args(argv)
     return args
 
@@ -40,6 +42,7 @@ def main(argv=None):
 	account=args.account
 	time=args.time
 	nodes=args.nodes
+	subids=args.subids
 
 	sys_argv=sys.argv[:]
 
