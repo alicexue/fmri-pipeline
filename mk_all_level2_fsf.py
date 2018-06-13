@@ -77,7 +77,6 @@ def main(argv=None):
 	print study_info
 
 	sys_argv=sys.argv[:]
-	#params_to_remove=['--subs','--tasks','--sessions','--task_runs','-i','--slurm_array_task_id']
 	params_to_remove=['-s','--specificruns','-i','--slurm_array_task_id']
 	for param in params_to_remove:
 		if param in sys_argv:

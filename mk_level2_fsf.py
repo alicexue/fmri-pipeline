@@ -47,7 +47,7 @@ def parse_command_line(argv):
     parser.add_argument('--sub', dest='subid',
         required=True,help='subject identifier (not including prefix "sub-")')
     parser.add_argument('--taskname', dest='taskname',
-    required=True,help='Task name')
+        required=True,help='Task name')
     parser.add_argument('--runs', dest='runs', nargs='+',
         required=True,help='Runs')
     parser.add_argument('--basedir', dest='basedir',
