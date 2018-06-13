@@ -31,13 +31,16 @@ def get_runs(funcdir,task):
 	runs=[]
 	files=os.listdir(funcdir)
 	for f in files:
-		i1=f.find('_task-'+task+'_run-')+len('_task-'+task+'_run-')
-		tmp=f[i1:]
-		i2=tmp.find('_')
-		run=tmp[:i2]
-		if (i1 > -1 and i2 > 0):
-			if run not in runs:
-				runs.append(run)
+		if f.endswith('_preproc.nii.gz'):
+			flag='_task-'+task+'_run-'
+			if flag in f:
+				i1=f.find(flag)+len(flag)
+				tmp=f[i1:]
+				i2=tmp.find('_')
+				run=tmp[:i2]
+				if (i1 > -1 and i2 > 0):
+					if run not in runs:
+						runs.append(run)
 	list.sort(runs)
 	return runs
 
@@ -46,16 +49,19 @@ def get_task_runs(funcdir):
 	if os.path.exists(funcdir):
 		files=os.listdir(funcdir)
 		for f in files:
-			runs=[]
-			# find task name
-			i1=f.find('_task-')+len('_task-')
-			tmp=f[i1:]
-			i2=tmp.find('_run-')
-			task=tmp[:i2]
-			if (i1 > -1 and i2 > -1):
-				if task not in task_runs.keys():
-					# find runs for this task
-					task_runs[task]=get_runs(funcdir,task)
+			if f.endswith('_preproc.nii.gz'):
+				runs=[]
+				# find task name
+				flag='_task-'
+				if flag in f:
+					i1=f.find(flag)+len(flag)
+					tmp=f[i1:]
+					i2=tmp.find('_run-')
+					task=tmp[:i2]
+					if (i1 > -1 and i2 > -1):
+						if task not in task_runs.keys():
+							# find runs for this task
+							task_runs[task]=get_runs(funcdir,task)
 	return task_runs
 
 
