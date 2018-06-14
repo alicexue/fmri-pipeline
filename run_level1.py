@@ -56,24 +56,27 @@ def main(argv=None):
 	basedir=args.basedir
 	modelnum=args.modelnum
 	specificruns=args.specificruns
-
+	
 	sys_argv=sys.argv[:]
 	
-	params_to_remove=['--email','-e','-A','--account','-t','--time','-N','--nodes']
+	params_to_remove=['--email','-e','-A','--account','-t','--time','-N','--nodes','-s','--specificruns']
 	for param in params_to_remove:
 		if param in sys_argv:
 			i=sys_argv.index(param)
 			del sys_argv[i]
 			del sys_argv[i]
 	del sys_argv[0]
-
+	
 	#njobs=len(mk_all_level1_fsf_bbr.main(argv=sys_argv[:]))
-	#sys_argv=setup_utils.model_params_to_command_string(studyid,basedir,modelnum)
-	#print sys_argv
-	njobs=len(mk_all_level1_fsf_bbr.main(argv=sys_argv[:]))
+	jobs=mk_all_level1_fsf_bbr.mk_all_level1_fsf_bbr(studyid,basedir,modelnum,-1,specificruns,specificruns)
+	njobs=len(jobs)
+	jobsdict={}
+	for i in range(0,njobs):
+		jobsdict[i]=jobs[i]
 	commands=['python','mk_all_level1_fsf_bbr.py'] + sys_argv
 	commands+=['--slurm_array_task_id', '$SLURM_ARRAY_TASK_ID']
 	strcommand =' '.join(c for c in commands)
+	strcommand=strcommand+" -s '%s'"%(json.dumps(specificruns))
 	with open('run_level1.sbatch', 'w') as qsubfile:
 		qsubfile.write('#!/bin/sh\n')
 		qsubfile.write('#\n')
@@ -88,14 +91,15 @@ def main(argv=None):
 		qsubfile.write('#----------------\n')
 		qsubfile.write('# Job Submission\n')
 		qsubfile.write('#----------------\n')
-		qsubfile.write(strcommand)
+		#qsubfile.write(strcommand)
+		qsubfile.write("python run_level1_job.py --jobs '%s' -i $SLURM_ARRAY_TASK_ID"%json.dumps(jobsdict))
 	try:
 		subprocess.call(['sbatch','run_level1.sbatch'])
 	except:
 		print "\nsbatch command was not found. Are you sure you're running this program on a cluster?"
 		print "WARNING: Running commands serially now...\n"
 		for i in range(njobs):
-			subprocess.call(commands[:-2]+['--slurm_array_task_id',str(i)])
+			subprocess.call(['python', 'run_level1_job.py', '--jobs', '%s'%json.dumps(jobsdict),'-i',str(i)])
 
 if __name__ == '__main__':
 	main()

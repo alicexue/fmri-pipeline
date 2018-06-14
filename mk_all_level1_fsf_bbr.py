@@ -60,12 +60,17 @@ def main(argv=None):
 	modelnum=sys_args.modelnum
 	slurm_array_task_id=sys_args.slurm_array_task_id
 	specificruns=sys_args.specificruns
-
+	
 	args=setup_utils.model_params_json_to_namespace(studyid,basedir,modelnum)
 	print args
 
 	if specificruns == {}: # if specificruns from sys.argv is empty (default), use specificruns from model_param
 		specificruns=args.specificruns
+	mk_all_level1_fsf_bbr(studyid,basedir,modelnum,slurm_array_task_id,specificruns,sys_args.specificruns)
+
+def mk_all_level1_fsf_bbr(studyid,basedir,modelnum,slurm_array_task_id,specificruns,sys_args_specificruns):
+	args=setup_utils.model_params_json_to_namespace(studyid,basedir,modelnum)
+
 	smoothing=args.smoothing
 	use_inplane=args.use_inplane
 	nonlinear=args.nonlinear
@@ -115,9 +120,9 @@ def main(argv=None):
 					runs=study_info[subid][ses][task]
 					list.sort(runs)
 					for run in runs:
-						model_subdir='%s/model/level1/model%03d/%s/%s/task-%s_run-%s'%(os.path.join(basedir,studyid),modelnum,subid,sesname,task,run)
-						feat_file="%s/%s_%s_task-%s_run-%s.feat"%(model_subdir,subid,sesname,task,run)
-						if sys_args.specificruns=={} and os.path.exists(feat_file):
+						model_subdir='%s/model/level1/model%03d/%s/%s/task-%s_run-%s'%(os.path.join(basedir,studyid),modelnum,subid,ses,task,run)
+						feat_file="%s/%s_%s_task-%s_run-%s.feat"%(model_subdir,subid,ses,task,run)
+						if sys_args_specificruns=={} and os.path.exists(feat_file):
 							existing_feat_files.append(feat_file)
 							runs_copy=study_info_copy[subid][ses][task]
 							runs_copy.remove(run)
@@ -140,7 +145,7 @@ def main(argv=None):
 				for run in runs:
 					model_subdir='%s/model/level1/model%03d/%s/task-%s_run-%s'%(os.path.join(basedir,studyid),modelnum,subid,task,run)
 					feat_file="%s/%s_task-%s_run-%s.feat"%(model_subdir,subid,task,run)
-					if sys_args.specificruns=={} and os.path.exists(feat_file):
+					if sys_args_specificruns=={} and os.path.exists(feat_file):
 						existing_feat_files.append(feat_file)
 						runs_copy=study_info_copy[subid][task]
 						runs_copy.remove(run)
@@ -153,12 +158,10 @@ def main(argv=None):
 				if len(study_info_copy[subid][task])==0:
 					del study_info_copy[subid]
 
-	print jobs
-
 	if len(study_info_copy.keys()) == 0:
 		print "ERROR: All runs for all subjects have been run on this model. Remove the feat files if you want to rerun them."
 		sys.exit(-1)
-	elif slurm_array_task_id > -1 and sys_args.specificruns=={} and len(existing_feat_files)!=0:
+	elif sys_args_specificruns=={} and len(existing_feat_files)!=0:
 		print "ERROR: Some subjects' runs have already been run on this model. If you want to rerun these subjects, remove their feat directories first. To run the remaining subjects, rerun run_level1.py and add:"
 		print "-s \'%s\'"%(json.dumps(study_info_copy))
 		sys.exit(-1)
