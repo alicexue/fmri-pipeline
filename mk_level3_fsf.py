@@ -73,7 +73,6 @@ def main(argv=None):
 
 
 def mk_level3_fsf(studyid,subids,taskname,basedir,modelnum,sesname):
-    print subids
     _thisDir = os.path.dirname(os.path.abspath(__file__)).decode(sys.getfilesystemencoding())
     studydir=os.path.join(basedir,studyid)
 
@@ -99,8 +98,8 @@ def mk_level3_fsf(studyid,subids,taskname,basedir,modelnum,sesname):
         if taskname in cond_key.keys():
             cond_key = cond_key[taskname]
         else:
-            print "ERROR: Task name was not found in JSON file %s. Make sure the JSON file is formatted correctly"%(cond_key_json)
-            sys.exit(-1)
+            print "WARNING: Task name %s was not found in JSON file %s. Make sure the JSON file is formatted correctly"%(taskname,cond_key_json)
+            return []
         nconditions = len(cond_key.keys())
     elif os.path.exists(cond_key_txt):
         cond_key=load_condkey(cond_key_txt)
@@ -184,8 +183,12 @@ def mk_level3_fsf(studyid,subids,taskname,basedir,modelnum,sesname):
                 outfile.write('set fmri(groupmem.%d) 1\n'%int(ngoodsubs+1))
                 ngoodsubs+=1
             else:
-                print "WARNING: featfile not found: %s, was not added to *.fsf"%featfile, 
+                print "WARNING: featfile not found: %s, was not added to *.fsf\n"%featfile, 
                 
+        if ngoodsubs==0:
+            print "ERROR: No subjects with feat files found"
+            sys.exit(-1)
+
         #Note: "feat won't run if feat_files are not added to this fsf."
         outfile.write('set fmri(npts) %d\n'%ngoodsubs) # number of runs
         outfile.write('set fmri(multiple) %d\n'%ngoodsubs) # number of runs

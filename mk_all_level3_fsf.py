@@ -5,7 +5,6 @@ Called by run_level3_feat.py
 # Created by Alice Xue, 06/2018
 
 from directory_struct_utils import *
-#from mk_level1_fsf_bbr import mk_level1_fsf_bbr
 import mk_level3_fsf
 import os
 import sys
@@ -28,8 +27,6 @@ def parse_command_line(argv):
         default=[],help='subject identifiers (not including prefix "sub-")')
     parser.add_argument('--sessions', dest='sessions', nargs='+',
         default=[],help='Name of session (not including prefix "sub-"')
-    parser.add_argument('-i', '--slurm_array_task_id', dest='slurm_array_task_id', type=int,
-        default=-1,help='index of job array in slurm')
 
     args = parser.parse_args(argv)
     return args
@@ -42,7 +39,6 @@ def main(argv=None):
 	basedir=args.basedir
 	modelnum=args.modelnum
 	subids=args.subids
-	slurm_array_task_id=args.slurm_array_task_id
 
 	hasSessions=False
 	studydir=os.path.join(basedir,studyid)
@@ -89,12 +85,8 @@ def main(argv=None):
 		copes=mk_level3_fsf.mk_level3_fsf(studyid=args[0],subids=args[1],taskname=args[2],basedir=args[3],modelnum=args[4],sesname=args[5])
 		all_copes+=copes
 
-	if slurm_array_task_id != -1:
-		print "Calling", ' '.join(['feat',all_copes[slurm_array_task_id]])
-		subprocess.call(['feat',all_copes[slurm_array_task_id]])
-	else:
-		print len(all_copes), "jobs"
-		return all_copes
+	print len(all_copes), "jobs"
+	return all_copes
 
 if __name__ == '__main__':
     main()

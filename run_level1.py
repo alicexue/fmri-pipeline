@@ -5,13 +5,11 @@ Runs the generated sbatch file
 
 # Created by Alice Xue, 06/2018
 
-import mk_all_level1_fsf_bbr
+import get_level1_jobs
 import subprocess
 import sys
 import argparse
 import json
-import warnings
-import setup_utils
 
 def parse_command_line(argv):
 	parser = argparse.ArgumentParser(description='setup_jobs')
@@ -46,6 +44,7 @@ def parse_command_line(argv):
 	return args
 
 def main(argv=None):
+	level=1
 	args=parse_command_line(argv)
 
 	email=args.email
@@ -67,16 +66,11 @@ def main(argv=None):
 			del sys_argv[i]
 	del sys_argv[0]
 	
-	#njobs=len(mk_all_level1_fsf_bbr.main(argv=sys_argv[:]))
-	jobs=mk_all_level1_fsf_bbr.mk_all_level1_fsf_bbr(studyid,basedir,modelnum,-1,specificruns,specificruns)
+	jobs=get_level1_jobs.get_level1_jobs(studyid,basedir,modelnum,specificruns,specificruns)
 	njobs=len(jobs)
 	jobsdict={}
 	for i in range(0,njobs):
 		jobsdict[i]=jobs[i]
-	commands=['python','mk_all_level1_fsf_bbr.py'] + sys_argv
-	commands+=['--slurm_array_task_id', '$SLURM_ARRAY_TASK_ID']
-	strcommand =' '.join(c for c in commands)
-	strcommand=strcommand+" -s '%s'"%(json.dumps(specificruns))
 	with open('run_level1.sbatch', 'w') as qsubfile:
 		qsubfile.write('#!/bin/sh\n')
 		qsubfile.write('#\n')
@@ -91,15 +85,14 @@ def main(argv=None):
 		qsubfile.write('#----------------\n')
 		qsubfile.write('# Job Submission\n')
 		qsubfile.write('#----------------\n')
-		#qsubfile.write(strcommand)
-		qsubfile.write("python run_level1_job.py --jobs '%s' -i $SLURM_ARRAY_TASK_ID"%json.dumps(jobsdict))
+		qsubfile.write("python run_feat_job.py --jobs '%s' -i $SLURM_ARRAY_TASK_ID --level 1"%json.dumps(jobsdict))
 	try:
 		subprocess.call(['sbatch','run_level1.sbatch'])
 	except:
 		print "\nsbatch command was not found. Are you sure you're running this program on a cluster?"
 		print "WARNING: Running commands serially now...\n"
 		for i in range(njobs):
-			subprocess.call(['python', 'run_level1_job.py', '--jobs', '%s'%json.dumps(jobsdict),'-i',str(i)])
+			subprocess.call(['python', 'run_feat_job.py', '--jobs', '%s'%json.dumps(jobsdict),'-i',str(i), '--level', str(level)])
 
 if __name__ == '__main__':
 	main()

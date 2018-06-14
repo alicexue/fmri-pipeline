@@ -1,5 +1,6 @@
 """
-Generates run_level3_feat.sbatch to run mk_all_level3_fsf in a job array
+Runs mk_all_level3_fsf to get list of jobs to run
+Generates run_level3_feat.sbatch and runs run_feat_job in job array
 Runs the generated sbatch file
 """
 
@@ -37,6 +38,8 @@ def parse_command_line(argv):
     return args
 
 def main(argv=None):
+	level=3
+
 	args=parse_command_line(argv)
 	email=args.email
 	account=args.account
@@ -56,10 +59,11 @@ def main(argv=None):
 
 	print sys_argv
 
-	njobs=len(mk_all_level3_fsf.main(argv=sys_argv[:]))
-	commands=['python','mk_all_level3_fsf.py'] + sys_argv
-	commands+=['--slurm_array_task_id', '$SLURM_ARRAY_TASK_ID']
-	strcommand =' '.join(c for c in commands)
+	jobs=mk_all_level3_fsf.main(argv=sys_argv[:])
+	njobs=len(jobs)
+	jobsdict={}
+	for i in range(0,njobs):
+		jobsdict[i]=jobs[i]
 	with open('run_level3.sbatch', 'w') as qsubfile:
 		qsubfile.write('#!/bin/sh\n')
 		qsubfile.write('#\n')
@@ -74,14 +78,14 @@ def main(argv=None):
 		qsubfile.write('#----------------\n')
 		qsubfile.write('# Job Submission\n')
 		qsubfile.write('#----------------\n')
-		qsubfile.write(strcommand)
+		qsubfile.write("python run_feat_job.py --jobs '%s' -i $SLURM_ARRAY_TASK_ID --level 3"%json.dumps(jobsdict))
 	try:
 		subprocess.call(['sbatch','run_level3.sbatch'])
 	except:
 		print "\nsbatch command was not found. Are you sure you're running this program on a cluster?"
 		print "WARNING: Running commands serially now...\n"
 		for i in range(njobs):
-			subprocess.call(commands[:-2]+['--slurm_array_task_id',str(i)])
+			subprocess.call(['python', 'run_feat_job.py', '--jobs', '%s'%json.dumps(jobsdict),'-i',str(i), '--level', str(level)])
 
 
 if __name__ == '__main__':
