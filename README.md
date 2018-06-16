@@ -1,10 +1,18 @@
 # fmri-pipeline
 
 Overview:
+- manage_flywheel_downloads.py downloads fmriprep outputs and raw BIDS from Flywheel
+
 - Creates *.fsf files for level 1, level 2, and level 3 analysis of fmri data.
 - Runs fsl's feat on the created *.fsf files in a slurm job array (or runs feat serially if not running on a cluster).
 
 Requirements:
+For downloading data from Flywheel:
+- [Flywheel CLI](https://docs.flywheel.io/display/EM/CLI+-+Installation) must be installed (and have your API key handy)
+- to export raw BIDS, you must have [Docker](https://docs.docker.com/install/#cloud) installed and running
+
+
+For running fmri analyses:
 - directory with fmriprep output named 'fmriprep'
 - func directories (with preprocessed functional files) should be under the subject folder (if there are no sessions) or under the appropriate session folder
 - anat directories (with preprocessed anatomical files) should be under each subject folder (not at the same level as the func directory if there are sessions) (which is how the output of fmriprep should be organized) (see File Structure below)
@@ -15,6 +23,10 @@ Requirements:
 - task contrasts (not required) may be specified under the model00\<N> directory as task_contrasts.json or task_contrasts.txt (see step 4 below)
 
 Steps:
+For downloading data from Flywheel:
+1. Run manage_flywheel_downloads.py, which will ask for the necessary information via the command line
+
+For running fmri analyses:
 1. Run setup.py to create the model directory and all necessary sub-directories. This will also create empty/sample *.json files (model_params.json, condition_key.json, task_contrasts.json) and EVs files for you to fill in. 
 2. Fill out model_params.json under model00\<N>, see Terminology below for explanation of the abbreviations.
 3. Fill out condition_key.json under model00\<N>, where the task name is the key and the value is a json object with EV names as keys and the conditions as values. (Note: The EV files, *_ev-00\<N>, are always padded with leading zeros so that there are 3 digits)
@@ -88,7 +100,12 @@ Some behaviors to note:
 - For level 1, run_level1.py will exit if no runs have been specified and some feat directories already exist. This prevents the creation of multiple feat directories for the same run (with + appended to the directory name). Upon exit, the program will print the additional arguments necessary to create the feat directories for the runs missing feats (or you may choose to remove the existing feat directories and create feats for all the runs). The program does not check for existing feat directories if the argument "specificruns" is passed to run_level1.py or mk_all_level1_fsf_bbr.py (This is intentional in order to make sure run_level1 can use mk_all_level1_fsf_bbr seamlessly. However, a warning is printed if the program is creating a feat that already exists). 
 
 Notes:
-- The slurm output is out of order (I think because feat is called in a subprocess). The log should still be clear.
+- The slurm output is out of order (I think because some things are run in a subprocess). The log should still be clear.
+- Flywheel downloads haven't been tested on habanero yet. Also need to test downloading fmriprep output for multiple subjects.
 
 To do:
+- Check for preprocessed anat files in the anat folder under subject folder AND under session folder
+- Check for multiple feats in level 2 analysis
+- TR: currently checks in raw->task-\<task>_bold.json. Need to also check under raw->sub->func->sub\<sub>_task-\<task>_run-\<run>_bold.json. May also want to require specifying TR under model.
+- Accomodate not having multiple runs (not having run in the file names)...
 - Integrate with flywheel
