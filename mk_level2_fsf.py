@@ -218,8 +218,8 @@ def mk_level2_fsf(studyid,subid,taskname,runs,basedir,modelnum,sesname='',callfe
             sub.call(['mkdir',feat_folder+'/reg'])
             if os.path.exists(feat_folder+'/reg_standard'):
                 print "Deleting reg_standard from %s ..."%feat_folder
-                sub.call(['rm','-r',feat_folder+'/reg_standard'])
-            sub.call(['rm',feat_folder+'/reg/'+'*.mat'])
+                sub.call(['rm','-rf',feat_folder+'/reg_standard'])
+            sub.call(['rm','-f',feat_folder+'/reg/'+'*.mat'])
 
             env = os.environ.copy()
 

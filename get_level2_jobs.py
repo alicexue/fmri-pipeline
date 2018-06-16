@@ -12,6 +12,7 @@ import sys
 import subprocess
 import argparse
 import json
+import copy
 
 def parse_command_line(argv):
     parser = argparse.ArgumentParser(description='setup_jobs')
@@ -56,6 +57,8 @@ def main(argv=None):
 	basedir=args.basedir
 	modelnum=args.modelnum
 
+	sys_args_specificruns=args.specificruns
+
 	study_info=specificruns
 	hasSessions=False
 	if specificruns=={}:
@@ -73,6 +76,8 @@ def main(argv=None):
 
 	print study_info
 
+	study_info_copy=copy.deepcopy(study_info)
+
 	sys_argv=sys.argv[:]
 	params_to_remove=['--email','-e','-A','--account','-t','--time','-N','--nodes','-s','--specificruns']
 	for param in params_to_remove:
@@ -82,7 +87,7 @@ def main(argv=None):
 			del sys_argv[i]
 	del sys_argv[0]
 
-	jobs = []
+	existing_feat_files=[]
 	jobs = []
 	subs=study_info.keys()
 	list.sort(subs)
@@ -96,25 +101,55 @@ def main(argv=None):
 				tasks=study_info[subid][ses].keys()
 				list.sort(tasks)
 				for task in tasks:
-					runs=study_info[subid][ses][task]
-					list.sort(runs)
-					args=sys_argv[:]
-					args=add_args(args,sub,task,runs)
-					args.append('--ses')
-					args.append(sesname)
-					jobs.append(args)
+					model_subdir='%s/model/level2/model%03d/%s/%s/task-%s'%(os.path.join(basedir,studyid),modelnum,subid,ses,task)
+					feat_file="%s/%s_%s_task-%s.gfeat"%(model_subdir,subid,ses,task)
+					if sys_args_specificruns=={} and os.path.exists(feat_file):
+						existing_feat_files.append(feat_file)
+						tasks_copy=study_info_copy[subid][ses]
+						tasks_copy.pop(task, None)
+					else:
+						if os.path.exists(feat_file):
+							print "WARNING: Existing feat file found: %s"%feat_file
+						runs=study_info[subid][ses][task]
+						list.sort(runs)
+						args=sys_argv[:]
+						args=add_args(args,sub,task,runs)
+						args.append('--ses')
+						args.append(sesname)
+						jobs.append(args)
+				if len(study_info_copy[subid][ses].keys())==0:
+					del study_info_copy[subid]
 		else:
 			tasks=study_info[subid].keys()
 			list.sort(tasks)
 			for task in tasks:
-				runs=study_info[subid][task]
-				list.sort(runs)
-				args=sys_argv[:]
-				args=add_args(args,sub,task,runs)
-				jobs.append(args)
+				model_subdir='%s/model/level2/model%03d/%s/task-%s'%(os.path.join(basedir,studyid),modelnum,subid,task)
+				feat_file="%s/%s_task-%s.gfeat"%(model_subdir,subid,task)
+				if sys_args_specificruns=={} and os.path.exists(feat_file):
+					existing_feat_files.append(feat_file)
+					tasks_copy=study_info_copy[subid]
+					tasks_copy.pop(task, None)
+				else:
+					if os.path.exists(feat_file):
+						print "WARNING: Existing feat file found: %s"%feat_file
+					runs=study_info[subid][task]
+					list.sort(runs)
+					args=sys_argv[:]
+					args=add_args(args,sub,task,runs)
+					jobs.append(args)
+			if len(study_info_copy[subid].keys())==0:
+				del study_info_copy[subid]
 
-	print len(jobs), "jobs"
-	return jobs
+	if len(study_info_copy.keys()) == 0:
+		print "ERROR: All tasks for all subjects have been run on this model. Remove the feat files if you want to rerun them."
+		sys.exit(-1)
+	elif sys_args_specificruns=={} and len(existing_feat_files)!=0:
+		print "ERROR: Some subjects' tasks have already been run on this model. If you want to rerun these subjects, remove their feat directories first. To run the remaining subjects, rerun run_level2.py and add:"
+		print "-s \'%s\'"%(json.dumps(study_info_copy))
+		sys.exit(-1)
+	else:
+		print len(jobs), "jobs"
+		return jobs
 
 if __name__ == '__main__':
     main()
