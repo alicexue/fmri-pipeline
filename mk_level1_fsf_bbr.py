@@ -299,13 +299,27 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
         print "ERROR: Could not find task name %s in contrasts. Make sure the file is formatted correctly."
         sys.exit(-1)
 
-    try:
-        #scan_key=load_scankey(os.path.join(basedir,studyid,'%s/func/task%03d_run%03d/scan_key.txt'%(fmriprep_subdir,tasknum,runname)))
-        scan_key=json.load(open(os.path.join(basedir,studyid,'raw','task-%s_bold.json'%(taskname))))
-        tr=scan_key['RepetitionTime']
-        print 'using task-specific scan key'
-    except:
-        print "ERROR: Couldn't find scan key. Should be a json file in "+os.path.join(basedir,studyid,'raw')+" and should be named task-<task>_bold.json"
+
+    # Find Repetition Time
+    tr=None
+    scan_key_path1=os.path.join(basedir,studyid,'raw','task-%s_bold.json'%(taskname))
+    if os.path.exists(scan_key_path1):
+        scan_key=json.load(open(scan_key_path1))
+        if 'RepetitionTime' in scan_key:
+            tr=scan_key['RepetitionTime']
+        else:
+            print "Could not find RepetitionTime key in %s"%scan_key_path1
+
+    scan_key_path2=os.path.join(basedir,studyid,'raw',subid,'func','%s_task-%s_run-%sbold.json'%(subid,taskname,runname))
+    if os.path.exists(scan_key_path2):
+        scan_key=json.load(open(scan_key_path2))
+        if 'RepetitionTime' in scan_key:
+            tr=scan_key['RepetitionTime']
+        else:
+            print "Could not find RepetitionTime key in %s"%scan_key_path2
+
+    if tr==None:
+        print "ERROR: Could not find scan key. Looked here: %s and here: %s."%(scan_key_path1,scan_key_path2)
         sys.exit(-1)
 
     if scan_key.has_key('nskip'):

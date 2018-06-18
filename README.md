@@ -19,7 +19,7 @@
 - func directories (with preprocessed functional files) should be in the subject folder (if there are no sessions) or under the appropriate session folder
 - anat directories (with preprocessed anatomical files) can be in the subject folder or in the appropriate session folder
 - EV files (see step 1 below)
-- TR should be specified in a JSON file called task-\<taskname>_bold.json under a directory named 'raw' at the same level as the fmriprep directory (the 'raw' directory should store the raw data files). "RepetitionTime" should be the key.
+- TR: checked for in raw->task-\<task>_bold.json. Need to also check under raw->sub->func->sub\<sub>_task-\<task>_run-\<run>_bold.json. Key should be "RepetitionTime".
 - model params must be specified under the model00\<N> directory (see step 2 below)
 - condition key must be specified under the model00\<N> directory as condition_key.json or condition_key.txt (see step 3 below)
 - task contrasts (not required) may be specified under the model00\<N> directory as task_contrasts.json or task_contrasts.txt (see step 4 below)
@@ -104,9 +104,8 @@ basedir
 
 ## Notes:
 - The slurm output is out of order (I think because some things are run in a subprocess). The log should still be clear.
-- Flywheel downloads haven't been tested on habanero yet. Also need to test downloading fmriprep output for multiple subjects.
 
 ## To do:
-- TR: currently checks in raw->task-\<task>_bold.json. Need to also check under raw->sub->func->sub\<sub>_task-\<task>_run-\<run>_bold.json. May also want to require specifying TR under model.
+- Test flywheel download scripts on multiple runs
 - Accomodate not having multiple runs (not having run in the file names)...
 - Integrate with flywheel
