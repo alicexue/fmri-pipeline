@@ -9,8 +9,9 @@
 ## Requirements:
 
 #### For downloading data from Flywheel:
-- [Flywheel CLI](https://docs.flywheel.io/display/EM/CLI+-+Installation) must be installed (and have your API key handy)
-- to export raw BIDS, you must have [Docker](https://docs.docker.com/install/#cloud) installed and running
+- Have the Flywheel Python SDK installed (see link [here](https://flywheel-io.github.io/core/branches/master/python/getting_started.html)). 
+- Have your Flywheel API key handy (see your user profile)
+- To export raw BIDS, you must have [Docker](https://docs.docker.com/install/#cloud) installed and running
 
 
 #### For running fmri analyses:
