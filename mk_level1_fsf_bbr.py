@@ -146,30 +146,53 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
     ###
 
 
-    # Get anat preprocessed data from fmriprep
+    ## Get anat preprocessed data from fmriprep
+
+    # anat dir directly under subject folder
+    anatdircontent = []
     anatdir = os.path.join(os.path.join(basedir,'%s/fmriprep/%s'%(studyid,subid)),'anat')
-    anatdircontent = os.listdir(anatdir)
+    if os.path.exists(anatdir):
+        anatdircontent = os.listdir(anatdir)
+
+    # anat dir under session folder
+    sesanatdircontent=[]
+    if sesname!="":
+        sesanatdir = os.path.join(os.path.join(basedir,'%s/fmriprep/%s/ses-%s'%(studyid,subid,sesname)),'anat')
+        if os.path.exists(sesanatdir):
+            sesanatdircontent = os.listdir(sesanatdir)
+
     anat_preproc_files = []
 
+    # check directory directly under subject folder
     anathead='%s_T1w_space-'%(subid)
     anattail='_preproc.nii.gz'
     for fname in anatdircontent:
         if fname.startswith(anathead) and fname.endswith(anattail):
-            anat_preproc_files.append(fname)
+            anat_preproc_files.append(os.path.join(anatdir,fname))
+
+    # check directory under session folder
+    if sesname!="":
+        anathead='%s_T1w_space-'%(subid)
+        sesanathead='%s_ses-%s_T1w_space-'%(subid,sesname)
+        anattail='_preproc.nii.gz'
+        for fname in sesanatdircontent:
+            if (fname.startswith(anathead) or fname.startswith(sesanathead)) and fname.endswith(anattail):
+                anat_preproc_files.append(os.path.join(sesanatdir,fname))
+
     if len(anat_preproc_files) == 1:
         initial_highres_file = anat_preproc_files[0]
     elif len(anat_preproc_files) == 0:
-        print "ERROR: Could not find preprocessed anat file in %s. Make sure this directory points to the output of fmriprep."%(anatdir)
+        print "ERROR: Could not find preprocessed anat file in %s or %s. Make sure this directory points to the output of fmriprep."%(anatdir,sesanatdir)
         sys.exit(-1)
     else:
         print fmriprep_subdir+'/'+anathead+spacetag+anattail
         if spacetag!='' and os.path.exists(fmriprep_subdir+'/anat/'+anathead+spacetag+anattail):
             initial_highres_file = anathead+spacetag+anattail
         else:
-            print "ERROR: Found multiple preprocessed anat files here: %s. Please specify the label in the arguments."%(anatdir)
-            print anat_preproc_files
+            print "ERROR: Found multiple preprocessed anat files. Please make sure the directory is structured correctly."
+            print "Files found:", anat_preproc_files
+            print "If the files listed above are in the same directory, specify the space tag you want to use in the arguments."
             sys.exit(-1)
-
 
     # Get func preprocessed data from fmriprep
     funcdir = os.path.join(fmriprep_subdir,'func')
@@ -351,7 +374,7 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
     if use_inplane==1:
         outfile.write('set fmri(reginitial_highres_yn) 1\n')
         #outfile.write('set initial_highres_files(1) "%s/anatomy/inplane001_brain.nii.gz"\n'%fmriprep_subdir)
-        outfile.write('set initial_highres_files(1) "%s"\n'%(os.path.join(anatdir,anat_preproc_file)))
+        outfile.write('set initial_highres_files(1) "%s"\n'%(initial_highres_file))
     else:
         outfile.write('set fmri(reginitial_highres_yn) 0\n')
 
