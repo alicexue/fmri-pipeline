@@ -11,13 +11,6 @@ import flywheel
 import download_flywheel_fmriprep
 import export_raw_bids
 
-fwExists=False
-try:
-	FNULL = open(os.devnull, 'w')
-	sp.call(['fw'],stdout=FNULL, stderr=sp.STDOUT)
-	fwExists=True
-except:
-	fwExists=False
 
 dockerExists=False
 try:
@@ -26,10 +19,6 @@ try:
 	dockerExists=True
 except:
 	dockerExists=False
-
-if not fwExists:
-	print "Flywheel's CLI is not installed."
-	sys.exit(-1)
 
 loggedIn=False
 while not loggedIn:

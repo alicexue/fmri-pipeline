@@ -66,7 +66,8 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir):
 						print('\tAnalysis: %s: %s' % (analysis.id, analysis.label))
 						date_created=analysis.created
 						analysis_ids[date_created]=analysis.id
-						dates.append(date_created)
+						if analysis.files!=None:
+							dates.append(date_created)
 						
 				if len(dates)!=0:
 					list.sort(dates)

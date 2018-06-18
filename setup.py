@@ -12,6 +12,7 @@ def create_model_level1_dir(studyid,basedir,modelnum):
 			hasSessions=True
 			study_info=get_study_info(studydir,hasSessions)
 	subs=study_info.keys()
+	print study_info
 	list.sort(subs)
 	i=0
 	for subid in subs:
