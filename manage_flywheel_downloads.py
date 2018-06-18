@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Takes command line input and runs download_flywheel_fmriprep and export_raw_bids accordingly
 """

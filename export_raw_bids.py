@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Exports raw BIDS from flywheel for each subject 
 Only exports raw BIDS for subjects whose fmriprep directories exist

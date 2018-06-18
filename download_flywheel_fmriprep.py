@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Downloads each subject's fmriprep outputs from flywheel
 

@@ -4,8 +4,6 @@
 
 import os
 
-# right now checks first subject - doesn't verify all subjects
-
 def get_fmriprep_dir(studydir):
 	fmriprep_dir=os.path.join(studydir,'fmriprep')
 	if os.path.exists(fmriprep_dir):

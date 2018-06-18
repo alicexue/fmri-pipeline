@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Generates run_level1.sbatch to run mk_all_level1_fsf_bbr in a job array
 Runs the generated sbatch file

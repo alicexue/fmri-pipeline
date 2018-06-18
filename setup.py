@@ -1,3 +1,11 @@
+#!/usr/bin/env python
+"""
+Create model directories based on structure of fmriprep directory
+Creates empty_condition_key, task_contrasts, and model_params files
+"""
+
+# Created by Alice Xue, 06/2018
+
 import json
 import os
 import sys

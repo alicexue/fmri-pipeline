@@ -1,3 +1,9 @@
+"""
+Functions for interacting with model_params, condition_key, and task_contrasts
+"""
+
+# Created by Alice Xue, 06/2018
+
 import json
 import os
 import sys

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Runs mk_all_level3_fsf to get list of jobs to run
 Generates run_level3_feat.sbatch and runs run_feat_job in job array

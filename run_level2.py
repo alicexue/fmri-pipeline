@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Generates run_level2_feat.sbatch to run mk_all_level2_fsf in a job array
 Runs the generated sbatch file
