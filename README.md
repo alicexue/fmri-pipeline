@@ -15,8 +15,8 @@
 
 #### For running fmri analyses:
 - directory with fmriprep output named 'fmriprep'
-- func directories (with preprocessed functional files) should be under the subject folder (if there are no sessions) or under the appropriate session folder
-- anat directories (with preprocessed anatomical files) should be under each subject folder (not at the same level as the func directory if there are sessions) (which is how the output of fmriprep should be organized) (see File Structure below)
+- func directories (with preprocessed functional files) should be in the subject folder (if there are no sessions) or under the appropriate session folder
+- anat directories (with preprocessed anatomical files) can be in the subject folder or in the appropriate session folder
 - EV files (see step 1 below)
 - TR should be specified in a JSON file called task-\<taskname>_bold.json under a directory named 'raw' at the same level as the fmriprep directory (the 'raw' directory should store the raw data files). "RepetitionTime" should be the key.
 - model params must be specified under the model00\<N> directory (see step 2 below)
@@ -49,11 +49,11 @@ basedir
     │
     └───fmriprep
     │	│
-    │	└───anat (has preprocessed data)
+    │	└───anat (can have preprocessed data here or below, under ses-01)
     │	│
     │	└───ses-01
     │	    │
-    │	    └───anat
+    │	    └───anat (can have preprocessed data here)
     │	    │
     │	    └───func (has preprocessed data)
     │
@@ -106,7 +106,6 @@ basedir
 - Flywheel downloads haven't been tested on habanero yet. Also need to test downloading fmriprep output for multiple subjects.
 
 ## To do:
-- Check for preprocessed anat files in the anat folder under subject folder AND under session folder
 - TR: currently checks in raw->task-\<task>_bold.json. Need to also check under raw->sub->func->sub\<sub>_task-\<task>_run-\<run>_bold.json. May also want to require specifying TR under model.
 - Accomodate not having multiple runs (not having run in the file names)...
 - Integrate with flywheel
