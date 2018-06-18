@@ -15,7 +15,6 @@ When download is complete, the tmp folder is removed
 # Notes:
 # So far only tested on Ellen's Curiosity project (where fmriprep has only been run on one subject)
 # Still needs to be tested on multiple subject analyses
-# Still needs to be tested on habanero
 
 # Created by Alice Xue, 06/2018
 
