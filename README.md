@@ -19,7 +19,6 @@
 - func directories (with preprocessed functional files) should be in the subject folder (if there are no sessions) or under the appropriate session folder
 - anat directories (with preprocessed anatomical files) can be in the subject folder or in the appropriate session folder
 - EV files (see step 1 below)
-- TR: checked for in raw->task-\<task>_bold.json. Need to also check under raw->sub->func->sub\<sub>_task-\<task>_run-\<run>_bold.json. Key should be "RepetitionTime".
 - model params must be specified under the model00\<N> directory (see step 2 below)
 - condition key must be specified under the model00\<N> directory as condition_key.json or condition_key.txt (see step 3 below)
 - task contrasts (not required) may be specified under the model00\<N> directory as task_contrasts.json or task_contrasts.txt (see step 4 below)
@@ -103,6 +102,7 @@ basedir
 - For level 1, run_level1.py will exit if no runs have been specified and some feat directories already exist. This prevents the creation of multiple feat directories for the same run (with + appended to the directory name). Upon exit, the program will print the additional arguments necessary to create the feat directories for the runs missing feats (or you may choose to remove the existing feat directories and create feats for all the runs). The program does not check for existing feat directories if the argument "specificruns" is passed to run_level1.py or mk_all_level1_fsf_bbr.py (This is intentional in order to make sure run_level1 can use mk_all_level1_fsf_bbr seamlessly. However, a warning is printed if the program is creating a feat that already exists). (The same thing happens if all feat directories for all tasks exist.) 
 
 ## Notes:
+- TR is obtained by reading the header of the Nifti file (preproc func file)
 - The slurm output is out of order (I think because some things are run in a subprocess). The log should still be clear.
 
 ## To do:

@@ -40,7 +40,7 @@ from openfmri_utils import *
 import argparse
 import json
 from collections import OrderedDict
-#import nibabel
+import nifti_utils
 
 def parse_command_line(argv):
     parser = argparse.ArgumentParser(argv, description='setup_subject')
@@ -301,34 +301,8 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
 
 
     # Find Repetition Time
-    tr=None
-    scan_key_path1=os.path.join(basedir,studyid,'raw','task-%s_bold.json'%(taskname))
-    if os.path.exists(scan_key_path1):
-        scan_key=json.load(open(scan_key_path1))
-        if 'RepetitionTime' in scan_key:
-            tr=scan_key['RepetitionTime']
-        else:
-            print "Could not find RepetitionTime key in %s"%scan_key_path1
-
-    scan_key_path2=os.path.join(basedir,studyid,'raw',subid,'func','%s_task-%s_run-%sbold.json'%(subid,taskname,runname))
-    if os.path.exists(scan_key_path2):
-        scan_key=json.load(open(scan_key_path2))
-        if 'RepetitionTime' in scan_key:
-            tr=scan_key['RepetitionTime']
-        else:
-            print "Could not find RepetitionTime key in %s"%scan_key_path2
-
-    if tr==None:
-        print "ERROR: Could not find scan key. Looked here: %s and here: %s."%(scan_key_path1,scan_key_path2)
-        sys.exit(-1)
-
-    if scan_key.has_key('nskip'):
-        nskip=int(scan_key['nskip'])
-    else:
-        nskip=0
+    tr=nifti_utils.get_TR('%s/func/%s'%(fmriprep_subdir,func_preproc_file))
         
-    #stubfilename='/vega/psych/users/ab4096/scripts/design_level1_fsl5.stub'
-    #stubfilename='/Users/alicexue/Documents/ShohamyLab/fsl_testing/design_level1_fsl5.stub'
     stubfilename=os.path.join(_thisDir,'design_level1_fsl5.stub')
     
     outfilename='%s/%s_task-%s_run-%s.fsf'%(model_subdir,subid_ses,taskname,runname)
@@ -344,7 +318,6 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
     stubfile.close()
     # figure out how many timepoints there are
 
-    #p = sub.Popen(['fslinfo','%s/BOLD/task%03d_run%03d/bold_mcf_brain'%(fmriprep_subdir,tasknum,runname)],stdout=sub.PIPE,stderr=sub.PIPE)
     p = sub.Popen(['fslinfo','%s/func/%s'%(fmriprep_subdir,func_preproc_file)],stdout=sub.PIPE,stderr=sub.PIPE)
     output, errors = p.communicate()
 
@@ -358,6 +331,7 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
     # now add custom lines
     outfile.write( 'set fmri(regstandard_nonlinear_yn) %d\n'%nonlinear)
     # Delete volumes
+    nskip=0
     outfile.write('set fmri(ndelete) %d\n'%nskip)
 
     # do or don't do registration
@@ -519,9 +493,8 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
                     outfile.write('set fmri(con_orig%d.%d) 0\n'%(contrastctr,evt+1))
 
             contrastctr+=1
+            
     # Add confound EVs text file
-    #confoundfile="%s/BOLD/task%03d_run%03d/QA/confound.txt"%(fmriprep_subdir,tasknum,runname)
-    #confoundfile="%s/func/QA/confound.txt"%(fmriprep_subdir)
     confoundfile='%s/onsets/%s_task-%s_run-%s_ev-confounds.tsv'%(model_subdir,subid_ses,taskname,runname)
     if os.path.exists(confoundfile) and confound:
         outfile.write('set fmri(confoundevs) 1\n')
