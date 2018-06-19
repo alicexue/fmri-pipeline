@@ -1,0 +1,3 @@
+*.pyc
+*.sbatch
+flywheel_API_key.txt
