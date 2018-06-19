@@ -45,13 +45,11 @@ else: # asks for the key from the command line
 			loggedIn=True
 		except:
 			print 'Invalid API key.'
-	print 'Your API key will now be saved as %s'%APIKeyFile
-	print 'Don\'t put this on GitHub!'
+	print 'Your API key will now be saved in %s for future use. Don\'t put this file on GitHub!'%APIKeyFile
 	with open(APIKeyFile,'w') as f:
 		f.write(key)
 
 self = fw.get_current_user()
-print 'You can ignore the UserWarning.'
 print('\nYou are now logged in as %s %s.' % (self.firstname, self.lastname))
 
 # Ask for group id
