@@ -21,14 +21,26 @@ try:
 except:
 	dockerExists=False
 
-loggedIn=False
-while not loggedIn:
-	key=raw_input('Enter Your Flywheel API Key: ')
-	try:
+APIKeyFile='flywheel_API_key.txt'
+
+if os.path.exists(APIKeyFile):
+	with open(APIKeyFile,'r') as f:
+		key = f.readline()
 		fw = flywheel.Flywheel(key) 
-		loggedIn=True
-	except:
-		print 'Invalid API key.'
+		print key
+else:
+	loggedIn=False
+	while not loggedIn:
+		key=raw_input('Enter Your Flywheel API Key: ')
+		try:
+			fw = flywheel.Flywheel(key) 
+			loggedIn=True
+		except:
+			print 'Invalid API key.'
+	print 'Your API key will now be saved as %s'%APIKeyFile
+	print 'Don\'t put this on GitHub!
+	with open(APIKeyFile,'w') as f:
+		f.write(key)
 
 self = fw.get_current_user()
 print 'You can ignore the UserWarning.'
