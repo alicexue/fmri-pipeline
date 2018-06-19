@@ -5,19 +5,18 @@ Called by run_level2_feat.py
 
 # Created by Alice Xue, 06/2018
 
+import argparse
+import copy
+import json
+import os
+import subprocess
+import sys
+
 from directory_struct_utils import *
 import mk_level2_fsf
-import os
-import sys
-import subprocess
-import argparse
-import json
-import copy
 
 def parse_command_line(argv):
-    parser = argparse.ArgumentParser(description='setup_jobs')
-    #parser.add_argument('integers', metavar='N', type=int, nargs='+',help='an integer for the accumulator')
-    # set up boolean flags
+    parser = argparse.ArgumentParser(description='get_jobs')
 
     parser.add_argument('--studyid', dest='studyid',
         required=True,help='Study ID')
@@ -57,11 +56,14 @@ def main(argv=None):
 	basedir=args.basedir
 	modelnum=args.modelnum
 
-	sys_args_specificruns=args.specificruns
+	sys_args_specificruns=args.specificruns # specificruns passed in through the command line
 
+	# gets dictionary of study information
 	study_info=specificruns
 	hasSessions=False
-	if specificruns=={}:
+	if specificruns=={}: # if specificruns in model_params was empty
+		# tries getting study info first with hasSessions set to false
+		# determines that hasSessions is true if the values of the subjects are empty
 		studydir=os.path.join(basedir,studyid)
 		study_info=get_study_info(studydir,hasSessions)
 		if len(study_info.keys()) > 0:
@@ -78,7 +80,8 @@ def main(argv=None):
 
 	study_info_copy=copy.deepcopy(study_info)
 
-	sys_argv=sys.argv[:]
+	sys_argv=sys.argv[:] # copy over the arguments passed in through the command line
+	# remove the parameters that are not passed to mk_level2_fsf (keep everything that IS passed to mk_level2_fsf)
 	params_to_remove=['--email','-e','-A','--account','-t','--time','-N','--nodes','-s','--specificruns']
 	for param in params_to_remove:
 		if param in sys_argv:
@@ -88,11 +91,12 @@ def main(argv=None):
 	del sys_argv[0]
 
 	existing_feat_files=[]
-	jobs = []
+	jobs = [] # list of list of arguments to run mk_level2_fsf on
 	subs=study_info.keys()
 	list.sort(subs)
+	# iterate through each subject, session, task, and runs
 	for subid in subs:
-		sub=subid[len('sub-'):]
+		sub=subid[len('sub-'):] # sub is the subject ID without the prefix 'sub-'
 		if hasSessions:
 			sessions=study_info[subid].keys()
 			list.sort(sessions)
@@ -101,34 +105,36 @@ def main(argv=None):
 				tasks=study_info[subid][ses].keys()
 				list.sort(tasks)
 				for task in tasks:
+					# check if feat exists for this run
 					model_subdir='%s/model/level2/model%03d/%s/%s/task-%s'%(os.path.join(basedir,studyid),modelnum,subid,ses,task)
 					feat_file="%s/%s_%s_task-%s.gfeat"%(model_subdir,subid,ses,task)
-					if sys_args_specificruns=={} and os.path.exists(feat_file):
+					if sys_args_specificruns=={} and os.path.exists(feat_file): # if subject didn't pass in specificruns and a feat file for this task exists
 						existing_feat_files.append(feat_file)
 						tasks_copy=study_info_copy[subid][ses]
-						tasks_copy.pop(task, None)
-					else:
+						tasks_copy.pop(task, None) # removes the task from study_info_copy if a feat file was found
+					else: # if subject passed in specificruns
 						if os.path.exists(feat_file):
 							print "WARNING: Existing feat file found: %s"%feat_file
 						runs=study_info[subid][ses][task]
 						list.sort(runs)
-						args=sys_argv[:]
+						args=sys_argv[:] # copies over the list of arguments passed into the command line
 						args=add_args(args,sub,task,runs)
 						args.append('--ses')
 						args.append(sesname)
 						jobs.append(args)
-				if len(study_info_copy[subid][ses].keys())==0:
-					del study_info_copy[subid]
-		else:
+				if len(study_info_copy[subid][ses].keys())==0: # if there are no tasks for this subject
+					del study_info_copy[subid] # remove the subject
+		else: # no sessions
 			tasks=study_info[subid].keys()
 			list.sort(tasks)
 			for task in tasks:
+				# check if feat exists for this run
 				model_subdir='%s/model/level2/model%03d/%s/task-%s'%(os.path.join(basedir,studyid),modelnum,subid,task)
 				feat_file="%s/%s_task-%s.gfeat"%(model_subdir,subid,task)
 				if sys_args_specificruns=={} and os.path.exists(feat_file):
 					existing_feat_files.append(feat_file)
-					tasks_copy=study_info_copy[subid]
-					tasks_copy.pop(task, None)
+					tasks_copy=study_info_copy[subid] 
+					tasks_copy.pop(task, None) # remove the task from the dictionary if a feat file was found
 				else:
 					if os.path.exists(feat_file):
 						print "WARNING: Existing feat file found: %s"%feat_file
@@ -137,17 +143,17 @@ def main(argv=None):
 					args=sys_argv[:]
 					args=add_args(args,sub,task,runs)
 					jobs.append(args)
-			if len(study_info_copy[subid].keys())==0:
-				del study_info_copy[subid]
+			if len(study_info_copy[subid].keys())==0: # if there are no tasks for this subject
+				del study_info_copy[subid] # remove the subject from the dictionary
 
 	if len(study_info_copy.keys()) == 0:
 		print "ERROR: All tasks for all subjects have been run on this model. Remove the feat files if you want to rerun them."
 		sys.exit(-1)
-	elif sys_args_specificruns=={} and len(existing_feat_files)!=0:
+	elif sys_args_specificruns=={} and len(existing_feat_files)!=0: # if the user didn't pass in specificruns and existing feat files were found
 		print "ERROR: Some subjects' tasks have already been run on this model. If you want to rerun these subjects, remove their feat directories first. To run the remaining subjects, rerun run_level2.py and add:"
 		print "-s \'%s\'"%(json.dumps(study_info_copy))
 		sys.exit(-1)
-	else:
+	else: # no existing feat files were found
 		print len(jobs), "jobs"
 		return jobs
 

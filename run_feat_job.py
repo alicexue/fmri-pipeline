@@ -1,14 +1,15 @@
 """
-Calls on mk_level1_fsf_bbr, mk_level2_fsf, mk_level3_fsf to create a particular feat
+Calls mk_level1_fsf_bbr, mk_level2_fsf, mk_level3_fsf to create a particular fsf or call feat
 The feat created is determined by the parameters in jobs[i], where jobs is a dictionary and i is the key of the job to run
 """
 
 # Created by Alice Xue, 06/2018
 
-import sys
 import argparse
 import json
 import subprocess
+import sys
+
 import mk_level1_fsf_bbr
 import mk_level2_fsf
 import mk_level3_fsf
@@ -36,15 +37,16 @@ def main():
 
 	if i in jobs.keys():
 		if level==1:
-			mk_level1_fsf_bbr.main(argv=jobs[i])
+			mk_level1_fsf_bbr.main(argv=jobs[i]) # create fsf
 		elif level==2:
-			mk_level2_fsf.main(argv=jobs[i])
+			mk_level2_fsf.main(argv=jobs[i]) # create fsf
 		elif level==3:
 			args=['feat',jobs[i]]
-			print 'Calling', ' '.join(args)
+			print 'Calling', ' '.join(args) # call feat on fsf's specified in jobs
+			# the fsf's were created in run_level3 when mk_all_level3_fsf was called
 			subprocess.call(args)
 	else:
-		print "Could not find %d as a key in the jobs dictionary: %s"%i
+		print "%d is not a key in the jobs dictionary: %s"%i
 		sys.exit(-1)
 	
 

@@ -6,17 +6,16 @@ Runs the generated sbatch file
 
 # Created by Alice Xue, 06/2018
 
-import get_level1_jobs
-import subprocess
-import sys
 import argparse
 import json
 import os
+import subprocess
+import sys
+
+import get_level1_jobs
 
 def parse_command_line(argv):
 	parser = argparse.ArgumentParser(description='setup_jobs')
-	#parser.add_argument('integers', metavar='N', type=int, nargs='+',help='an integer for the accumulator')
-	# set up boolean flags
 
 	parser.add_argument('-e','--email',dest='email',
 		required=True,help='Email to send job updates to')
@@ -58,6 +57,7 @@ def main(argv=None):
 	modelnum=args.modelnum
 	specificruns=args.specificruns
 
+	# double checks with user that all files have been set
 	modeldir=os.path.join(basedir,studyid,'model','level1','model%03d'%modelnum)
 	rsp=''
 	while rsp!='y':
@@ -71,22 +71,15 @@ def main(argv=None):
 	rsp=''
 	while rsp!='y':
 		rsp=raw_input('Did you set the EV files under the onset directories? (y/n) ')
-
-	sys_argv=sys.argv[:]
 	
-	params_to_remove=['--email','-e','-A','--account','-t','--time','-N','--nodes','-s','--specificruns']
-	for param in params_to_remove:
-		if param in sys_argv:
-			i=sys_argv.index(param)
-			del sys_argv[i]
-			del sys_argv[i]
-	del sys_argv[0]
-	
-	jobs=get_level1_jobs.get_level1_jobs(studyid,basedir,modelnum,specificruns,specificruns)
+	# get the list of jobs to run
+	jobs=get_level1_jobs.get_level1_jobs(studyid,basedir,modelnum,specificruns,specificruns) 
 	njobs=len(jobs)
+	# turn the list of jobs into a dictionary with the index as the key
 	jobsdict={}
 	for i in range(0,njobs):
 		jobsdict[i]=jobs[i]
+	# create an sbatch file to run the job array
 	with open('run_level1.sbatch', 'w') as qsubfile:
 		qsubfile.write('#!/bin/sh\n')
 		qsubfile.write('#\n')

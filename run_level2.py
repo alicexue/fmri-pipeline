@@ -6,16 +6,15 @@ Runs the generated sbatch file
 
 # Created by Alice Xue, 06/2018
 
-import get_level2_jobs
-import subprocess
-import sys
 import argparse
 import json
+import subprocess
+import sys
+
+import get_level2_jobs
 
 def parse_command_line(argv):
     parser = argparse.ArgumentParser(description='setup_jobs')
-    #parser.add_argument('integers', metavar='N', type=int, nargs='+',help='an integer for the accumulator')
-    # set up boolean flags
 
     parser.add_argument('-e','--email',dest='email',
     	required=True,help='Email to send job updates to')
@@ -51,8 +50,8 @@ def main(argv=None):
 	nodes=args.nodes
 	specificruns=args.specificruns
 
-	sys_argv=sys.argv[:]
-
+	sys_argv=sys.argv[:] # copies over the arguments passed in through the command line
+	# removes the arguments that shouldn't be passed into get_level2_jobs.main() (removes the arguments only relevant to run_level2)
 	params_to_remove=['--email','-e','-A','--account','-t','--time','-N','--nodes']
 	for param in params_to_remove:
 		if param in sys_argv:
@@ -63,11 +62,14 @@ def main(argv=None):
 
 	print sys_argv
 
+	# get the list of jobs to run
 	jobs=get_level2_jobs.main(argv=sys_argv[:])
 	njobs=len(jobs)
+	# turn the list of jobs into a dictionary with the index as the key
 	jobsdict={}
 	for i in range(0,njobs):
 		jobsdict[i]=jobs[i]
+	# create an sbatch file to run the job array
 	with open('run_level2.sbatch', 'w') as qsubfile:
 		qsubfile.write('#!/bin/sh\n')
 		qsubfile.write('#\n')

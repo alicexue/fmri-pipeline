@@ -4,13 +4,14 @@ Called by run_level3_feat.py
 """
 # Created by Alice Xue, 06/2018
 
-from directory_struct_utils import *
-import mk_level3_fsf
-import os
-import sys
-import subprocess
 import argparse
 import json
+import os
+import subprocess
+import sys
+
+from directory_struct_utils import *
+import mk_level3_fsf
 
 def parse_command_line(argv):
     parser = argparse.ArgumentParser(description='setup_jobs')
@@ -40,6 +41,8 @@ def main(argv=None):
 	modelnum=args.modelnum
 	subids=args.subids
 
+	# gets fmriprep directory structure and stores it in study_info
+	# since we don't know if there are sessions or not, tries without sessions first
 	hasSessions=False
 	studydir=os.path.join(basedir,studyid)
 	study_info=get_study_info(studydir,hasSessions)
@@ -51,12 +54,12 @@ def main(argv=None):
 	print study_info
 
 	jobs = []
-	if len(subids)==0:
+	if len(subids)==0: # checks if user did not specify subjects to run level 3 on 
 		subs=study_info.keys()
 	else:
 		subs=[]
 		for sub in subids:
-			subs.append('sub-'+sub)
+			subs.append('sub-'+sub) # adds the prefix 'sub-' to each subid passed in
 	list.sort(subs)
 	# iterate through runs based on the runs the first subject did
 	subid=subs[0]
@@ -65,7 +68,7 @@ def main(argv=None):
 		sessions=study_info[subid].keys()
 		list.sort(sessions)
 		for ses in sessions:
-			sesname=ses[len('ses-'):]
+			sesname=ses[len('ses-'):] # remove prefix 'ses-'
 			tasks=study_info[subid][ses].keys()
 			list.sort(tasks)
 			for task in tasks:
@@ -79,6 +82,7 @@ def main(argv=None):
 			args=[studyid,subids,task,basedir,modelnum,sesname]
 			jobs.append(args)
 
+	# creates fsf's and retrieves a list of their names
 	all_copes=[]
 	for job_args in jobs:
 		args=job_args

@@ -37,6 +37,7 @@ def export_raw_bids(studyid,basedir,project_label):
 	except:
 		dockerExists=False
 
+	# check if fw CLI is installed - needed for exporting BIDS
 	fwExists=False	
 	try:	
 		FNULL = open(os.devnull, 'w')	

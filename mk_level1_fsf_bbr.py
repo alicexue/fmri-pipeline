@@ -32,21 +32,20 @@ USAGE: mk_level1_fsf_bbr.py <studyid> <sub> <taskname> <runname> <smoothing - mm
 #Modified by Alice Xue to work with BIDS-like directory structure 05/2018
 
 # create fsf file for arbitrary design
+
+import argparse
+from collections import OrderedDict
+import json
 import numpy as N
-import sys
 import os
 import subprocess as sub
-from openfmri_utils import *
-import argparse
-import json
-from collections import OrderedDict
+import sys
+
 import nifti_utils
+from openfmri_utils import *
 
 def parse_command_line(argv):
     parser = argparse.ArgumentParser(argv, description='setup_subject')
-    #parser.add_argument('integers', metavar='N', type=int, nargs='+',help='an integer for the accumulator')
-    # set up boolean flags
-
 
     parser.add_argument('--studyid', dest='studyid',
         required=True,help='Study ID')
@@ -88,13 +87,6 @@ def parse_command_line(argv):
     args = parser.parse_args(argv)
     return args
 
-# create as a function that will be called by mk_all_fsf.py
-# just set these for testing
-## studyid='ds103'
-## runname=1
-## smoothing=6
-## use_inplane=0
-## nonlinear=1
 
 def main(argv=None):
     args=parse_command_line(argv)
@@ -125,7 +117,7 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
     _thisDir = os.path.dirname(os.path.abspath(__file__)).decode(sys.getfilesystemencoding())
     tasknum = 1
 
-    ###
+    # Create the folders that are needed
     projdir=os.path.join(basedir,studyid)
     subid='sub-%s'%(subid)
     subid_ses=subid
@@ -143,11 +135,9 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
     model_subdir=os.path.join(model_subdir,'task-%s_run-%s'%(taskname,runname))
     if not os.path.exists(model_subdir):
         os.makedirs(model_subdir)
-    ###
 
 
     ## Get anat preprocessed data from fmriprep
-
     # anat dir directly under subject folder
     anatdircontent = []
     anatdir = os.path.join(os.path.join(basedir,'%s/fmriprep/%s'%(studyid,subid)),'anat')
@@ -179,6 +169,7 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
             if (fname.startswith(anathead) or fname.startswith(sesanathead)) and fname.endswith(anattail):
                 anat_preproc_files.append(os.path.join(sesanatdir,fname))
 
+    # find initial_high_res_file in anat_preproc_files found above
     if len(anat_preproc_files) == 1:
         initial_highres_file = anat_preproc_files[0]
     elif len(anat_preproc_files) == 0:
@@ -204,9 +195,10 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
     for fname in funcdircontent:
         if fname.startswith(funchead) and fname.endswith(functail):
             func_preproc_files.append(fname)
-        if altBETmask:
+        if altBETmask: # if using alternative brain mask, get the brain mask file from the func dir
             if fname.startswith(funchead) and fname.endswith('_brainmask.nii.gz'):
                 fmriprep_brainmask=fname
+     # find initial_high_res_file in func_preproc_files found above
     if len(func_preproc_files) == 1:
         func_preproc_file = func_preproc_files[0]
     elif len(func_preproc_files) == 0:
@@ -224,20 +216,24 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
     if "MNI152NLin2009cAsym" not in func_preproc_file and not doreg:
         print "\nWARNING: It appears that your preprocessed functional file %s is not in MNI152NLin2009cAsym space. You may want to do registration."%(func_preproc_file)
 
-    ###
 
+    # not tested yet
     print 'PROCESSING:',fmriprep_subdir
     if anatimg=='':
         anatimg=os.path.join(fmriprep_subdir,'anatomy/highres001_brain')
     
-    # read the conditions_key file
+    # read the conditions_key file 
+    # if it's a json file
     cond_key_json = os.path.join(basedir,studyid,'model/level1/model%03d/condition_key.json'%modelnum)
     # if it's a text file
     cond_key_txt = os.path.join(basedir,studyid,'model/level1/model%03d/condition_key.txt'%modelnum)
     if os.path.exists(cond_key_json):
-        conddict = json.load(open(cond_key_json), object_pairs_hook=OrderedDict)
+        conddict = json.load(open(cond_key_json), object_pairs_hook=OrderedDict) # keep the order of the keys as they were in the json file 
         if taskname in conddict.keys():
-            conddict = conddict[taskname]
+            # set conddict to the dictionary for this task where 
+                # the EV names are the keys
+                # and the names of the conditions are the values
+            conddict = conddict[taskname] 
         else:
             print "ERROR: Task name was not found in JSON file. Make sure the JSON file is formatted correctly"
             sys.exit(-1)
@@ -245,6 +241,7 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
         list.sort(ev_keys)
         ev_files=[]
         conditions=[]
+        # get the names of the EV files and the names of the conditions
         for ev in ev_keys:
             ev_files.append('%s_task-%s_run-%s_ev-%03d'%(subid_ses,taskname,runname,int(ev)))
             conditions.append(conddict[ev])  
@@ -258,6 +255,7 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
         print "ERROR: Could not find condition key in %s"%(os.path.join(basedir,studyid,'model/level1/model%03d'%modelnum))
         sys.exit(-1)
 
+    # not tested yet
     # check for orthogonalization file
     orth={}
     orthfile=os.path.join(basedir,studyid,'model/level1/model%03d/orthogonalize.txt'%modelnum)
@@ -272,13 +270,17 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
     else:
         print 'no orthogonalization found'
         
+    # not tested yet
     # check for QA dir
     #qadir='%s/BOLD/task%03d_run%03d/QA'%(fmriprep_subdir,tasknum,runname)
     qadir='%s/QA'%(fmriprep_subdir)
 
 
+    # Get task contrasts
     print 'loading contrasts'
+    # if it's a json file
     contrastsfile_json=os.path.join(basedir,studyid,'model/level1/model%03d/task_contrasts.json'%modelnum)
+    # if it's a txt file
     contrastsfile_txt=os.path.join(basedir,studyid,'model/level1/model%03d/task_contrasts.txt'%modelnum)
     if os.path.exists(contrastsfile_json):
         contrasts_all = json.load(open(contrastsfile_json), object_pairs_hook=OrderedDict)
@@ -299,12 +301,13 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
         print "ERROR: Could not find task name %s in contrasts. Make sure the file is formatted correctly."
         sys.exit(-1)
 
-
-    # Find Repetition Time
+    # Find Repetition Time - from header of preprocessed func file
     tr=nifti_utils.get_TR('%s/func/%s'%(fmriprep_subdir,func_preproc_file))
-        
+    
+    # Get fsf template with default values
     stubfilename=os.path.join(_thisDir,'design_level1_fsl5.stub')
     
+    # Name of fsf file to create
     outfilename='%s/%s_task-%s_run-%s.fsf'%(model_subdir,subid_ses,taskname,runname)
     print('outfilename: %s\n'%outfilename)
     outfile=open(outfilename,'w')
@@ -316,8 +319,8 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
         outfile.write(l)
 
     stubfile.close()
-    # figure out how many timepoints there are
 
+    # figure out how many timepoints there are 
     p = sub.Popen(['fslinfo','%s/func/%s'%(fmriprep_subdir,func_preproc_file)],stdout=sub.PIPE,stderr=sub.PIPE)
     output, errors = p.communicate()
 
@@ -330,6 +333,8 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
     outfile.write('\n\n### AUTOMATICALLY GENERATED PART###\n\n')
     # now add custom lines
     outfile.write( 'set fmri(regstandard_nonlinear_yn) %d\n'%nonlinear)
+
+    # not tested - used to be read from scan_key.txt 
     # Delete volumes
     nskip=0
     outfile.write('set fmri(ndelete) %d\n'%nskip)
@@ -346,6 +351,7 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
     else:
         outfile.write('set fmri(alternative_mask) ""\n')
 
+    # look for standard brain fsl provides
     env = os.environ.copy()
     FSLDIR='/usr/local/fsl'
     if 'FSLDIR' in env.keys():
@@ -356,12 +362,10 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
     outfile.write('set fmri(regstandard) "%s"\n'%regstandard)
 
     outfile.write('set fmri(outputdir) "%s/%s_task-%s_run-%s.feat"\n'%(model_subdir,subid_ses,taskname,runname))
-    #outfile.write('set feat_files(1) "%s/BOLD/task%03d_run%03d/bold_mcf_brain.nii.gz"\n'%(fmriprep_subdir,tasknum,runname))
     outfile.write('set feat_files(1) "%s"\n'%(os.path.join(funcdir,func_preproc_file)))
 
     if use_inplane==1:
         outfile.write('set fmri(reginitial_highres_yn) 1\n')
-        #outfile.write('set initial_highres_files(1) "%s/anatomy/inplane001_brain.nii.gz"\n'%fmriprep_subdir)
         outfile.write('set initial_highres_files(1) "%s"\n'%(initial_highres_file))
     else:
         outfile.write('set fmri(reginitial_highres_yn) 0\n')
@@ -391,25 +395,25 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
     convals_orig=N.zeros(nevs)
     empty_evs=[]
 
+    # iterate through the EVs
     for ev in range(len(conditions)):
         outfile.write('\n\nset fmri(evtitle%d) "%s"\n'%(ev+1,conditions[ev]))
 
+        ## get the full path of the EV file
+        # if it's a json file
         if os.path.exists(cond_key_json):
             condfile='%s/onsets/%s'%(model_subdir,ev_files[ev])
             if os.path.exists(condfile+'.txt'):
                 condfile+='.txt'
             elif os.path.exists(condfile+'.tsv'):
                 condfile+='.tsv'
-            """
-            else:
-                print "ERROR: EV files must be .txt or .tsv files. Files with name %s not found."%(condfile)
-                sys.exit(-1)
-            """
         else:
             condfile='%s/onsets/%s_task-%s_run-%s_ev-%03d.txt'%(model_subdir,subid_ses,taskname,runname,ev+1)
+        # if the EV file exists
         if os.path.exists(condfile):
             outfile.write('set fmri(shape%d) 3\n'%(ev+1))
             outfile.write('set fmri(custom%d) "%s"\n'%(ev+1,condfile))
+        # if the EV file is missing
         else:
              outfile.write('set fmri(shape%d) 10\n'%(ev+1))
              print '%s is missing, using empty EV'%condfile
@@ -450,6 +454,7 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
             if (evt==ev):
                 convals_orig[evt]=1
                 
+    # to deal with missing EVs
     if len(empty_evs)>0:
         empty_ev_file=open('%s/onsets/%s_task-%s_run-%s_empty_evs.txt'%(model_subdir,subid_ses,taskname,runname),'w')
         for eev in empty_evs:
@@ -462,9 +467,9 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
     outfile.write('set fmri(conname_orig.%d) "all"\n'%(ev+2))
 
     for evt in range(nevs*2):
-            outfile.write('set fmri(con_real%d.%d) %d\n'%(ev+2,evt+1,convals_real[evt]))
+        outfile.write('set fmri(con_real%d.%d) %d\n'%(ev+2,evt+1,convals_real[evt]))
     for evt in range(nevs):
-            outfile.write('set fmri(con_orig%d.%d) %d\n'%(ev+2,evt+1,convals_orig[evt]))
+        outfile.write('set fmri(con_orig%d.%d) %d\n'%(ev+2,evt+1,convals_orig[evt]))
 
     # add custom contrasts
     if len(contrasts)>0:

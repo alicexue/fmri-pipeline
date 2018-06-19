@@ -11,7 +11,7 @@ from argparse import Namespace
 from directory_struct_utils import *
 
 def model_params_json_to_namespace(studyid,basedir,modelnum):
-	# Converts json of parameters to Namespace
+	# Converts json of parameters to Namespace object that can be parsed
 	modeldir=os.path.join(basedir,studyid,'model','level1','model%03d'%modelnum)
 	if os.path.exists(modeldir+'/model_params.json'):
 		with open(modeldir+'/model_params.json','r') as f:
@@ -37,7 +37,7 @@ def model_params_json_to_namespace(studyid,basedir,modelnum):
 		sys.exit(-1)
 
 def model_params_json_to_list(studyid,basedir,modelnum):
-	# Takes json of argument parameters and converts to string of commands
+	# Takes json of argument parameters and converts to string of commands, which can be called on in a subprocess
 	modeldir=os.path.join(basedir,studyid,'model','level1','model%03d'%modelnum)
 	if os.path.exists(modeldir+'/model_params.json'):
 		with open(modeldir+'/model_params.json','r') as f:
@@ -62,6 +62,7 @@ def model_params_json_to_list(studyid,basedir,modelnum):
 		sys.exit(-1)
 
 def create_model_level1_dir(studyid,basedir,modelnum):
+	# Creates model dir, the subject dirs, onset dirs, and empty EV files (that are named correctly)
 	hasSessions=False
 	studydir=os.path.join(basedir,studyid)
 	study_info=get_study_info(studydir,hasSessions)
@@ -73,6 +74,7 @@ def create_model_level1_dir(studyid,basedir,modelnum):
 	print study_info
 	list.sort(subs)
 	i=0
+	# iterate through the subjects, sessions, tasks, and runs
 	for subid in subs:
 		sub=subid[len('sub-'):]
 		if hasSessions:
@@ -125,6 +127,8 @@ def create_level1_model_params_json(studyid,basedir,modelnum):
 		print "Created sample model_params.json with default values"
 
 def create_empty_condition_key(studyid,basedir,modelnum):
+	# Creates an empty sample condition key 
+	# Gets the name of all possible tasks (that the first subject did), and adds those to the condition key
 	modeldir=os.path.join(basedir,studyid,'model','level1','model%03d'%modelnum)
 	if not os.path.exists(modeldir):
 		os.makedirs(modeldir)
@@ -164,6 +168,7 @@ def create_empty_condition_key(studyid,basedir,modelnum):
 		print "Created empty condition_key.json"
 
 def create_empty_task_contrasts_file(studyid,basedir,modelnum):
+	# Creates an empty task_contrasts file with the task names as keys
 	modeldir=os.path.join(basedir,studyid,'model','level1','model%03d'%modelnum)
 	if not os.path.exists(modeldir):
 		os.makedirs(modeldir)
@@ -203,7 +208,7 @@ def create_empty_task_contrasts_file(studyid,basedir,modelnum):
 		print "Created empty task_contrasts.json"
 
 def check_model_params_cli(studyid,basedir,modelnum):
-	# Takes json of argument parameters and converts to string of commands
+	# Modifies model_params by interacting with user through the command line
 	modeldir=os.path.join(basedir,studyid,'model','level1','model%03d'%modelnum)
 	new_params={}
 	if os.path.exists(modeldir+'/model_params.json'):

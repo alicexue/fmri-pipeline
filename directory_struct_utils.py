@@ -1,18 +1,36 @@
-# Retrieves fmriprep directory structure
+"""
+Gets information about the fmriprep directory structure
+"""
 
 # Created by Alice Xue, 06/2018
 
 import os
 
 def get_fmriprep_dir(studydir):
+	"""Checks for fmriprep directory under studydir
+
+    Args:
+        studydir (str): path of parent directory of fmriprep directory (basedir + studyid)
+    Returns:
+        path of fmriprep directory, if found, or empty string (prints error message)
+
+    """
 	fmriprep_dir=os.path.join(studydir,'fmriprep')
 	if os.path.exists(fmriprep_dir):
 		return fmriprep_dir
 	else:
-		print "fmriprep directory not found in %s"%studydir
+		print "ERROR: fmriprep directory not found in %s"%studydir
 		return ''
 
 def get_all_subs(studydir):
+	"""Gets list of subject IDs (not including the prefix 'sub-')
+
+    Args:
+        studydir (str): path of parent directory of fmriprep directory (basedir + studyid)
+    Returns:
+        sorted list of subjects
+
+    """
 	fmriprep=get_fmriprep_dir(studydir)
 	all_subs=[]
 	if os.path.exists(fmriprep):
@@ -26,6 +44,17 @@ def get_all_subs(studydir):
 	return all_subs
 
 def get_runs(funcdir,task):
+	"""Gets list of runs for a given task
+	Determines the run names based on files ending with '_preproc.nii.gz'
+	Parses those file names (searches for _task- and _run-)
+
+    Args:
+        funcdir (str): path of func directory for a specific subject
+        task: name of task to find runs for
+    Returns:
+        sorted list of run names for the given task and subject (subject is specified in funcdir)
+
+    """
 	runs=[]
 	files=os.listdir(funcdir)
 	for f in files:
@@ -43,6 +72,16 @@ def get_runs(funcdir,task):
 	return runs
 
 def get_task_runs(funcdir):
+	"""Gets dictionary with task names as keys and list of runs as the values
+	Determines the task names based on files ending with '_preproc.nii.gz'
+	Parses those file names (searches for _task- and _run-)
+
+    Args:
+        funcdir (str): path of func directory for a specific subject
+    Returns:
+        dictionary (as stated above)
+
+    """
 	task_runs={}
 	if os.path.exists(funcdir):
 		files=os.listdir(funcdir)
@@ -64,6 +103,15 @@ def get_task_runs(funcdir):
 
 
 def get_study_info(studydir,hasSessions):
+	"""Gets the structure of the fmriprep directory
+
+    Args:
+        studydir (str): path of parent directory of fmriprep directory (basedir + studyid)
+        hasSessions: True if there are sessions for this study
+    Returns:
+        nested dictionary with subject IDs as the keys and then sessions (if they exist), task names, and list of runs
+
+    """
 	fmriprep=get_fmriprep_dir(studydir)
 	all_subs=get_all_subs(studydir)
 	info={}
