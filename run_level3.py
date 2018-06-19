@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
-Runs mk_all_level3_fsf to get list of jobs to run
-Generates run_level3_feat.sbatch and runs run_feat_job in job array
+Runs mk_all_level3_fsf to create fsf's 
+Generates run_level3_feat.sbatch and runs run_feat_job in job array and call feat on the created fsf's
 Runs the generated sbatch file
 """
 
@@ -15,8 +15,6 @@ import json
 
 def parse_command_line(argv):
     parser = argparse.ArgumentParser(description='setup_jobs')
-    #parser.add_argument('integers', metavar='N', type=int, nargs='+',help='an integer for the accumulator')
-    # set up boolean flags
 
     parser.add_argument('-e','--email',dest='email',
     	required=True,help='Email to send job updates to')
@@ -60,11 +58,14 @@ def main(argv=None):
 
 	print sys_argv
 
+	# get the list of jobs to run
 	jobs=mk_all_level3_fsf.main(argv=sys_argv[:])
 	njobs=len(jobs)
+	# turn the list of jobs into a dictionary with the index as the key
 	jobsdict={}
 	for i in range(0,njobs):
 		jobsdict[i]=jobs[i]
+	# create an sbatch file to run the job array
 	with open('run_level3.sbatch', 'w') as qsubfile:
 		qsubfile.write('#!/bin/sh\n')
 		qsubfile.write('#\n')
