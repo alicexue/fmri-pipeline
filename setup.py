@@ -23,6 +23,12 @@ def main():
 	create_empty_task_contrasts_file(studyid,basedir,modelnum)
 	create_level1_model_params_json(studyid,basedir,modelnum)
 	check_model_params_cli(studyid,basedir,modelnum)
+	modeldir=os.path.join(basedir,studyid,'model','level1','model%03d'%modelnum)
+	print '\nMake sure to modify:'
+	print '\t', modeldir+'/condition_key.json'
+	print '\t', modeldir+'/task_contrasts.json'
+	print '\tand the EV files under the onset directories'
+
 
 if __name__ == '__main__':
 	main()

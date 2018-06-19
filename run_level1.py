@@ -11,6 +11,7 @@ import subprocess
 import sys
 import argparse
 import json
+import os
 
 def parse_command_line(argv):
 	parser = argparse.ArgumentParser(description='setup_jobs')
@@ -56,7 +57,21 @@ def main(argv=None):
 	basedir=args.basedir
 	modelnum=args.modelnum
 	specificruns=args.specificruns
-	
+
+	modeldir=os.path.join(basedir,studyid,'model','level1','model%03d'%modelnum)
+	rsp=''
+	while rsp!='y':
+		rsp=raw_input('Did you set %s/model_params.json? (y/n) '%modeldir)
+	rsp=''
+	while rsp!='y':
+		rsp=raw_input('Did you set %s/condition_key.json? (y/n) '%modeldir)
+	rsp=''
+	while rsp!='y':
+		rsp=raw_input('Did you set %s/task_contrasts.json or remove it? (y/n) '%modeldir)
+	rsp=''
+	while rsp!='y':
+		rsp=raw_input('Did you set the EV files under the onset directories? (y/n) ')
+
 	sys_argv=sys.argv[:]
 	
 	params_to_remove=['--email','-e','-A','--account','-t','--time','-N','--nodes','-s','--specificruns']
