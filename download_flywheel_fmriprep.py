@@ -36,9 +36,10 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir):
 	# Creates tmp, fmriprep, and reports directories if they don't exist
 	studydir=os.path.join(basedir,studyid)
 	if not os.path.exists(studydir):
-		os.makedirs(studydir)
-		os.makedirs(os.path.join(studydir,'tmp'))
+		os.mkdir(studydir)
 	tmpdir=os.path.join(studydir,'tmp')
+	if not os.path.exists(tmpdir):
+		os.mkdir(os.path.join(tmpdir))
 	fmriprepdir=os.path.join(studydir,'fmriprep')
 	if not os.path.exists(fmriprepdir):
 		os.mkdir(fmriprepdir)
