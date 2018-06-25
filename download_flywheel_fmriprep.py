@@ -83,11 +83,17 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir):
 					for file in analysis.files:
 						print file.name
 						name = file.name
+						# assumes subject ID is between sub- and _ or between sub- and .
 						if 'sub-' in name:
 							i1 = name.find('sub-')
-							i2 = name.find('.')
+							tmpname=name[i1:]
+							if '_' in tmpname:
+								i2 = tmpname.find('_')
+							else:
+								i2 = tmpname.find('.')
 							if i1 > -1 and i2 > -1:
-								sub=name[i1:i2] # sub is the subject ID with 'sub-' removed
+								sub=tmpname[:i2] # sub is the subject ID with 'sub-' removed
+								print "Subject ID:", sub
 
 								# get fmriprep reports (html and svg files)
 								if 'html' in file.name: # sub-<id>.html.zip
@@ -138,8 +144,10 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir):
 											print 'Renaming %s to %s'%(oldindexhtml,newindexhtml)
 											sp.call(['mv',oldindexhtml,newindexhtml])
 										# remove originally downloaded files
+										"""
 										sp.call(['rm','-rf',filepath])
 										sp.call(['rm','-rf',unzippedfilepath])
+										"""
 								
 								# get fmriprep outputs
 								elif 'fmriprep' in file.name: # fmriprep_output_sub-<id>.zip
@@ -170,16 +178,19 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir):
 										# Remove figures directory from sub folder in fmriprep 
 										# the figures direcotry is a duplicate of the fmriprep reports, which are downloaded separately into the reports directory
 										fmriprepsubfigures=os.path.join(newsubfmriprep,'figures')
+										"""
 										if os.path.exists(fmriprepsubfigures):
 											print "Removing %s"%fmriprepsubfigures
 											sp.call(['rm','-rf',fmriprepsubfigures])
 										sp.call(['rm','-rf',filepath])
 										sp.call(['rm','-rf',unzippedfilepath])	
+										"""
 	# remove the tmp directory
+	"""
 	if os.path.exists(tmpdir):
 		print 'Removing %s'%tmpdir
 		sp.call(['rm','-rf',tmpdir])
-				
+	"""			
 if __name__ == '__main__':
     main()
 
