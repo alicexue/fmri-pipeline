@@ -144,10 +144,8 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir):
 											print 'Renaming %s to %s'%(oldindexhtml,newindexhtml)
 											sp.call(['mv',oldindexhtml,newindexhtml])
 										# remove originally downloaded files
-										"""
 										sp.call(['rm','-rf',filepath])
 										sp.call(['rm','-rf',unzippedfilepath])
-										"""
 								
 								# get fmriprep outputs
 								elif 'fmriprep' in file.name: # fmriprep_output_sub-<id>.zip
@@ -164,33 +162,49 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir):
 										unzippedfilepath=filepath[:-4] # removes .zip from name 
 										print 'Unzipping', filepath, 'to', unzippedfilepath
 										sp.call(['unzip',filepath,'-d',unzippedfilepath])
+
 										# Move downloaded fmriprep folder to fmriprep
 										unzippedfmriprep=os.path.join(unzippedfilepath,'fmriprep',sub)
 										newsubfmriprep=os.path.join(fmriprepdir,'%s'%sub)
-										if os.path.exists(unzippedfilepath):
-											try:
-												print "Moving %s to %s"%(unzippedfmriprep,fmriprepdir)
-												sp.call(['mv',unzippedfmriprep,fmriprepdir])
-											except:
-												print "Could not move %s to %s"%s(unzippedfmriprep,newsubfmriprep)
-										else:
-											print "Could not find %s"%unzippedfmriprep
+
+										# iterates through the unzipped sub folder to find fmriprep folder buried inside
+										# the variable i is used to avoid an infinite loop
+										i=3
+										curdir=''
+										fullcurdir=unzippedfilepath
+										moved=False
+										while i > 0 and curdir!='fmriprep':
+											if 'fmriprep' in os.listdir(fullcurdir):
+												tmpsubfmriprepdir=os.path.join(fullcurdir,'fmriprep',sub)
+												if os.path.exists(tmpsubfmriprepdir):
+													print "Moving %s to %s"%(tmpsubfmriprepdir,fmriprepdir)
+													sp.call(['mv',tmpsubfmriprepdir,fmriprepdir])
+												moved=True
+											if len(os.listdir(fullcurdir))>0:
+												# assuming only one directory in fullcurdir
+												for folder in os.listdir(fullcurdir):
+													if os.path.isdir(os.path.join(fullcurdir,folder)):
+														curdir=folder
+														fullcurdir=os.path.join(fullcurdir,folder)
+											i-=1;
+										if not moved:
+											print "Could not find %s in %s.html"%(sub,sub)
+
 										# Remove figures directory from sub folder in fmriprep 
 										# the figures direcotry is a duplicate of the fmriprep reports, which are downloaded separately into the reports directory
 										fmriprepsubfigures=os.path.join(newsubfmriprep,'figures')
-										"""
+										
 										if os.path.exists(fmriprepsubfigures):
 											print "Removing %s"%fmriprepsubfigures
 											sp.call(['rm','-rf',fmriprepsubfigures])
 										sp.call(['rm','-rf',filepath])
 										sp.call(['rm','-rf',unzippedfilepath])	
-										"""
+										
 	# remove the tmp directory
-	"""
 	if os.path.exists(tmpdir):
 		print 'Removing %s'%tmpdir
 		sp.call(['rm','-rf',tmpdir])
-	"""			
+			
 if __name__ == '__main__':
     main()
 

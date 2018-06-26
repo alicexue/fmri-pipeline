@@ -102,6 +102,7 @@ else: # if no projects are found, asks to enter group id again
 # Asks for study id
 print '\nThe study id is the name of the directory that the fmriprep output will be downloaded to.'
 studyid=raw_input('Enter the study id: ')
+studyid=studyid.strip()
 # Asks for base directory
 print '\nThe base directory is the full path of where the study id directory will be created. (Don\'t include study id here.)'
 basedir=raw_input('Enter the base directory: ')
@@ -109,6 +110,7 @@ basedir=raw_input('Enter the base directory: ')
 while not os.path.exists(basedir):
 	print 'Invalid base directory.'
 	basedir=raw_input('Enter the base directory: ')
+	basedir=basedir.strip()
 
 studydir=os.path.join(basedir,studyid)
 if not os.path.exists(studydir):
