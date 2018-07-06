@@ -223,9 +223,9 @@ def check_model_params_cli(studyid,basedir,modelnum):
 				if cur_val=='':
 					pprint_ver="\'\'"
 				print '\n', param+':', pprint_ver
-				rsp=''
-				while rsp != 'y' and rsp != 'n':
-					rsp=raw_input('Do you want to change %s? (y/n) '%(param))
+				rsp=None
+				while rsp != 'y' and rsp != '':
+					rsp=raw_input('Do you want to change %s? (y/ENTER) '%(param))
 				if rsp == 'y':
 					if type(cur_val) == type(True): # if it's a boolean
 						new_params[param] = not cur_val

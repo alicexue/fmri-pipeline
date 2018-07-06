@@ -59,18 +59,14 @@ def main(argv=None):
 
 	# double checks with user that all files have been set
 	modeldir=os.path.join(basedir,studyid,'model','level1','model%03d'%modelnum)
-	rsp=''
-	while rsp!='y':
-		rsp=raw_input('Did you set %s/model_params.json? (y/n) '%modeldir)
-	rsp=''
-	while rsp!='y':
-		rsp=raw_input('Did you set %s/condition_key.json? (y/n) '%modeldir)
-	rsp=''
-	while rsp!='y':
-		rsp=raw_input('Did you set %s/task_contrasts.json or remove it? (y/n) '%modeldir)
-	rsp=''
-	while rsp!='y':
-		rsp=raw_input('Did you set the EV files under the onset directories? (y/n) ')
+	rsp=None
+	print 'Make sure that the following have been set:'
+	print '\t%s/model_params.json'%modeldir
+	print '\t%s/condition_key.json'%modeldir
+	print '\t%s/task_contrasts.json (may be removed)'%modeldir
+	print '\tEV files under the onset directories'
+	while rsp != 'y' and rsp != '':
+		rsp=raw_input('Press ENTER to continue:')	
 	
 	# get the list of jobs to run
 	jobs=get_level1_jobs.get_level1_jobs(studyid,basedir,modelnum,specificruns,specificruns) 
