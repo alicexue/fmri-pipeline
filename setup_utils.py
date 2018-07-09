@@ -71,7 +71,7 @@ def create_model_level1_dir(studyid,basedir,modelnum):
 			hasSessions=True
 			study_info=get_study_info(studydir,hasSessions)
 	subs=study_info.keys()
-	print study_info
+	print json.dumps(study_info)
 	list.sort(subs)
 	i=0
 	# iterate through the subjects, sessions, tasks, and runs
@@ -239,7 +239,7 @@ def check_model_params_cli(studyid,basedir,modelnum):
 									validinput=True
 								except:
 									print "Invalid value for specificruns. Must be able to call json.loads on the input."
-									print """Example: '{"sub-01": {"ses-01": {"flanker": ["1", "2"]}}, "sub-02": {"ses-01": {"flanker": ["1", "2"]}}}'"""
+									print """Example: {"sub-01": {"ses-01": {"flanker": ["1", "2"]}}, "sub-02": {"ses-01": {"flanker": ["1", "2"]}}}"""
 						else:
 							new_param_val=raw_input('New value of %s: '%param)
 							new_params[param] = new_param_val

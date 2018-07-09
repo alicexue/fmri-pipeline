@@ -65,6 +65,10 @@ def main(argv=None):
 	# get the list of jobs to run
 	jobs=get_level2_jobs.main(argv=sys_argv[:])
 	njobs=len(jobs)
+	print "WARNING: If any feat files exist (warnings would be printed above), they will not be overwritten if you continue."
+	rsp=None
+	while rsp != 'y' and rsp != '':
+		rsp=raw_input('Press ENTER to continue:')
 	# turn the list of jobs into a dictionary with the index as the key
 	jobsdict={}
 	for i in range(0,njobs):

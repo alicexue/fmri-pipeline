@@ -51,7 +51,7 @@ def main(argv=None):
 			hasSessions=True
 			study_info=get_study_info(studydir,hasSessions)
 
-	print study_info
+	print json.dumps(study_info)
 
 	jobs = []
 	if len(subids)==0: # checks if user did not specify subjects to run level 3 on 

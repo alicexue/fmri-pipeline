@@ -47,7 +47,7 @@ def add_args(args,sub,task,run):
 
 def main(argv=None):
 	sys_args=parse_command_line(argv)
-	print sys_args
+	print json.dumps(sys_args)
 
 	studyid=sys_args.studyid
 	basedir=sys_args.basedir
@@ -55,7 +55,7 @@ def main(argv=None):
 	specificruns=sys_args.specificruns
 	
 	args=setup_utils.model_params_json_to_namespace(studyid,basedir,modelnum)
-	print args
+	print json.dumps(args)
 
 	if specificruns == {}: # if specificruns from sys.argv is empty (default), use specificruns from model_param
 		specificruns=args.specificruns
@@ -98,7 +98,7 @@ def get_level1_jobs(studyid,basedir,modelnum,specificruns,sys_args_specificruns)
 		l2=study_info[l1[0]].keys()[0]
 		if l2.startswith('ses-'):
 			hasSessions=True
-	print study_info
+	print json.dumps(study_info)
 
 	# convert model params into a list of arguments that can be used to call mk_level1_fsf_bbr
 	# contains all the model params but not specific info like subject, task, run

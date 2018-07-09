@@ -61,7 +61,7 @@ def main(argv=None):
 	# gets dictionary of study information
 	study_info=specificruns
 	hasSessions=False
-	if specificruns=={}: # if specificruns in model_params was empty
+	if specificruns=={}: # if specificruns passed into command line was empty
 		# tries getting study info first with hasSessions set to false
 		# determines that hasSessions is true if the values of the subjects are empty
 		studydir=os.path.join(basedir,studyid)
@@ -76,7 +76,7 @@ def main(argv=None):
 		if l2.startswith('ses-'):
 			hasSessions=True
 
-	print study_info
+	print json.dumps(study_info)
 
 	study_info_copy=copy.deepcopy(study_info)
 

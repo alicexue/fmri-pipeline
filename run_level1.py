@@ -13,6 +13,7 @@ import subprocess
 import sys
 
 import get_level1_jobs
+import setup_utils
 
 def parse_command_line(argv):
 	parser = argparse.ArgumentParser(description='setup_jobs')
@@ -68,9 +69,18 @@ def main(argv=None):
 	while rsp != 'y' and rsp != '':
 		rsp=raw_input('Press ENTER to continue:')	
 	
+	# get specificruns from model_params
+	args=setup_utils.model_params_json_to_namespace(studyid,basedir,modelnum) 
+	if specificruns == {}: # if specificruns from sys.argv is empty (default), use specificruns from model_param
+		specificruns=args.specificruns
+
 	# get the list of jobs to run
 	jobs=get_level1_jobs.get_level1_jobs(studyid,basedir,modelnum,specificruns,specificruns) 
 	njobs=len(jobs)
+	print "WARNING: If any feat files exist (warnings would be printed above), they will not be overwritten if you continue."
+	rsp=None
+	while rsp != 'y' and rsp != '':
+		rsp=raw_input('Press ENTER to continue:')
 	# turn the list of jobs into a dictionary with the index as the key
 	jobsdict={}
 	for i in range(0,njobs):
