@@ -100,12 +100,9 @@ basedir
 
 ## Some behaviors to note:
 - For level 1, run_level1.py will exit if no runs have been specified and some feat directories already exist. This prevents the creation of multiple feat directories for the same run (with + appended to the directory name). Upon exit, the program will print the additional arguments necessary to create the feat directories for the runs missing feats (or you may choose to remove the existing feat directories and create feats for all the runs). The program does not check for existing feat directories if the argument "specificruns" is passed to run_level1.py or mk_all_level1_fsf_bbr.py (This is intentional in order to make sure run_level1 can use mk_all_level1_fsf_bbr seamlessly. However, a warning is printed if the program is creating a feat that already exists). (The same thing happens if all feat directories for all tasks exist.) 
+- If specificruns isn't specified through the command line, specificruns from modelparams.json is used. If specificruns in modelparams.json is empty, then the script is run on all runs for all tasks for all subjects.
 
 ## Notes:
 - TR is obtained by reading the header of the Nifti file (preproc func file)
 - The slurm output is out of order (I think because some things are run in a subprocess). The log should still be clear.
 
-## To do:
-- Test flywheel download scripts on multiple runs
-- Accomodate not having multiple runs (not having run in the file names)...
-- Integrate with flywheel
