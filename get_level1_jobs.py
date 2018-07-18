@@ -23,8 +23,8 @@ def parse_command_line(argv):
         required=True,help='Study ID')
     parser.add_argument('--basedir', dest='basedir',
         required=True,help='Base directory (above studyid directory)')
-    parser.add_argument('--modelname', dest='modelname',
-		default='1',help='Model name')
+    parser.add_argument('-m', '--modelname', dest='modelname',
+		required=True,help='Model name')
     parser.add_argument('-s', '--specificruns', dest='specificruns', type=json.loads,
 		default={},help="""
 			JSON object in a string that details which runs to create fsf's for. If specified, ignores specificruns specified in model_params.json.

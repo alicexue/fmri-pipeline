@@ -51,8 +51,8 @@ def parse_command_line(argv):
         required=True,help='Runs')
     parser.add_argument('--basedir', dest='basedir',
         required=True,help='Base directory (above studyid directory)')
-    parser.add_argument('--modelname', dest='modelname',
-        default='1',help='Model name')
+    parser.add_argument('-m', '--modelname', dest='modelname',
+        required=True,help='Model name')
     parser.add_argument('--sesname', dest='sesname',
         default='',help='Name of session (not including "ses-")')
     parser.add_argument('--callfeat', dest='callfeat', action='store_true',

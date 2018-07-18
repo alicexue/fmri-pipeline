@@ -29,8 +29,8 @@ def parse_command_line(argv):
             If there aren't sessions: \'{"sub-01":{"flanker":["1"]},"sub-02":{"flanker":["1","2"]}}\'. Make sure this describes the fmriprep folder, which should be in BIDS format.
             Make sure to have single quotes around the JSON object and double quotes within."""
             )
-    parser.add_argument('--modelname', dest='modelname',
-        default='1',help='Model name')
+    parser.add_argument('-m', '--modelname', dest='modelname',
+        required=True,help='Model name')
     parser.add_argument('--sessions', dest='sessions', nargs='+',
         default=[],help='Name of session (not including prefix "sub-"')
 

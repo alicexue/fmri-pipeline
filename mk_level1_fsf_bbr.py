@@ -69,8 +69,8 @@ def parse_command_line(argv):
         default=True,help='Turn off prewhitening')
     parser.add_argument('--noconfound', dest='confound', action='store_false',
         default=True,help='Omit motion/confound modeling')
-    parser.add_argument('--modelname', dest='modelname',
-        default='1',help='Model name')
+    parser.add_argument('-m', '--modelname', dest='modelname',
+        required=True,help='Model name')
     parser.add_argument('--anatimg', dest='anatimg',
         default='',help='Anatomy image (should be _brain)')
     parser.add_argument('--doreg', dest='doreg', action='store_true',
