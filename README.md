@@ -19,8 +19,8 @@
 - func directories (with preprocessed functional files) should be in the subject folder (if there are no sessions) or under the appropriate session folder
 - anat directories (with preprocessed anatomical files) can be in the subject folder or in the appropriate session folder
 - EV files (see step 1 below)
-- model params must be specified under the model00\<N> directory (see step 2 below)
-- condition key must be specified under the model00\<N> directory as condition_key.json or condition_key.txt (see step 3 below)
+- model params must be specified under the model-<modelname> directory (see step 2 below)
+- condition key must be specified under the model-<modelname> directory as condition_key.json or condition_key.txt (see step 3 below)
 - task contrasts (not required) may be specified under the model00\<N> directory as task_contrasts.json or task_contrasts.txt (see step 4 below)
 
 ## Steps:
@@ -61,7 +61,7 @@ basedir
         │
         └───level<N>
 	    │
-	    └───model00<N>
+	    └───model-<modelname>
 	    	│   model_params.json
 		│   condition_key.json
 		│   task_contrasts.json
@@ -79,6 +79,7 @@ basedir
 - **studyid**: name of the parent directory of the fmriprep directory
 - **basedir**: full path of the grandparent directory of the fmriprep directory (don't include studyid here)
 - **sub**: subject identifier (not including the prefix 'sub-')
+- **modelname**: name of model (string)
 - **taskname**: name of task
 - **runname**: name of run
 - **smoothing**: mm FWHM; default is 0
@@ -86,7 +87,6 @@ basedir
 - **nohpf**: turn off high pass filtering 
 - **nowhite**: turn off prewhitening
 - **noconfound**: omit motion/confound modeling
-- **modelnum**: model num; default is 1
 - **anatimg**: anatomy image (should be _brain)
 - **doreg**: do registration
 - **spacetag**: space tag for prepreprocessed data (if the functional or anatomical data was preprocessed in multiple spaces, you can specify the space here) (the script will tell you if multiple preprocessed files were found and you need to specify this tag)
@@ -104,5 +104,3 @@ basedir
 
 ## Notes:
 - TR is obtained by reading the header of the Nifti file (preproc func file)
-- The slurm output is out of order (I think because some things are run in a subprocess). The log should still be clear.
-
