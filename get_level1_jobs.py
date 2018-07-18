@@ -23,8 +23,8 @@ def parse_command_line(argv):
         required=True,help='Study ID')
     parser.add_argument('--basedir', dest='basedir',
         required=True,help='Base directory (above studyid directory)')
-    parser.add_argument('--modelnum', dest='modelnum',type=int,
-		default=1,help='Model number')
+    parser.add_argument('--modelname', dest='modelname',
+		default='1',help='Model name')
     parser.add_argument('-s', '--specificruns', dest='specificruns', type=json.loads,
 		default={},help="""
 			JSON object in a string that details which runs to create fsf's for. If specified, ignores specificruns specified in model_params.json.
@@ -51,24 +51,24 @@ def main(argv=None):
 
 	studyid=sys_args.studyid
 	basedir=sys_args.basedir
-	modelnum=sys_args.modelnum
+	modelname=sys_args.modelname
 	specificruns=sys_args.specificruns
 	
-	args=setup_utils.model_params_json_to_namespace(studyid,basedir,modelnum)
+	args=setup_utils.model_params_json_to_namespace(studyid,basedir,modelname)
 	print json.dumps(args)
 
 	if specificruns == {}: # if specificruns from sys.argv is empty (default), use specificruns from model_param
 		specificruns=args.specificruns
-	get_level1_jobs(studyid,basedir,modelnum,specificruns,sys_args.specificruns)
+	get_level1_jobs(studyid,basedir,modelname,specificruns,sys_args.specificruns)
 
-def get_level1_jobs(studyid,basedir,modelnum,specificruns,sys_args_specificruns):
+def get_level1_jobs(studyid,basedir,modelname,specificruns,sys_args_specificruns):
 	"""
 	Args:
 		specificruns (dict): from model_params.json
 		sys_args_specificruns (dict): passed into the program through the command line (sys.args)
 	"""
 	# gets parameters set in model_param.json
-	args=setup_utils.model_params_json_to_namespace(studyid,basedir,modelnum) 
+	args=setup_utils.model_params_json_to_namespace(studyid,basedir,modelname) 
 
 	smoothing=args.smoothing
 	use_inplane=args.use_inplane
@@ -102,7 +102,7 @@ def get_level1_jobs(studyid,basedir,modelnum,specificruns,sys_args_specificruns)
 
 	# convert model params into a list of arguments that can be used to call mk_level1_fsf_bbr
 	# contains all the model params but not specific info like subject, task, run
-	sys_argv=setup_utils.model_params_json_to_list(studyid,basedir,modelnum)
+	sys_argv=setup_utils.model_params_json_to_list(studyid,basedir,modelname)
 
 	# created a deep copy of study_info (want to remove runs from the copy and not the original)
 	study_info_copy=copy.deepcopy(study_info)
@@ -126,7 +126,7 @@ def get_level1_jobs(studyid,basedir,modelnum,specificruns,sys_args_specificruns)
 					list.sort(runs)
 					for run in runs:
 						# check if feat exists for this run
-						model_subdir='%s/model/level1/model%03d/%s/%s/task-%s_run-%s'%(os.path.join(basedir,studyid),modelnum,subid,ses,task,run)
+						model_subdir='%s/model/level1/model-%s/%s/%s/task-%s_run-%s'%(os.path.join(basedir,studyid),modelname,subid,ses,task,run)
 						feat_file="%s/%s_%s_task-%s_run-%s.feat"%(model_subdir,subid,ses,task,run)
 						if sys_args_specificruns=={} and os.path.exists(feat_file): # if subject didn't pass in specificruns and a feat file for this run exists
 							existing_feat_files.append(feat_file)
@@ -150,7 +150,7 @@ def get_level1_jobs(studyid,basedir,modelnum,specificruns,sys_args_specificruns)
 				list.sort(runs)
 				for run in runs:
 					# check if feat exists for this run
-					model_subdir='%s/model/level1/model%03d/%s/task-%s_run-%s'%(os.path.join(basedir,studyid),modelnum,subid,task,run)
+					model_subdir='%s/model/level1/model-%s/%s/task-%s_run-%s'%(os.path.join(basedir,studyid),modelname,subid,task,run)
 					feat_file="%s/%s_task-%s_run-%s.feat"%(model_subdir,subid,task,run)
 					if sys_args_specificruns=={} and os.path.exists(feat_file): # if subject didn't pass in specificruns and a feat file for this run exists
 						existing_feat_files.append(feat_file)

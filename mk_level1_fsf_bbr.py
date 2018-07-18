@@ -69,8 +69,8 @@ def parse_command_line(argv):
         default=True,help='Turn off prewhitening')
     parser.add_argument('--noconfound', dest='confound', action='store_false',
         default=True,help='Omit motion/confound modeling')
-    parser.add_argument('--modelnum', dest='modelnum',type=int,
-        default=1,help='Model number')
+    parser.add_argument('--modelname', dest='modelname',
+        default='1',help='Model name')
     parser.add_argument('--anatimg', dest='anatimg',
         default='',help='Anatomy image (should be _brain)')
     parser.add_argument('--doreg', dest='doreg', action='store_true',
@@ -100,7 +100,7 @@ def main(argv=None):
     use_inplane=args.use_inplane
     basedir=args.basedir
     nonlinear=args.nonlinear
-    modelnum=args.modelnum
+    modelname=args.modelname
     anatimg=args.anatimg
     confound=args.confound
     hpf = args.hpf
@@ -111,9 +111,9 @@ def main(argv=None):
     altBETmask=args.altBETmask
     callfeat=args.callfeat
       
-    mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,basedir,nonlinear,modelnum,anatimg,confound,hpf,whiten,doreg,sesname,spacetag,altBETmask,callfeat)
+    mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,basedir,nonlinear,modelname,anatimg,confound,hpf,whiten,doreg,sesname,spacetag,altBETmask,callfeat)
 
-def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,basedir,nonlinear=1,modelnum=1,anatimg='',confound=True,hpf=True,whiten=True,doreg=False,sesname='',spacetag='',altBETmask=False,callfeat=False):
+def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,basedir,nonlinear=1,modelname=1,anatimg='',confound=True,hpf=True,whiten=True,doreg=False,sesname='',spacetag='',altBETmask=False,callfeat=False):
     _thisDir = os.path.dirname(os.path.abspath(__file__)).decode(sys.getfilesystemencoding())
     tasknum = 1
 
@@ -129,7 +129,7 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
     if not os.path.exists(fmriprep_subdir):
         print "ERROR: No fmriprep folder found for this subject. Checked %s"%(fmriprep_subdir)
         sys.exit(-1)
-    model_subdir='%s/model/level1/model%03d/%s'%(os.path.join(basedir,studyid),modelnum,subid)
+    model_subdir='%s/model/level1/model-%s/%s'%(os.path.join(basedir,studyid),modelname,subid)
     if sesname!="":
         model_subdir=os.path.join(model_subdir,'ses-%s'%(sesname))
     model_subdir=os.path.join(model_subdir,'task-%s_run-%s'%(taskname,runname))
@@ -224,9 +224,9 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
     
     # read the conditions_key file 
     # if it's a json file
-    cond_key_json = os.path.join(basedir,studyid,'model/level1/model%03d/condition_key.json'%modelnum)
+    cond_key_json = os.path.join(basedir,studyid,'model/level1/model-%s/condition_key.json'%modelname)
     # if it's a text file
-    cond_key_txt = os.path.join(basedir,studyid,'model/level1/model%03d/condition_key.txt'%modelnum)
+    cond_key_txt = os.path.join(basedir,studyid,'model/level1/model-%s/condition_key.txt'%modelname)
     if os.path.exists(cond_key_json):
         conddict = json.load(open(cond_key_json), object_pairs_hook=OrderedDict) # keep the order of the keys as they were in the json file 
         if taskname in conddict.keys():
@@ -252,14 +252,14 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
         conditions=cond_key[taskname].values()
         print 'found conditions:',conditions
     else:
-        print "ERROR: Could not find condition key in %s"%(os.path.join(basedir,studyid,'model/level1/model%03d'%modelnum))
+        print "ERROR: Could not find condition key in %s"%(os.path.join(basedir,studyid,'model/level1/model-%s'%modelname))
         sys.exit(-1)
 
     # not tested yet
     # check for orthogonalization file
     orth={}
-    orthfile=os.path.join(basedir,studyid,'model/level1/model%03d/orthogonalize.txt'%modelnum)
-    #orthfile=os.path.join(basedir,studyid,'models/model%03d/orthogonalize.txt'%modelnum)
+    orthfile=os.path.join(basedir,studyid,'model/level1/model-%s/orthogonalize.txt'%modelname)
+    #orthfile=os.path.join(basedir,studyid,'models/model-%s/orthogonalize.txt'%modelname)
     if os.path.exists(orthfile):
         f=open(orthfile)
         for l in f.readlines():
@@ -279,9 +279,9 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
     # Get task contrasts
     print 'loading contrasts'
     # if it's a json file
-    contrastsfile_json=os.path.join(basedir,studyid,'model/level1/model%03d/task_contrasts.json'%modelnum)
+    contrastsfile_json=os.path.join(basedir,studyid,'model/level1/model-%s/task_contrasts.json'%modelname)
     # if it's a txt file
-    contrastsfile_txt=os.path.join(basedir,studyid,'model/level1/model%03d/task_contrasts.txt'%modelnum)
+    contrastsfile_txt=os.path.join(basedir,studyid,'model/level1/model-%s/task_contrasts.txt'%modelname)
     if os.path.exists(contrastsfile_json):
         contrasts_all = json.load(open(contrastsfile_json), object_pairs_hook=OrderedDict)
         contrasts_all = dict(contrasts_all)
@@ -290,7 +290,7 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
     elif os.path.exists(contrastsfile_txt):
         contrasts_all=load_contrasts(contrastsfile)
     else:
-        print "WARNING: Could not find task_contrasts file in %s"%(os.path.join(basedir,studyid,'model/level1/model%03d'%modelnum))
+        print "WARNING: Could not find task_contrasts file in %s"%(os.path.join(basedir,studyid,'model/level1/model-%s'%modelname))
         contrasts_all={}
     print 'added contrasts:',contrasts_all
 

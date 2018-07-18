@@ -14,17 +14,17 @@ from setup_utils import *
 
 def main():
 	if len(sys.argv) < 4:
-		print "usage: setup.py <studyid> <basedir> <modelnum>"
+		print "usage: setup.py <studyid> <basedir> <modelname>"
 		sys.exit(-1)
 	studyid=sys.argv[1]
 	basedir=sys.argv[2]
-	modelnum=int(sys.argv[3])
-	create_model_level1_dir(studyid,basedir,modelnum)
-	create_empty_condition_key(studyid,basedir,modelnum)
-	create_empty_task_contrasts_file(studyid,basedir,modelnum)
-	create_level1_model_params_json(studyid,basedir,modelnum)
-	check_model_params_cli(studyid,basedir,modelnum)
-	modeldir=os.path.join(basedir,studyid,'model','level1','model%03d'%modelnum)
+	modelname=sys.argv[3]
+	create_model_level1_dir(studyid,basedir,modelname)
+	create_empty_condition_key(studyid,basedir,modelname)
+	create_empty_task_contrasts_file(studyid,basedir,modelname)
+	create_level1_model_params_json(studyid,basedir,modelname)
+	check_model_params_cli(studyid,basedir,modelname)
+	modeldir=os.path.join(basedir,studyid,'model','level1','model-%s'%modelname)
 	print '\nMake sure to modify:'
 	print '\t', modeldir+'/condition_key.json'
 	print '\t', modeldir+'/task_contrasts.json'

@@ -31,8 +31,8 @@ def parse_command_line(argv):
 		required=True,help='Study ID')
 	parser.add_argument('--basedir', dest='basedir',
 		required=True,help='Base directory (above studyid directory)')
-	parser.add_argument('--modelnum', dest='modelnum',type=int,
-		default=1,help='Model number')
+	parser.add_argument('--modelname', dest='modelname',
+		default='1',help='Model name')
 
 	parser.add_argument('-s', '--specificruns', dest='specificruns', type=json.loads,
 		default={},help="""
@@ -55,11 +55,11 @@ def main(argv=None):
 	nodes=args.nodes
 	studyid=args.studyid
 	basedir=args.basedir
-	modelnum=args.modelnum
+	modelname=args.modelname
 	specificruns=args.specificruns
 
 	# double checks with user that all files have been set
-	modeldir=os.path.join(basedir,studyid,'model','level1','model%03d'%modelnum)
+	modeldir=os.path.join(basedir,studyid,'model','level1','model-%s'%modelname)
 	rsp=None
 	print 'Make sure that the following have been set:'
 	print '\t%s/model_params.json'%modeldir
@@ -70,12 +70,12 @@ def main(argv=None):
 		rsp=raw_input('Press ENTER to continue:')	
 	
 	# get specificruns from model_params
-	args=setup_utils.model_params_json_to_namespace(studyid,basedir,modelnum) 
+	args=setup_utils.model_params_json_to_namespace(studyid,basedir,modelname) 
 	if specificruns == {}: # if specificruns from sys.argv is empty (default), use specificruns from model_param
 		specificruns=args.specificruns
 
 	# get the list of jobs to run
-	jobs=get_level1_jobs.get_level1_jobs(studyid,basedir,modelnum,specificruns,specificruns) 
+	jobs=get_level1_jobs.get_level1_jobs(studyid,basedir,modelname,specificruns,specificruns) 
 	njobs=len(jobs)
 	print "WARNING: If any feat files exist (warnings would be printed above), they will not be overwritten if you continue."
 	rsp=None

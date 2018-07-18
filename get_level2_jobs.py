@@ -29,8 +29,8 @@ def parse_command_line(argv):
             If there aren't sessions: \'{"sub-01":{"flanker":["1"]},"sub-02":{"flanker":["1","2"]}}\'. Make sure this describes the fmriprep folder, which should be in BIDS format.
             Make sure to have single quotes around the JSON object and double quotes within."""
             )
-    parser.add_argument('--modelnum', dest='modelnum',type=int,
-        default=1,help='Model number')
+    parser.add_argument('--modelname', dest='modelname',
+        default='1',help='Model name')
     parser.add_argument('--sessions', dest='sessions', nargs='+',
         default=[],help='Name of session (not including prefix "sub-"')
 
@@ -54,7 +54,7 @@ def main(argv=None):
 	studyid=args.studyid
 	specificruns=args.specificruns
 	basedir=args.basedir
-	modelnum=args.modelnum
+	modelname=args.modelname
 
 	sys_args_specificruns=args.specificruns # specificruns passed in through the command line
 
@@ -106,7 +106,7 @@ def main(argv=None):
 				list.sort(tasks)
 				for task in tasks:
 					# check if feat exists for this run
-					model_subdir='%s/model/level2/model%03d/%s/%s/task-%s'%(os.path.join(basedir,studyid),modelnum,subid,ses,task)
+					model_subdir='%s/model/level2/model-%s/%s/%s/task-%s'%(os.path.join(basedir,studyid),modelname,subid,ses,task)
 					feat_file="%s/%s_%s_task-%s.gfeat"%(model_subdir,subid,ses,task)
 					if sys_args_specificruns=={} and os.path.exists(feat_file): # if subject didn't pass in specificruns and a feat file for this task exists
 						existing_feat_files.append(feat_file)
@@ -129,7 +129,7 @@ def main(argv=None):
 			list.sort(tasks)
 			for task in tasks:
 				# check if feat exists for this run
-				model_subdir='%s/model/level2/model%03d/%s/task-%s'%(os.path.join(basedir,studyid),modelnum,subid,task)
+				model_subdir='%s/model/level2/model-%s/%s/task-%s'%(os.path.join(basedir,studyid),modelname,subid,task)
 				feat_file="%s/%s_task-%s.gfeat"%(model_subdir,subid,task)
 				if sys_args_specificruns=={} and os.path.exists(feat_file):
 					existing_feat_files.append(feat_file)

@@ -10,14 +10,14 @@ import sys
 from argparse import Namespace
 from directory_struct_utils import *
 
-def model_params_json_to_namespace(studyid,basedir,modelnum):
+def model_params_json_to_namespace(studyid,basedir,modelname):
 	# Converts json of parameters to Namespace object that can be parsed
-	modeldir=os.path.join(basedir,studyid,'model','level1','model%03d'%modelnum)
+	modeldir=os.path.join(basedir,studyid,'model','level1','model-%s'%modelname)
 	if os.path.exists(modeldir+'/model_params.json'):
 		with open(modeldir+'/model_params.json','r') as f:
 			params = json.load(f)
 		args=Namespace()
-		args.modelnum=params['modelnum']
+		args.modelname=params['modelname']
 		args.specificruns=params['specificruns']
 		args.studyid=params['studyid']
 		args.basedir=params['basedir']
@@ -36,15 +36,15 @@ def model_params_json_to_namespace(studyid,basedir,modelnum):
 		print "ERROR: model_params.json does not exist in %s"%modeldir
 		sys.exit(-1)
 
-def model_params_json_to_list(studyid,basedir,modelnum):
+def model_params_json_to_list(studyid,basedir,modelname):
 	# Takes json of argument parameters and converts to string of commands, which can be called on in a subprocess
-	modeldir=os.path.join(basedir,studyid,'model','level1','model%03d'%modelnum)
+	modeldir=os.path.join(basedir,studyid,'model','level1','model-%s'%modelname)
 	if os.path.exists(modeldir+'/model_params.json'):
 		with open(modeldir+'/model_params.json','r') as f:
 			params = json.load(f)
 		
 		# no_action_params: parameters that don't have store_true or store_false as an action
-		no_action_params=['studyid','basedir','smoothing','use_inplane','modelnum','anatimg','spacetag']
+		no_action_params=['studyid','basedir','smoothing','use_inplane','modelname','anatimg','spacetag']
 		action_params={'nonlinear':False,'nohpf':True,'nowhiten':True,'noconfound':True,'doreg':False,'altBETmask':False}
 		# keys in action_params are arguments that have action that stores parameter as true/false
 		# values in action_params are default arguments
@@ -61,7 +61,7 @@ def model_params_json_to_list(studyid,basedir,modelnum):
 		print "model_params.json does not exist in %s"%modeldir
 		sys.exit(-1)
 
-def create_model_level1_dir(studyid,basedir,modelnum):
+def create_model_level1_dir(studyid,basedir,modelname):
 	# Creates model dir, the subject dirs, onset dirs, and empty EV files (that are named correctly)
 	hasSessions=False
 	studydir=os.path.join(basedir,studyid)
@@ -88,7 +88,7 @@ def create_model_level1_dir(studyid,basedir,modelnum):
 					runs=study_info[subid][ses][task]
 					list.sort(runs)
 					for run in runs:
-						onsetsdir=os.path.join(basedir,studyid,'model','level1','model%03d'%modelnum,subid,ses,'task-%s_run-%s'%(task,run),'onsets')
+						onsetsdir=os.path.join(basedir,studyid,'model','level1','model-%s'%modelname,subid,ses,'task-%s_run-%s'%(task,run),'onsets')
 						if not os.path.exists(onsetsdir):
 							os.makedirs(onsetsdir)
 						evfilename=onsetsdir+'/%s_%s_task-%s_run-%s_ev-%03d'%(subid,ses,task,run,1)
@@ -103,7 +103,7 @@ def create_model_level1_dir(studyid,basedir,modelnum):
 				runs=study_info[subid][task]
 				list.sort(runs)
 				for run in runs:
-					onsetsdir=os.path.join(basedir,studyid,'model','level1','model%03d'%modelnum,subid,'task-%s_run-%s'%(task,run),'onsets')
+					onsetsdir=os.path.join(basedir,studyid,'model','level1','model-%s'%modelname,subid,'task-%s_run-%s'%(task,run),'onsets')
 					if not os.path.exists(onsetsdir):
 						os.makedirs(onsetsdir)
 					evfilename=onsetsdir+'/%s_task-%s_run-%s_ev-%03d'%(subid,task,run,1)
@@ -113,11 +113,11 @@ def create_model_level1_dir(studyid,basedir,modelnum):
 							i+=1
 	print "Created %d onset directories and empty sample ev files"%(i)
 
-def create_level1_model_params_json(studyid,basedir,modelnum):
+def create_level1_model_params_json(studyid,basedir,modelname):
 	# Creates model_params.json file to define arguments 
 	# Keys must be spelled correctly
-	params={'studyid':studyid,'basedir':basedir,'specificruns':{},'smoothing':0,'use_inplane':0,'nonlinear':False,'nohpf':True,'nowhiten':True,'noconfound':True,'modelnum':modelnum,'anatimg':'','doreg':False,'spacetag':'','altBETmask':False}
-	modeldir=os.path.join(basedir,studyid,'model','level1','model%03d'%modelnum)
+	params={'studyid':studyid,'basedir':basedir,'specificruns':{},'smoothing':0,'use_inplane':0,'nonlinear':False,'nohpf':True,'nowhiten':True,'noconfound':True,'modelname':modelname,'anatimg':'','doreg':False,'spacetag':'','altBETmask':False}
+	modeldir=os.path.join(basedir,studyid,'model','level1','model-%s'%modelname)
 	if not os.path.exists(modeldir):
 		os.makedirs(modeldir)
 				
@@ -126,10 +126,10 @@ def create_level1_model_params_json(studyid,basedir,modelnum):
 			json.dump(params,outfile)
 		print "Created sample model_params.json with default values"
 
-def create_empty_condition_key(studyid,basedir,modelnum):
+def create_empty_condition_key(studyid,basedir,modelname):
 	# Creates an empty sample condition key 
 	# Gets the name of all possible tasks (that the first subject did), and adds those to the condition key
-	modeldir=os.path.join(basedir,studyid,'model','level1','model%03d'%modelnum)
+	modeldir=os.path.join(basedir,studyid,'model','level1','model-%s'%modelname)
 	if not os.path.exists(modeldir):
 		os.makedirs(modeldir)
 
@@ -167,9 +167,9 @@ def create_empty_condition_key(studyid,basedir,modelnum):
 			json.dump(condition_key,outfile)
 		print "Created empty condition_key.json"
 
-def create_empty_task_contrasts_file(studyid,basedir,modelnum):
+def create_empty_task_contrasts_file(studyid,basedir,modelname):
 	# Creates an empty task_contrasts file with the task names as keys
-	modeldir=os.path.join(basedir,studyid,'model','level1','model%03d'%modelnum)
+	modeldir=os.path.join(basedir,studyid,'model','level1','model-%s'%modelname)
 	if not os.path.exists(modeldir):
 		os.makedirs(modeldir)
 
@@ -207,15 +207,15 @@ def create_empty_task_contrasts_file(studyid,basedir,modelnum):
 			json.dump(condition_key,outfile)
 		print "Created empty task_contrasts.json"
 
-def check_model_params_cli(studyid,basedir,modelnum):
+def check_model_params_cli(studyid,basedir,modelname):
 	# Modifies model_params by interacting with user through the command line
-	modeldir=os.path.join(basedir,studyid,'model','level1','model%03d'%modelnum)
+	modeldir=os.path.join(basedir,studyid,'model','level1','model-%s'%modelname)
 	new_params={}
 	if os.path.exists(modeldir+'/model_params.json'):
 		with open(modeldir+'/model_params.json','r') as f:
 			params = json.load(f)
-			new_params['modelnum']=params['modelnum']
-			# not including modelnum
+			new_params['modelname']=params['modelname']
+			# not including modelname
 			ordered_params=['specificruns','studyid','basedir','anatimg','nohpf','use_inplane','nowhiten','nonlinear','altBETmask','smoothing','doreg','noconfound','spacetag']
 			for param in ordered_params:
 				cur_val=params[param]
@@ -249,7 +249,7 @@ def check_model_params_cli(studyid,basedir,modelnum):
 	with open(modeldir+'/model_params.json','w') as outfile:
 		json.dump(new_params,outfile)
 		print '\nUpdated %s.'%(modeldir+'/model_params.json')
-		for param in ['modelnum']+ordered_params:
+		for param in ['modelname']+ordered_params:
 			pprint_val=new_params[param]
 			if pprint_val == '':
 				pprint_val="\'\'"

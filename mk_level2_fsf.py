@@ -51,8 +51,8 @@ def parse_command_line(argv):
         required=True,help='Runs')
     parser.add_argument('--basedir', dest='basedir',
         required=True,help='Base directory (above studyid directory)')
-    parser.add_argument('--modelnum', dest='modelnum',type=int,
-        default=1,help='Model number')
+    parser.add_argument('--modelname', dest='modelname',
+        default='1',help='Model name')
     parser.add_argument('--sesname', dest='sesname',
         default='',help='Name of session (not including "ses-")')
     parser.add_argument('--callfeat', dest='callfeat', action='store_true',
@@ -71,15 +71,15 @@ def main(argv=None):
     taskname=args.taskname
     runs=args.runs
     basedir=args.basedir
-    modelnum=args.modelnum
+    modelname=args.modelname
     callfeat=args.callfeat
     
-    print studyid,subid,sesname,taskname,runs,basedir,modelnum,callfeat
+    print studyid,subid,sesname,taskname,runs,basedir,modelname,callfeat
     
-    mk_level2_fsf(studyid,subid,taskname,runs,basedir,modelnum,sesname,callfeat)
+    mk_level2_fsf(studyid,subid,taskname,runs,basedir,modelname,sesname,callfeat)
 
 
-def mk_level2_fsf(studyid,subid,taskname,runs,basedir,modelnum,sesname='',callfeat=False):
+def mk_level2_fsf(studyid,subid,taskname,runs,basedir,modelname,sesname='',callfeat=False):
     _thisDir = os.path.dirname(os.path.abspath(__file__)).decode(sys.getfilesystemencoding())
 
     # set up variables 
@@ -89,8 +89,8 @@ def mk_level2_fsf(studyid,subid,taskname,runs,basedir,modelnum,sesname='',callfe
         subid_ses+="_ses-%s"%(sesname) # for if files are prefixed with with the name of the session after the subject ID
 
     # locate level 1 model dir, create level 2 model dir
-    lev1_model_subdir='%s/model/level1/model%03d/%s'%(os.path.join(basedir,studyid),modelnum,subid)
-    model_subdir='%s/model/level2/model%03d/%s'%(os.path.join(basedir,studyid),modelnum,subid)
+    lev1_model_subdir='%s/model/level1/model-%s/%s'%(os.path.join(basedir,studyid),modelname,subid)
+    model_subdir='%s/model/level2/model-%s/%s'%(os.path.join(basedir,studyid),modelname,subid)
     if sesname!='':
         lev1_model_subdir+='/ses-%s'%(sesname)
         model_subdir+='/ses-%s'%(sesname)
@@ -101,9 +101,9 @@ def mk_level2_fsf(studyid,subid,taskname,runs,basedir,modelnum,sesname='',callfe
 
     ## read the conditions_key file
     # if it's a json file
-    cond_key_json = os.path.join(basedir,studyid,'model/level1/model%03d/condition_key.json'%modelnum)
+    cond_key_json = os.path.join(basedir,studyid,'model/level1/model-%s/condition_key.json'%modelname)
     # if it's a text file
-    cond_key_txt = os.path.join(basedir,studyid,'model/level1/model%03d/condition_key.txt'%modelnum)
+    cond_key_txt = os.path.join(basedir,studyid,'model/level1/model-%s/condition_key.txt'%modelname)
     if os.path.exists(cond_key_json):
         cond_key = json.load(open(cond_key_json), object_pairs_hook=OrderedDict) # keep the order of the keys as they were in the json file 
         if taskname in cond_key.keys():
@@ -124,14 +124,14 @@ def mk_level2_fsf(studyid,subid,taskname,runs,basedir,modelnum,sesname='',callfe
         conditions=cond_key[taskname].values()
         cond_key = cond_key[taskname]
     else:
-        print "ERROR: Could not find condition key in %s"%(os.path.join(basedir,studyid,'model/level1/model%03d'%modelnum))
+        print "ERROR: Could not find condition key in %s"%(os.path.join(basedir,studyid,'model/level1/model-%s'%modelname))
         sys.exit(-1)
 
     ## get contrasts
     # if it's a json file
-    contrastsfile_json=os.path.join(basedir,studyid,'model/level1/model%03d/task_contrasts.json'%modelnum)
+    contrastsfile_json=os.path.join(basedir,studyid,'model/level1/model-%s/task_contrasts.json'%modelname)
     # if it's a txt file
-    contrastsfile_txt=os.path.join(basedir,studyid,'model/level1/model%03d/task_contrasts.txt'%modelnum)
+    contrastsfile_txt=os.path.join(basedir,studyid,'model/level1/model-%s/task_contrasts.txt'%modelname)
     if os.path.exists(contrastsfile_json):
         all_addl_contrasts = json.load(open(contrastsfile_json), object_pairs_hook=OrderedDict)
         all_addl_contrasts = dict(all_addl_contrasts)
@@ -140,7 +140,7 @@ def mk_level2_fsf(studyid,subid,taskname,runs,basedir,modelnum,sesname='',callfe
     elif os.path.exists(contrastsfile_txt):
         all_addl_contrasts=load_contrasts(contrastsfile)
     else:
-        print "WARNING: Could not find task_contrasts file in %s"%(os.path.join(basedir,studyid,'model/level1/model%03d'%modelnum))
+        print "WARNING: Could not find task_contrasts file in %s"%(os.path.join(basedir,studyid,'model/level1/model-%s'%modelname))
         all_addl_contrasts={}
     if all_addl_contrasts.has_key(taskname):
         addl_contrasts=all_addl_contrasts[taskname]

@@ -28,8 +28,8 @@ def parse_command_line(argv):
         required=True,help='Study ID')
     parser.add_argument('--basedir', dest='basedir',
         required=True,help='Base directory (above studyid directory)')
-    parser.add_argument('--modelnum', dest='modelnum',type=int,
-        default=1,help='Model number')
+    parser.add_argument('--modelname', dest='modelname',
+        default='1',help='Model name')
     parser.add_argument('--subs', dest='subids', nargs='+',
         default=[],help='subject identifiers (not including prefix "sub-")')
 
