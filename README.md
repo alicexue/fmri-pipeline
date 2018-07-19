@@ -34,8 +34,9 @@
 3. Fill out condition_key.json under model00\<N>, where the task name is the key and the value is a json object with EV names as keys and the conditions as values. (Note: The EV files, *_ev-00\<N>, are always padded with leading zeros so that there are 3 digits)
 4. If you need to specify task contrasts, fill out task_contrasts.json, where the key is the task name and the value is a json object in which the key is the name of the contrast and the value is a list that represents the contrast vector. If you don't want to specify task contrasts for this model, remove the file.
 5. Create the EV files. setup.py creates one sample EV file - with the correct file name - in a folder called 'onsets' under each run folder. Make sure to follow the same naming system when creating more EV files.
-6. To run level 1, use run_level1.py, which will create a job array where each job creates a *.fsf file for one run and runs feat on that run. (By default, if the argument specificruns is not specified, fsf's will be created for all runs)
-7. Level 2 and level 3 are run similarly. Use the -h option to see explanations of the parameters
+6. If desired, create a custom stub file named design_level\<N>_custom.stub under the model directory with feat settings (see design_level1_fsl5.stub for examples). If a setting in the custom file is found in the stub file, the custom setting will be written to the fsf file. If the setting is not found, it will be added to the fsf.
+7. To run level 1, use run_level1.py, which will create a job array where each job creates a *.fsf file for one run and runs feat on that run. (By default, if the argument specificruns is not specified, fsf's will be created for all runs)
+8. Level 2 and level 3 are run similarly. Use the -h option to see explanations of the parameters
 
 ## File Structure:
 ```
@@ -65,6 +66,7 @@ basedir
 	    	│   model_params.json
 		│   condition_key.json
 		│   task_contrasts.json
+		|   design_level<N>_custom.stub (optional)
 	    	│
 		└───sub-<subid>
 		    │
