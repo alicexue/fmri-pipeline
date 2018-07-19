@@ -132,6 +132,21 @@ def mk_level3_fsf(studyid,subids,taskname,basedir,modelname,sesname):
 
     # get fsf template with default values
     stubfilename=os.path.join(_thisDir,'design_level3.stub')
+    customstubfilename=os.path.join(basedir,studyid,'model/level3/model-%s/design_level3_custom.stub'%modelname)
+    # Get settings from custom stub file, store in customsettings dictionary 
+    # in customsettings, key is the setting ('fmri(mc)' for example) and the value of the setting is the value
+    customsettings={}
+    if os.path.exists(customstubfilename):
+        print 'Found custom fsf stub'
+        customstubfile=open(customstubfilename,'r')
+        for l in customstubfile:
+            llist=l.split(' ')
+            if len(l)>3 and llist[0]=='set':
+                setting=llist[1]
+                value=llist[2]
+                customsettings[setting]=value
+        customstubfile.close()
+
     fsfnames=[]
     for copenum in range(1,ncopes+1):
         # set feat names
@@ -146,9 +161,25 @@ def mk_level3_fsf(studyid,subids,taskname,basedir,modelname,sesname):
         # first get common lines from stub file
         stubfile=open(stubfilename,'r')
         for l in stubfile:
+            llist=l.split(' ')
+            if len(l)>3 and llist[0]=='set':
+                setting=llist[1]
+                value=llist[2]
+                # check if setting in default stub file shows up in custom stub file
+                if setting in customsettings.keys():
+                    outfile.write('# From custom stub file\n')
+                    llist[2]=customsettings[setting]
+                    l=' '.join(llist)
+                    del customsettings[setting]
             outfile.write(l)
-
         stubfile.close()
+
+         # if there are other settings that haven't been replaced and still need to be added
+        if len(customsettings) > 0:
+            outfile.write('\n### Additional settings from custom stub file ###\n')
+            for setting in customsettings:
+                l='set ' + setting + ' ' + customsettings[setting]
+                outfile.write(l)
 
         # now add custom lines
 
