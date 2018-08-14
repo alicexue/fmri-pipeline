@@ -142,4 +142,4 @@ else:
 download_flywheel_fmriprep.download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir)
 # exports raw BIDS (export of raw BIDS should happen after downloading fmriprep output because export_raw_bids looks for subjects in fmriprep folder)
 if exportRawBids:
-	export_raw_bids.export_raw_bids(studyid,basedir,project_label)
+	export_raw_bids.export_raw_bids(studyid,basedir,key,group_id,project_label)
