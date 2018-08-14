@@ -269,7 +269,7 @@ def mk_level2_fsf(studyid,subid,taskname,runs,basedir,modelname,sesname='',callf
                 print "Copying %s to %s"%(mean_func,feat_folder+'/reg')
                 sub.call(['cp',feat_folder+'/'+mean_func,feat_folder+'/reg/standard.nii.gz'])
             else:
-                print "No %s found in %s."(mean_func,feat_folder)
+                print "No %s found in %s."%(mean_func,feat_folder)
             print "Completed registration workaround."
 
         outfile.write('set feat_files(%d) "%s"\n'%(int(r+1), feat_folder))

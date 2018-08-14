@@ -122,8 +122,10 @@ def main(argv=None):
 						args.append('--ses')
 						args.append(sesname)
 						jobs.append(args)
-				if len(study_info_copy[subid][ses].keys())==0: # if there are no tasks for this subject
-					del study_info_copy[subid] # remove the subject
+				if len(study_info_copy[subid][ses].keys())==0: # if there are no tasks for this session
+					del study_info_copy[subid][ses] # remove the session
+				if len(study_info_copy[subid].keys())==0: # if there are no sessions for this subject
+					del study_info_copy[subid] # remove the subject from the dictionary
 		else: # no sessions
 			tasks=study_info[subid].keys()
 			list.sort(tasks)

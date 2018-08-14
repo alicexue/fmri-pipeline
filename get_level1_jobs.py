@@ -141,7 +141,9 @@ def get_level1_jobs(studyid,basedir,modelname,specificruns,sys_args_specificruns
 							args.append(sesname) 
 							jobs.append(args) # each list 'args' specifies the arguments to run mk_level1_fsf_bbr on
 					if len(study_info_copy[subid][ses][task])==0: # if there are no runs for this task
-						del study_info_copy[subid] # remove the task from the dictionary
+						del study_info_copy[subid][ses][task] # remove the task from the dictionary
+					if len(study_info_copy[subid][ses])==0: # if there are no tasks for this session
+						del study_info_copy[subid][ses] # remove the ses from dictionary
 		else: # no sessions
 			tasks=study_info[subid].keys()
 			list.sort(tasks)
@@ -163,7 +165,9 @@ def get_level1_jobs(studyid,basedir,modelname,specificruns,sys_args_specificruns
 						args=add_args(args,sub,task,run)
 						jobs.append(args)
 				if len(study_info_copy[subid][task])==0: # if there are no runs for this task
-					del study_info_copy[subid]  # remove the task from the dictionary
+					del study_info_copy[subid][task]  # remove the task from the dictionary
+		if len(study_info_copy[subid])==0: # if there are no sessions or tasks for this subject left
+			del study_info_copy[subid]
 
 	if len(study_info_copy.keys()) == 0: 
 		print "ERROR: All runs for all subjects have been run on this model. Remove the feat files if you want to rerun them."
