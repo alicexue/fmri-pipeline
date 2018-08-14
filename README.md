@@ -29,12 +29,12 @@
 1. Run manage_flywheel_downloads.py, which will ask for the necessary information via the command line
 
 #### For running fmri analyses:
-1. Run setup.py to create the model directory and all necessary sub-directories. This will also create empty/sample *.json files (model_params.json, condition_key.json, task_contrasts.json) and EVs files for you to fill in. 
+1. Run setup.py to create the model directory and all necessary sub-directories. This will also create empty/sample *.json files (model_params.json, condition_key.json, task_contrasts.json) and onset directories for the EV files. 
 2. Fill out model_params.json under model00\<N>, see Terminology below for explanation of the abbreviations.
 3. Fill out condition_key.json under model00\<N>, where the task name is the key and the value is a json object with EV names as keys and the conditions as values. (Note: The EV files, *_ev-00\<N>, are always padded with leading zeros so that there are 3 digits)
 4. If you need to specify task contrasts, fill out task_contrasts.json, where the key is the task name and the value is a json object in which the key is the name of the contrast and the value is a list that represents the contrast vector. If you don't want to specify task contrasts for this model, remove the file.
-5. Create the EV files. setup.py creates one sample EV file - with the correct file name - in a folder called 'onsets' under each run folder. Make sure to follow the same naming system when creating more EV files. Confound files are in the same location as the EV files (the file name ends in *_ev-confounds, see below).
-6. If desired, create a custom stub file named design_level\<N>_custom.stub under the model directory with feat settings (see design_level1_fsl5.stub for examples). If a setting in the custom file is found in the stub file, the custom setting will be written to the fsf file. If the setting is not found, it will be added to the fsf.
+5. Create the EV files, which belong in the 'onsets' directories under each run folder. Make sure the EV files are named correctly (see the diagram below). Confound files should be saved in the same location as the EV files (the file name ends in *_ev-confounds, see below).
+6. If customization of fsf files is desired, create a custom stub file named design_level\<N>_custom.stub under the model directory with feat settings (see design_level1_fsl5.stub for examples). If a setting in the custom file is found in the stub file, the custom setting will replace the existing setting. If the custom setting is not found, it will be added to the fsf.
 7. To run level 1, use run_level1.py, which will create a job array where each job creates a *.fsf file for one run and runs feat on that run. (By default, if the argument specificruns is not specified, fsf's will be created for all runs)
 8. Level 2 and level 3 are run similarly. Use the -h option to see explanations of the parameters
 
@@ -45,8 +45,8 @@ basedir
 └───<studyid>
     │
     └───raw
-    │   |   task-<task>_bold.json
     │
+    └───freesurfer
     │
     └───fmriprep
     │	│
@@ -78,7 +78,7 @@ basedir
 			    │
 ```
 
-## Terminology and abbreviations:
+## Explanations of abbreviations:
 - **studyid**: name of the parent directory of the fmriprep directory
 - **basedir**: full path of the grandparent directory of the fmriprep directory (don't include studyid here)
 - **sub**: subject identifier (not including the prefix 'sub-')
@@ -100,10 +100,12 @@ basedir
 ## Note on file types:
 - The EV files can be *.tsv or *.txt files. Just make sure the file is named according to the specification above.
 - condition_key and task_contrasts can be *.json or *.txt 
+- In json objects, strings must be in double quotes, not single quotes
 
 ## Some behaviors to note:
 - For level 1, run_level1.py will exit if no runs have been specified and some feat directories already exist. This prevents the creation of multiple feat directories for the same run (with + appended to the directory name). Upon exit, the program will print the additional arguments necessary to create the feat directories for the runs missing feats (or you may choose to remove the existing feat directories and create feats for all the runs). The program does not check for existing feat directories if the argument "specificruns" is passed to run_level1.py or mk_all_level1_fsf_bbr.py (This is intentional in order to make sure run_level1 can use mk_all_level1_fsf_bbr seamlessly. However, a warning is printed if the program is creating a feat that already exists). (The same thing happens if all feat directories for all tasks exist.) 
 - If specificruns isn't specified through the command line, specificruns from modelparams.json is used. If specificruns in modelparams.json is empty, then the script is run on all runs for all tasks for all subjects.
+- Re: downloading and exporting data from flywheel - if the subject folder for fmriprep/reports/freesurfer does not exist, entire analysis output for that subject will be downloaded. If that subject folder does exist, only the session folder will be moved to the subject directory. (For freesurfer however, only one session will be downloaded. There are no session folders under the subject freesurfer directory)
 
 ## Notes:
 - TR is obtained by reading the header of the Nifti file (preproc func file)
