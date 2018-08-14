@@ -28,7 +28,8 @@ def main():
 	print '\nMake sure to modify:'
 	print '\t', modeldir+'/condition_key.json'
 	print '\t', modeldir+'/task_contrasts.json'
-	print '\tand the EV files under the onset directories'
+	print '\tand set the EV files under the onset directories'
+	print '\tThe EV files (can be .tsv or .txt) must be named like so: sub-<subid>_task-<taskname>_run-<runname>_ev-00<N>'
 
 
 if __name__ == '__main__':

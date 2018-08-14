@@ -1,14 +1,17 @@
 #!/usr/bin/env python
 """
-Downloads each subject's fmriprep outputs from flywheel
+Downloads each subject's fmriprep outputs (func and anat, reports, freesurfer) from flywheel
 Iterates through all the sessions and analyses
-Checks if the subject's fmriprep and reports folder for the given session have already been downloaded
-Will not overwrite subjects with existing fmriprep and reports folders (will print a skip message)
+Checks if the subject's fmriprep, freesurfer, and reports folder for the given session have already been downloaded
+Will not overwrite existing fmriprep and reports folders (will print a skip message)
 If fmriprep was run multiple times, downloads the most recent analysis
 Downloads everything into a tmp folder
 Each subject's fmriprep folder is moved to the fmriprep directory under the directory basedir+studyid
 The html and svg outputs are moved to the reports directory (which is at the same level as the fmriprep directory)
 When download is complete, the tmp folder is removed
+
+Notes:
+- Only freesurfer for 1 session is downloaded
 """
 
 # Created by Alice Xue, 06/2018
@@ -19,18 +22,38 @@ from pprint import pprint
 import subprocess as sp
 import sys
 
+def unzip_dir(dir_from, dir_to):
+	print 'Unzipping', dir_from, 'to', dir_to
+	sp.call(['unzip',dir_from,'-d',dir_to])
+
+def move_dir(dir_from, dir_to):
+	print 'Moving %s to %s'%(dir_from, dir_to)
+	sp.call(['mv',dir_from, dir_to])
+
+def rename_dir(dir_from, dir_to):
+	print 'Renaming %s to %s'%(dir_from, dir_to)
+	sp.call(['mv',dir_from, dir_to])
+
+def remove_dir(dir_name):
+	if os.path.exists(dir_name):
+		print "Removing %s"%dir_name
+		sp.call(['rm','-rf',dir_name])
+
 def main():
-	if len(sys.argv)!=6:
-		print "usage: download_flywheel_fmriprep <Flywheel API key> <Flywheel group_id> <Flywheel project_label> <studyid> <basedir>"
+	if len(sys.argv)!=9:
+		print "usage: download_flywheel_fmriprep <Flywheel API key> <Flywheel group_id> <Flywheel project_label> <studyid> <basedir> <bool: download reports> <bool: download fmriprep outputs> <bool: download freesurfer outputs>"
 		sys.exit(-1)
 	key=sys.argv[1]
 	group_id=sys.argv[2]
 	project_label=sys.argv[3]
 	studyid=sys.argv[4]
 	basedir=sys.argv[5]
-	download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir)
+	downloadReports=sys.argv[6]
+	downloadFmriprep=sys.argv[7]
+	downloadFreesurfer=sys.argv[8]
+	download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downloadReports,downloadFmriprep,downloadFreesurfer)
 
-def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir):
+def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downloadReports,downloadFmriprep,downloadFreesurfer):
 	# Creates tmp, fmriprep, and reports directories if they don't exist
 	studydir=os.path.join(basedir,studyid)
 	if not os.path.exists(studydir):
@@ -82,7 +105,7 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir):
 						print('API Error: %d -- %s' % (e.status, e.reason))
 					"""
 					for file in analysis.files:
-						print file.name
+						#print file.name
 						name = file.name
 						# assumes subject ID is between sub- and _ or between sub- and .
 						if 'sub-' in name:
@@ -94,10 +117,10 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir):
 								i2 = tmpname.find('.')
 							if i1 > -1 and i2 > -1:
 								sub=tmpname[:i2] # sub is the subject ID with 'sub-' removed
-								print "Subject ID:", sub
+								#print "Subject ID:", sub
 
 								# get fmriprep reports (html and svg files)
-								if 'html' in file.name: # sub-<id>.html.zip
+								if downloadReports and 'html' in file.name: # sub-<id>.html.zip
 									subreportsdir=os.path.join(reportsdir,sub)
 									subsesreportsdir=os.path.join(reportsdir,sub,'ses-'+session['label'])
 									if os.path.exists(subsesreportsdir):
@@ -108,13 +131,12 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir):
 											downloadSessionOnly=True
 										# download the file
 										outfile=sub+'.html.zip'
-										print 'Downloading', file.name
+										print 'Downloading', sub+'/ses-'+session['label'] + ':', file.name
 										filepath=os.path.join(tmpdir,outfile)
 										fw.download_output_from_session_analysis(session.id, most_recent_analysis_id, file.name, filepath)
 										unzippedfilepath=filepath[:-4]
 										# unzip the file
-										print 'Unzipping', filepath, 'to', unzippedfilepath
-										sp.call(['unzip',filepath,'-d',unzippedfilepath])
+										unzip_dir(filepath,unzippedfilepath)
 										# Move sub folder in sub-<id>.html->flywheel->...->sub-<id> to the reportsdir
 										# iterates through the flywheel folder to find sub folder buried inside
 										# the variable i is used to avoid an infinite loop
@@ -132,8 +154,7 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir):
 												#if not os.path.exists(targetdir):
 												#	os.mkdir(targetdir)
 												if os.path.exists(desireddir):
-													print "Moving %s to %s"%(desireddir,targetdir)
-													sp.call(['mv',desireddir,targetdir])
+													move_dir(desireddir,targetdir)
 													moved=True
 											if len(os.listdir(fullcurdir))>0:
 												# assuming only one directory in fullcurdir
@@ -148,35 +169,39 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir):
 										indexhtmlpath=os.path.join(unzippedfilepath,'index.html')
 										if os.path.exists(indexhtmlpath):
 											subreportsdir=os.path.join(reportsdir,sub)
-											print 'Moving %s to %s'%(indexhtmlpath,subreportsdir)
-											sp.call(['mv',indexhtmlpath,subreportsdir])
+											move_dir(indexhtmlpath,subreportsdir)
 											oldindexhtml=os.path.join(subreportsdir,'index.html')
 											newindexhtml=os.path.join(subreportsdir,'ses-'+session['label'],'%s.html'%sub)
-											print 'Renaming %s to %s'%(oldindexhtml,newindexhtml)
-											sp.call(['mv',oldindexhtml,newindexhtml])
+											move_dir(oldindexhtml,newindexhtml)
 										# remove originally downloaded files
-										sp.call(['rm','-rf',filepath])
-										sp.call(['rm','-rf',unzippedfilepath])
+										remove_dir(filepath)
+										remove_dir(unzippedfilepath)
 								
 								# get fmriprep outputs
-								elif file.name.startswith('fmriprep_'+sub): # fmriprep_sub-<subid>_<random alphanumericcode?>.zip
+								elif (downloadFmriprep or downloadFreesurfer) and file.name.startswith('fmriprep_'+sub): # fmriprep_sub-<subid>_<random alphanumericcode?>.zip
 									subfmriprepdir=os.path.join(fmriprepdir,sub)
+									subfreesurferdir=os.path.join(freesurferdir,sub)
 									subsesfmriprepdir=os.path.join(fmriprepdir,sub,'ses-'+session['label'])
-									if os.path.exists(subsesfmriprepdir):
-										print 'Skipping downloading and processing of fmriprep outputs for %s'%sub
-									else:
+									continueFmriprepDownload=downloadFmriprep
+									continueFreesurferDownload=downloadFreesurfer
+									if downloadFmriprep and os.path.exists(subsesfmriprepdir):
+										print 'Skipping downloading and processing of fmriprep outputs for %s/ses-%s'%(sub,session['label'])
+										continueFmriprepDownload=False
+									if downloadFreesurfer and os.path.exists(subfreesurferdir):
+										print 'Skipping downloading and processing of freesurfer outputs for %s'%sub
+										continueFreesurferDownload=False
+									if continueFmriprepDownload or continueFreesurferDownload:
 										downloadSessionOnly=False
 										if os.path.exists(subfmriprepdir):
 											downloadSessionOnly=True
 										outfile=sub+'.zip'
 										# downloads outputs
-										print 'Downloading', file.name
+										print 'Downloading', sub+'/ses-'+session['label'] + ':', file.name
 										filepath=os.path.join(tmpdir,outfile)
 										fw.download_output_from_session_analysis(session.id, most_recent_analysis_id, file.name, filepath)
 										# unzips outputs
 										unzippedfilepath=filepath[:-4] # removes .zip from name 
-										print 'Unzipping', filepath, 'to', unzippedfilepath
-										sp.call(['unzip',filepath,'-d',unzippedfilepath])
+										unzip_dir(filepath,unzippedfilepath)
 
 										# Move downloaded fmriprep folder to fmriprep
 										unzippedfmriprep=os.path.join(unzippedfilepath,'fmriprep',sub)
@@ -189,7 +214,7 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir):
 										fullcurdir=unzippedfilepath
 										moved=False
 										while i > 0 and curdir!='fmriprep':
-											if 'fmriprep' in os.listdir(fullcurdir):
+											if downloadFmriprep and continueFmriprepDownload and 'fmriprep' in os.listdir(fullcurdir):
 												desireddir=os.path.join(fullcurdir,'fmriprep',sub)
 												targetdir=fmriprepdir
 												if downloadSessionOnly:
@@ -198,14 +223,12 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir):
 
 												tmpsubfmriprepdir=os.path.join(fullcurdir,'fmriprep',sub)
 												if os.path.exists(desireddir):
-													print "Moving %s to %s"%(desireddir,targetdir)
-													sp.call(['mv',desireddir,targetdir])
+													move_dir(desireddir,targetdir)
 													moved=True
-											if 'freesurfer' in os.listdir(fullcurdir):
+											if downloadFreesurfer and continueFreesurferDownload and 'freesurfer' in os.listdir(fullcurdir):
 												tmpsubfreesurferdir=os.path.join(fullcurdir,'freesurfer',sub)
 												if os.path.exists(tmpsubfreesurferdir) and not os.path.exists(os.path.join(freesurferdir,sub)):
-													print "Moving %s to %s"%(tmpsubfreesurferdir,freesurferdir)
-													sp.call(['mv',tmpsubfreesurferdir,freesurferdir])
+													move_dir(tmpsubfreesurferdir,freesurferdir)
 													moved=True
 											if len(os.listdir(fullcurdir))>0:
 												# assuming only one directory in fullcurdir
@@ -214,23 +237,20 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir):
 														curdir=folder
 														fullcurdir=os.path.join(fullcurdir,folder)
 											i-=1;
-										if not moved:
-											print "Could not find fmriprep in %s"%sub
+										if downloadFmriprep and not moved:
+											print "Could not find fmriprep in %s"%desireddir
 
 										# Remove figures directory from sub folder in fmriprep 
-										# the figures direcotry is a duplicate of the fmriprep reports, which are downloaded separately into the reports directory
+										# the figures directory is a duplicate of the fmriprep reports, which are downloaded separately into the reports directory
 										fmriprepsubfigures=os.path.join(newsubfmriprep,'figures')
 										
-										if os.path.exists(fmriprepsubfigures):
-											print "Removing %s"%fmriprepsubfigures
-											sp.call(['rm','-rf',fmriprepsubfigures])
-										sp.call(['rm','-rf',filepath])
-										sp.call(['rm','-rf',unzippedfilepath])	
+										remove_dir(fmriprepsubfigures)
+										remove_dir(filepath)
+										remove_dir(unzippedfilepath)
 										
 	# remove the tmp directory
 	if os.path.exists(tmpdir):
-		print 'Removing %s'%tmpdir
-		sp.call(['rm','-rf',tmpdir])
+		remove_dir(tmpdir)
 			
 if __name__ == '__main__':
     main()

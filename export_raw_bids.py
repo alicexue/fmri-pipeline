@@ -2,6 +2,9 @@
 """
 Exports raw BIDS from flywheel for all subjects into a directory called 'raw'
 (unable to get list of subjects to export bids directories individually)
+Subject codes are passed as parameters to "fw export bids" not subject id's 
+Subject codes and id's may differ if subjects codes contain underscores 
+(I assume that subject id's are subjects codes with underscores removed)
 Note: raw BIDS can only be exported if docker is running
 """
 
@@ -74,7 +77,9 @@ def export_raw_bids(studyid,basedir,key,group_id,project_label):
 				sub_code_dict[code] = code_w_underscore_removed # key is subject code, value is subject id
 				# subject code is used to export BIDS, subject id used by the fmriprep output 
 
-		for sub_code in sub_code_dict.keys():
+		sub_list = sub_code_dict.keys()
+		sub_list.sort()
+		for sub_code in sub_list:
 			sub=sub_code_dict[sub_code]
 			rawsubdir=os.path.join(rawdir,'sub-%s'%sub)
 			if os.path.exists(rawsubdir):

@@ -49,6 +49,7 @@ else: # asks for the key from the command line
 	with open(APIKeyFile,'w') as f:
 		f.write(key)
 
+print 'If you cannot log in, delete flywheel_API_key.txt and run manage_flywheel_downloads.py again.'
 self = fw.get_current_user()
 print('\nYou are now logged in as %s %s.' % (self.firstname, self.lastname))
 
@@ -99,7 +100,7 @@ else: # if no projects are found, asks to enter group id again
 		my_project=raw_input('Enter the project label: ')
 	project_label=my_project
 	
-# Asks for study id
+# Ask for study id
 print '\nThe study id is the name of the directory that the fmriprep output will be downloaded to.'
 studyid=raw_input('Enter the study id: ')
 studyid=studyid.strip()
@@ -118,28 +119,48 @@ if not os.path.exists(studydir):
 else:
 	print '\nNote: %s already exists. Only the remaining subjects\' data will be downloaded.'%studydir
 
-# Asks if user wants to export BIDS, which is only allowed if docker is installed and running
+# Ask which outputs to download
+downloadReports=False
+downloadFmriprep=False
+downloadFreesurfer=False
+rsp=None
+while rsp!='n' and rsp!='':
+	rsp=raw_input('Do you want to download fmriprep outputs? (ENTER/n) ')
+	if rsp=='':
+		downloadFmriprep=True
+rsp=None
+while rsp!='n' and rsp!='':
+	rsp=raw_input('Do you want to download fmriprep reports? (html and svg files) (ENTER/n) ')
+	if rsp=='':
+		downloadReports=True
+rsp=None
+while rsp!='n' and rsp!='':
+	rsp=raw_input('Do you want to download the freesurfer outputs? (ENTER/n) ')
+	if rsp=='':
+		downloadFreesurfer=True
+
+# Ask if user wants to export BIDS, which is only allowed if docker is installed and running
 exportRawBids=False
 if dockerExists:
 	rsp=''
 	print ''
-	while rsp!='y' and rsp!='n':
-		rsp=raw_input('Do you want to download the raw BIDS data for your subjects? (y/n) ')
+	while rsp!='' and rsp!='n':
+		rsp=raw_input('Do you want to download the raw BIDS data for your subjects? (ENTER/n) ')
 		if rsp=='y':
 			exportRawBids=True
 			rsp2=''
-			while rsp2!='y' and rsp2!='n':
-				rsp2=raw_input('Docker is needed to export the raw BIDS data. Is docker running? (y/n) ')
+			while rsp2!='' and rsp2!='n':
+				rsp2=raw_input('Docker is needed to export the raw BIDS data. Is docker running? (ENTER/n) ')
 			if rsp2=='n':
 				print 'Since docker is not running, raw BIDS won\'t be exported.'
 				exportRawBids=False
-			elif rsp2=='y' and not fwExists: 
+			elif rsp2=='' and not fwExists: 
 				print 'Flywheel CLI not installed, which is necessary for exporting raw BIDS.'
 else:
 	print 'Note: docker is not installed. Raw BIDS cannot be exported.'
 
 # downloads fmriprep outputs 
-download_flywheel_fmriprep.download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir)
+download_flywheel_fmriprep.download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downloadReports,downloadFmriprep,downloadFreesurfer)
 # exports raw BIDS (export of raw BIDS should happen after downloading fmriprep output because export_raw_bids looks for subjects in fmriprep folder)
 if exportRawBids:
 	export_raw_bids.export_raw_bids(studyid,basedir,key,group_id,project_label)

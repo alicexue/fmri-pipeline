@@ -62,7 +62,8 @@ def model_params_json_to_list(studyid,basedir,modelname):
 		sys.exit(-1)
 
 def create_model_level1_dir(studyid,basedir,modelname):
-	# Creates model dir, the subject dirs, onset dirs, and empty EV files (that are named correctly)
+	# Creates model dir, the subject dirs, onset dirs
+	# no longer creates empty EV files - causes fsl errors if not removed by user
 	hasSessions=False
 	studydir=os.path.join(basedir,studyid)
 	study_info=get_study_info(studydir,hasSessions)
@@ -91,11 +92,13 @@ def create_model_level1_dir(studyid,basedir,modelname):
 						onsetsdir=os.path.join(basedir,studyid,'model','level1','model-%s'%modelname,subid,ses,'task-%s_run-%s'%(task,run),'onsets')
 						if not os.path.exists(onsetsdir):
 							os.makedirs(onsetsdir)
+						"""
 						evfilename=onsetsdir+'/%s_%s_task-%s_run-%s_ev-%03d'%(subid,ses,task,run,1)
 						if not os.path.exists(evfilename+'.tsv') and not os.path.exists(evfilename+'.txt'):
 							with open(evfilename+'.tsv','a') as outfile:
 								outfile.write('')
-								i+=1
+						"""
+						i+=1
 		else:
 			tasks=study_info[subid].keys()
 			list.sort(tasks)
@@ -107,11 +110,14 @@ def create_model_level1_dir(studyid,basedir,modelname):
 					if not os.path.exists(onsetsdir):
 						os.makedirs(onsetsdir)
 					evfilename=onsetsdir+'/%s_task-%s_run-%s_ev-%03d'%(subid,task,run,1)
+					"""
 					if not os.path.exists(evfilename+'.tsv') and not os.path.exists(evfilename+'.txt'):
 						with open(evfilename+'.tsv','a') as outfile:
 							outfile.write('')
-							i+=1
-	print "Created %d onset directories and empty sample ev files"%(i)
+					"""
+					i+=1
+	#print "Created %d onset directories and empty sample ev files"%(i)
+	print "Created %d onset directories"%(i)
 
 def create_level1_model_params_json(studyid,basedir,modelname):
 	# Creates model_params.json file to define arguments 
