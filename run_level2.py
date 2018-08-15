@@ -7,7 +7,9 @@ Runs the generated sbatch file
 # Created by Alice Xue, 06/2018
 
 import argparse
+from joblib import Parallel, delayed
 import json
+import multiprocessing
 import subprocess
 import sys
 
@@ -41,6 +43,9 @@ def parse_command_line(argv):
     args = parser.parse_args(argv)
     return args
 
+def call_feat_job(i,jobsdict,level):
+	subprocess.call(['python', 'run_feat_job.py', '--jobs', '%s'%json.dumps(jobsdict),'-i',str(i), '--level', str(level)])
+
 def main(argv=None):
 	level=2
 	args=parse_command_line(argv)
@@ -67,7 +72,7 @@ def main(argv=None):
 	njobs=len(jobs)
 	print "WARNING: If any feat files exist (warnings would be printed above), they will not be overwritten if you continue."
 	rsp=None
-	while rsp != 'y' and rsp != '':
+	while rsp != '':
 		rsp=raw_input('Press ENTER to continue:')
 	# turn the list of jobs into a dictionary with the index as the key
 	jobsdict={}
@@ -92,11 +97,19 @@ def main(argv=None):
 	try:
 		subprocess.call(['sbatch','run_level2.sbatch'])
 	except:
-		print "\nsbatch command was not found. Are you sure you're running this program on a cluster?"
-		print "WARNING: Running commands serially now...\n"
-		for i in range(njobs):
-			subprocess.call(['python', 'run_feat_job.py', '--jobs', '%s'%json.dumps(jobsdict),'-i',str(i), '--level', str(level)])
-
+		print "\nNOTE: sbatch command was not found."
+		rsp=None
+		while rsp != 'n' and rsp != '':
+			rsp=raw_input('Do you want to run the jobs in parallel using multiprocessing? (ENTER/n) ')
+		if rsp == '':
+			inputs = range(njobs)
+			num_cores = multiprocessing.cpu_count()
+			print 'NOTE: Running feat in parallel across %s cores now...\n'%(num_cores)
+			results = Parallel(n_jobs=num_cores)(delayed(call_feat_job)(i,jobsdict,level) for i in inputs)
+		else:
+			print "NOTE: Running commands serially now...\n"
+			for i in range(njobs):
+				call_feat_job(i,jobsdict,level)
 
 if __name__ == '__main__':
     main()

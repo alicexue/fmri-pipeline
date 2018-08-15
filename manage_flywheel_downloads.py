@@ -120,6 +120,7 @@ else:
 	print '\nNote: %s already exists. Only the remaining subjects\' data will be downloaded.'%studydir
 
 # Ask which outputs to download
+print ''
 downloadReports=False
 downloadFmriprep=False
 downloadFreesurfer=False
@@ -142,7 +143,7 @@ while rsp!='n' and rsp!='':
 # Ask if user wants to export BIDS, which is only allowed if docker is installed and running
 exportRawBids=False
 if dockerExists:
-	rsp=''
+	rsp=None
 	print ''
 	while rsp!='' and rsp!='n':
 		rsp=raw_input('Do you want to download the raw BIDS data for your subjects? (ENTER/n) ')
@@ -160,7 +161,8 @@ else:
 	print 'Note: docker is not installed. Raw BIDS cannot be exported.'
 
 # downloads fmriprep outputs 
-download_flywheel_fmriprep.download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downloadReports,downloadFmriprep,downloadFreesurfer)
+if downloadFmriprep or downloadFreesurfer or downloadReports:
+	download_flywheel_fmriprep.download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downloadReports,downloadFmriprep,downloadFreesurfer)
 # exports raw BIDS (export of raw BIDS should happen after downloading fmriprep output because export_raw_bids looks for subjects in fmriprep folder)
 if exportRawBids:
 	export_raw_bids.export_raw_bids(studyid,basedir,key,group_id,project_label)

@@ -62,13 +62,13 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downlo
 	if not os.path.exists(tmpdir):
 		os.mkdir(os.path.join(tmpdir))
 	fmriprepdir=os.path.join(studydir,'fmriprep')
-	if not os.path.exists(fmriprepdir):
+	if downloadFmriprep and not os.path.exists(fmriprepdir):
 		os.mkdir(fmriprepdir)
 	freesurferdir=os.path.join(studydir,'freesurfer')
-	if not os.path.exists(freesurferdir):
+	if downloadFreesurfer and not os.path.exists(freesurferdir):
 		os.mkdir(freesurferdir)
 	reportsdir=os.path.join(studydir,'reports')
-	if not os.path.exists(reportsdir):
+	if downloadReports and not os.path.exists(reportsdir):
 		os.mkdir(reportsdir)
 
 	# Create client

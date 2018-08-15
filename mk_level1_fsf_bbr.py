@@ -173,7 +173,10 @@ def mk_level1_fsf_bbr(studyid,subid,taskname,runname,smoothing,use_inplane,based
     if len(anat_preproc_files) == 1:
         initial_highres_file = anat_preproc_files[0]
     elif len(anat_preproc_files) == 0:
-        print "ERROR: Could not find preprocessed anat file in %s or %s. Make sure this directory points to the output of fmriprep."%(anatdir,sesanatdir)
+        if sesname=="":
+            print "ERROR: Could not find preprocessed anat file in %s. Make sure this directory points to the output of fmriprep."%(anatdir)
+        else:
+            print "ERROR: Could not find preprocessed anat file in %s or %s. Make sure this directory points to the output of fmriprep."%(anatdir,sesanatdir)
         sys.exit(-1)
     else:
         print fmriprep_subdir+'/'+anathead+spacetag+anattail
