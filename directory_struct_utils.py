@@ -5,6 +5,7 @@ Gets information about the fmriprep directory structure
 # Created by Alice Xue, 06/2018
 
 import os
+import sys
 
 def get_fmriprep_dir(studydir):
 	"""Checks for fmriprep directory under studydir
@@ -20,7 +21,7 @@ def get_fmriprep_dir(studydir):
 		return fmriprep_dir
 	else:
 		print "ERROR: fmriprep directory not found in %s"%studydir
-		return ''
+		sys.exit(-1)
 
 def get_all_subs(studydir):
 	"""Gets list of subject IDs (not including the prefix 'sub-')

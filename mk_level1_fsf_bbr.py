@@ -62,7 +62,7 @@ def parse_command_line(argv):
     parser.add_argument('--use_inplane', dest='use_inplane', type=int,
         default=0,help='Use inplane image')
     parser.add_argument('--nonlinear', dest='nonlinear', action='store_true',
-        default=False,help='Use nonlinear regristration')
+        default=False,help='Use nonlinear registration')
     parser.add_argument('--nohpf', dest='hpf', action='store_false',
         default=True,help='Turn off high pass filtering')
     parser.add_argument('--nowhiten', dest='whiten', action='store_false',

@@ -17,27 +17,29 @@ import sys
 import mk_all_level3_fsf
 
 def parse_command_line(argv):
-    parser = argparse.ArgumentParser(description='setup_jobs')
+	parser = argparse.ArgumentParser(description='setup_jobs')
 
-    parser.add_argument('-e','--email',dest='email',
-    	required=True,help='Email to send job updates to')
-    parser.add_argument('-A','--account',dest='account',
-    	required=True,help='Slurm account')
-    parser.add_argument('-t', '--time',dest='time',
-    	default="00:30:00",help='Estimated time to run each job - hh:mm:ss')
-    parser.add_argument('-N', '--nodes',dest='nodes',type=int,
-    	default=1,help='Number of nodes')
-    parser.add_argument('--studyid', dest='studyid',
-        required=True,help='Study ID')
-    parser.add_argument('--basedir', dest='basedir',
-        required=True,help='Base directory (above studyid directory)')
-    parser.add_argument('-m', '--modelname', dest='modelname',
-        required=True,help='Model name')
-    parser.add_argument('--subs', dest='subids', nargs='+',
-        default=[],help='subject identifiers (not including prefix "sub-")')
+	parser.add_argument('-e','--email',dest='email',
+		required=True,help='Email to send job updates to')
+	parser.add_argument('-A','--account',dest='account',
+		required=True,help='Slurm account')
+	parser.add_argument('-t', '--time',dest='time',
+		default="00:30:00",help='Estimated time to run each job - hh:mm:ss')
+	parser.add_argument('-N', '--nodes',dest='nodes',type=int,
+		default=1,help='Number of nodes')
+	parser.add_argument('--studyid', dest='studyid',
+		required=True,help='Study ID')
+	parser.add_argument('--basedir', dest='basedir',
+		required=True,help='Base directory (above studyid directory)')
+	parser.add_argument('-m', '--modelname', dest='modelname',
+		required=True,help='Model name')
+	parser.add_argument('--subs', dest='subids', nargs='+',
+		default=[],help='subject identifiers (not including prefix "sub-")')
+	parser.add_argument('--randomise', dest='randomise', action='store_true',
+		default=False,help='Use Randomise for stats instead of FLAME 1')
 
-    args = parser.parse_args(argv)
-    return args
+	args = parser.parse_args(argv)
+	return args
 
 def call_feat_job(i,jobsdict,level):
 	subprocess.call(['python', 'run_feat_job.py', '--jobs', '%s'%json.dumps(jobsdict),'-i',str(i), '--level', str(level)])
@@ -106,4 +108,4 @@ def main(argv=None):
 
 
 if __name__ == '__main__':
-    main()
+	main()
