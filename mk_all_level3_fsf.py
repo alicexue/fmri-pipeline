@@ -28,6 +28,8 @@ def parse_command_line(argv):
 		default=[],help='subject identifiers (not including prefix "sub-")')
 	parser.add_argument('--randomise', dest='randomise', action='store_true',
 		default=False,help='Use Randomise for stats instead of FLAME 1') 
+	parser.add_argument('--nofeat', dest='nofeat', action='store_true',
+		default=False,help='Only create the fsf\'s, don\'t call feat')
 
 	args = parser.parse_args(argv)
 	return args

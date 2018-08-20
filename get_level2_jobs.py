@@ -22,6 +22,8 @@ def parse_command_line(argv):
         required=True,help='Study ID')
     parser.add_argument('--basedir', dest='basedir',
         required=True,help='Base directory (above studyid directory)')
+    parser.add_argument('--nofeat',dest='nofeat',action='store_true',
+		default=False,help='Only create the fsf\'s, don\'t call feat')
     parser.add_argument('-s', '--specificruns', dest='specificruns', type=json.loads,
         default={},help="""
             JSON object in a string that details which runs to create fsf's for. 
@@ -37,14 +39,15 @@ def parse_command_line(argv):
     args = parser.parse_args(argv)
     return args
 
-def add_args(args,sub,task,runs):
+def add_args(args,sub,task,runs,nofeat):
 	args.append('--sub')
 	args.append(sub)
 	args.append('--taskname')
 	args.append(task)
 	args.append('--runs')
 	args+=runs
-	args.append('--callfeat')
+	if not nofeat:
+		args.append('--callfeat')
 	return args
 
 def main(argv=None):
@@ -55,6 +58,7 @@ def main(argv=None):
 	specificruns=args.specificruns
 	basedir=args.basedir
 	modelname=args.modelname
+	nofeat=args.nofeat
 
 	sys_args_specificruns=args.specificruns # specificruns passed in through the command line
 
@@ -88,6 +92,9 @@ def main(argv=None):
 			i=sys_argv.index(param)
 			del sys_argv[i]
 			del sys_argv[i]
+	if '--nofeat' in sys_argv:
+		i=sys_argv.index('--nofeat')
+		del sys_argv[i]
 	del sys_argv[0]
 
 	existing_feat_files=[]
@@ -118,7 +125,7 @@ def main(argv=None):
 						runs=study_info[subid][ses][task]
 						list.sort(runs)
 						args=sys_argv[:] # copies over the list of arguments passed into the command line
-						args=add_args(args,sub,task,runs)
+						args=add_args(args,sub,task,runs,nofeat)
 						args.append('--ses')
 						args.append(sesname)
 						jobs.append(args)
@@ -143,7 +150,7 @@ def main(argv=None):
 					runs=study_info[subid][task]
 					list.sort(runs)
 					args=sys_argv[:]
-					args=add_args(args,sub,task,runs)
+					args=add_args(args,sub,task,runs,nofeat)
 					jobs.append(args)
 			if len(study_info_copy[subid].keys())==0: # if there are no tasks for this subject
 				del study_info_copy[subid] # remove the subject from the dictionary

@@ -25,6 +25,8 @@ def parse_command_line(argv):
         required=True,help='Base directory (above studyid directory)')
     parser.add_argument('-m', '--modelname', dest='modelname',
 		required=True,help='Model name')
+    parser.add_argument('--nofeat',dest='nofeat',action='store_true',
+		default=False,help='Only create the fsf\'s, don\'t call feat')
     parser.add_argument('-s', '--specificruns', dest='specificruns', type=json.loads,
 		default={},help="""
 			JSON object in a string that details which runs to create fsf's for. If specified, ignores specificruns specified in model_params.json.
@@ -35,14 +37,15 @@ def parse_command_line(argv):
     args = parser.parse_args(argv)
     return args
 
-def add_args(args,sub,task,run):
+def add_args(args,sub,task,run,nofeat):
 	args.append('--sub')
 	args.append(sub)
 	args.append('--taskname')
 	args.append(task)
 	args.append('--runname')
 	args.append(run)
-	args.append('--callfeat')
+	if not nofeat:
+		args.append('--callfeat')
 	return args
 
 def main(argv=None):
@@ -53,15 +56,16 @@ def main(argv=None):
 	basedir=sys_args.basedir
 	modelname=sys_args.modelname
 	specificruns=sys_args.specificruns
+	nofeat=sys_args.nofeat
 	
 	args=setup_utils.model_params_json_to_namespace(studyid,basedir,modelname)
 	print json.dumps(args)
 
 	if specificruns == {}: # if specificruns from sys.argv is empty (default), use specificruns from model_param
 		specificruns=args.specificruns
-	get_level1_jobs(studyid,basedir,modelname,specificruns,sys_args.specificruns)
+	get_level1_jobs(studyid,basedir,modelname,specificruns,sys_args.specificruns,nofeat)
 
-def get_level1_jobs(studyid,basedir,modelname,specificruns,sys_args_specificruns):
+def get_level1_jobs(studyid,basedir,modelname,specificruns,sys_args_specificruns,nofeat):
 	"""
 	Args:
 		specificruns (dict): from model_params.json
@@ -136,7 +140,7 @@ def get_level1_jobs(studyid,basedir,modelname,specificruns,sys_args_specificruns
 							if os.path.exists(feat_file):
 								print "WARNING: Existing feat file found: %s"%feat_file
 							args=sys_argv[:] # copies over the list of model params
-							args=add_args(args,sub,task,run) # adds subject, task, and run 
+							args=add_args(args,sub,task,run,nofeat) # adds subject, task, and run 
 							args.append('--ses') # adds session
 							args.append(sesname) 
 							jobs.append(args) # each list 'args' specifies the arguments to run mk_level1_fsf_bbr on
@@ -162,7 +166,7 @@ def get_level1_jobs(studyid,basedir,modelname,specificruns,sys_args_specificruns
 						if os.path.exists(feat_file):
 							print "WARNING: Existing feat file found: %s"%feat_file
 						args=sys_argv[:]
-						args=add_args(args,sub,task,run)
+						args=add_args(args,sub,task,run,nofeat)
 						jobs.append(args)
 				if len(study_info_copy[subid][task])==0: # if there are no runs for this task
 					del study_info_copy[subid][task]  # remove the task from the dictionary

@@ -28,6 +28,8 @@ def parse_command_line(argv):
 		default="02:00:00",help='Estimated time to run each job - hh:mm:ss')
 	parser.add_argument('-N', '--nodes',dest='nodes',type=int,
 		default=1,help='Number of nodes')
+	parser.add_argument('--nofeat',dest='nofeat',action='store_true',
+		default=False,help='Only create the fsf\'s, don\'t call feat')
 	
 	parser.add_argument('--studyid', dest='studyid',
 		required=True,help='Study ID')
@@ -62,6 +64,7 @@ def main(argv=None):
 	basedir=args.basedir
 	modelname=args.modelname
 	specificruns=args.specificruns
+	nofeat=args.nofeat
 
 	# double checks with user that all files have been set
 	modeldir=os.path.join(basedir,studyid,'model','level1','model-%s'%modelname)
@@ -72,7 +75,7 @@ def main(argv=None):
 	print '\t%s/task_contrasts.json (optional but must be removed if not using)'%modeldir
 	print '\t%s/design_level1_custom.stub (optional)'%modeldir
 	print '\tEV files under the onset directories'
-	while rsp != 'y' and rsp != '':
+	while rsp != '':
 		rsp=raw_input('Press ENTER to continue:')	
 	
 	# get specificruns from model_params
@@ -81,48 +84,57 @@ def main(argv=None):
 		specificruns=args.specificruns
 
 	# get the list of jobs to run
-	jobs=get_level1_jobs.get_level1_jobs(studyid,basedir,modelname,specificruns,specificruns) 
+	jobs=get_level1_jobs.get_level1_jobs(studyid,basedir,modelname,specificruns,specificruns,nofeat) 
 	njobs=len(jobs)
-	print "WARNING: If any feat files exist (warnings would be printed above), they will not be overwritten if you continue."
-	rsp=None
-	while rsp != '':
-		rsp=raw_input('Press ENTER to continue:')
 	# turn the list of jobs into a dictionary with the index as the key
 	jobsdict={}
 	for i in range(0,njobs):
 		jobsdict[i]=jobs[i]
-	# create an sbatch file to run the job array
-	with open('run_level1.sbatch', 'w') as qsubfile:
-		qsubfile.write('#!/bin/sh\n')
-		qsubfile.write('#\n')
-		qsubfile.write('#SBATCH -J run_level1_feat\n')
-		qsubfile.write('#SBATCH -A %s\n'%(account))
-		qsubfile.write('#SBATCH -N %d\n'%(nodes))
-		qsubfile.write('#SBATCH -c 1\n')
-		qsubfile.write('#SBATCH --time=%s\n'%(time))
-		qsubfile.write('#SBATCH --mail-user=%s\n'%(email))
-		qsubfile.write('#SBATCH --mail-type=ALL\n')
-		qsubfile.write('#SBATCH --array=%s-%s\n'%(0,njobs-1))
-		qsubfile.write('#----------------\n')
-		qsubfile.write('# Job Submission\n')
-		qsubfile.write('#----------------\n')
-		qsubfile.write("python run_feat_job.py --jobs '%s' -i $SLURM_ARRAY_TASK_ID --level 1"%json.dumps(jobsdict))
-	try:
-		subprocess.call(['sbatch','run_level1.sbatch'])
-	except:
-		print "\nNOTE: sbatch command was not found."
+
+	if nofeat:
+		for i in range(njobs):
+			call_feat_job(i,jobsdict,level)
+		print '\n%s *.fsf files created.'%(njobs)
+	else:
+		print "WARNING: If any feat files exist (warnings would be printed above), they will not be overwritten if you continue."
 		rsp=None
-		while rsp != 'n' and rsp != '':
-			rsp=raw_input('Do you want to run the jobs in parallel using multiprocessing? (ENTER/n) ')
-		if rsp == '':
-			inputs = range(njobs)
-			num_cores = multiprocessing.cpu_count()
-			print 'NOTE: Running feat in parallel across %s cores now...\n'%(num_cores)
-			results = Parallel(n_jobs=num_cores)(delayed(call_feat_job)(i,jobsdict,level) for i in inputs)
-		else:
-			print "NOTE: Running commands serially now...\n"
-			for i in range(njobs):
-				call_feat_job(i,jobsdict,level)
+		while rsp != '':
+			rsp=raw_input('Press ENTER to continue:')
+
+		# create an sbatch file to run the job array
+		with open('run_level1.sbatch', 'w') as qsubfile:
+			qsubfile.write('#!/bin/sh\n')
+			qsubfile.write('#\n')
+			qsubfile.write('#SBATCH -J run_level1_feat\n')
+			qsubfile.write('#SBATCH -A %s\n'%(account))
+			qsubfile.write('#SBATCH -N %d\n'%(nodes))
+			qsubfile.write('#SBATCH -c 1\n')
+			qsubfile.write('#SBATCH --time=%s\n'%(time))
+			qsubfile.write('#SBATCH --mail-user=%s\n'%(email))
+			qsubfile.write('#SBATCH --mail-type=ALL\n')
+			qsubfile.write('#SBATCH --array=%s-%s\n'%(0,njobs-1))
+			qsubfile.write('#----------------\n')
+			qsubfile.write('# Job Submission\n')
+			qsubfile.write('#----------------\n')
+			qsubfile.write("python run_feat_job.py --jobs '%s' -i $SLURM_ARRAY_TASK_ID --level 1"%json.dumps(jobsdict))
+
+		try:
+			subprocess.call(['sbatch','run_level1.sbatch'])
+		except:
+			print "\nNOTE: sbatch command was not found."
+			rsp=None
+			while rsp != 'n' and rsp != '':
+				rsp=raw_input('Do you want to run the jobs in parallel using multiprocessing? (ENTER/n) ')
+			if rsp == '':
+				inputs = range(njobs)
+				num_cores = multiprocessing.cpu_count()
+				print 'NOTE: Running feat in parallel across %s cores now...\n'%(num_cores)
+				results = Parallel(n_jobs=num_cores)(delayed(call_feat_job)(i,jobsdict,level) for i in inputs)
+			else:
+				print "NOTE: Running commands serially now...\n"
+				for i in range(njobs):
+					call_feat_job(i,jobsdict,level)
+
 
 if __name__ == '__main__':
 	main()
