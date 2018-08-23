@@ -75,21 +75,34 @@ def main(argv=None):
 			tasks=study_info[subid][ses].keys()
 			list.sort(tasks)
 			for task in tasks:
-				args=[studyid,subids,task,basedir,modelname,sesname,randomise]
+				args=argparse.Namespace()
+				args.studyid=studyid
+				args.subids=subids
+				args.taskname=task
+				args.basedir=basedir
+				args.modelname=modelname
+				args.sesname=sesname
+				args.randomise=randomise
 				jobs.append(args)
 	else:
 		sesname=''
 		tasks=study_info[subid].keys()
 		list.sort(tasks)
 		for task in tasks:
-			args=[studyid,subids,task,basedir,modelname,sesname,randomise]
+			args=argparse.Namespace()
+			args.studyid=studyid
+			args.subids=subids
+			args.taskname=task
+			args.basedir=basedir
+			args.modelname=modelname
+			args.sesname=sesname
+			args.randomise=randomise
 			jobs.append(args)
 
 	# creates fsf's and retrieves a list of their names
 	all_copes=[]
 	for job_args in jobs:
-		args=job_args
-		copes=mk_level3_fsf.mk_level3_fsf(studyid=args[0],subids=args[1],taskname=args[2],basedir=args[3],modelname=args[4],sesname=args[5],randomise=args[6])
+		copes=mk_level3_fsf.mk_level3_fsf(job_args)
 		all_copes+=copes
 
 	print len(all_copes), "jobs"

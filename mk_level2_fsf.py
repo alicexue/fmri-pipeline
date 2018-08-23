@@ -65,49 +65,41 @@ def main(argv=None):
     args=parse_command_line(argv)
     print args
     
-    studyid=args.studyid
-    subid=args.subid
-    sesname=args.sesname
-    taskname=args.taskname
-    runs=args.runs
-    basedir=args.basedir
-    modelname=args.modelname
-    callfeat=args.callfeat
-    
-    print studyid,subid,sesname,taskname,runs,basedir,modelname,callfeat
-    
-    mk_level2_fsf(studyid,subid,taskname,runs,basedir,modelname,sesname,callfeat)
+    mk_level2_fsf(args)
 
+# a: Namespace object, output of parser_command_line
+def mk_level2_fsf(a):
+    # attributes in a:
+    # studyid,subid,taskname,runs,basedir,modelname,sesname,callfeat
 
-def mk_level2_fsf(studyid,subid,taskname,runs,basedir,modelname,sesname='',callfeat=False):
     _thisDir = os.path.dirname(os.path.abspath(__file__)).decode(sys.getfilesystemencoding())
 
     # set up variables 
-    subid='sub-%s'%(subid)
+    subid='sub-%s'%(a.subid)
     subid_ses=subid
-    if sesname!="":
-        subid_ses+="_ses-%s"%(sesname) # for if files are prefixed with with the name of the session after the subject ID
+    if a.sesname!="":
+        subid_ses+="_ses-%s"%(a.sesname) # for if files are prefixed with with the name of the session after the subject ID
 
     # locate level 1 model dir, create level 2 model dir
-    lev1_model_subdir='%s/model/level1/model-%s/%s'%(os.path.join(basedir,studyid),modelname,subid)
-    model_subdir='%s/model/level2/model-%s/%s'%(os.path.join(basedir,studyid),modelname,subid)
-    if sesname!='':
-        lev1_model_subdir+='/ses-%s'%(sesname)
-        model_subdir+='/ses-%s'%(sesname)
-    model_subdir=os.path.join(model_subdir,'task-%s'%taskname)
+    lev1_model_subdir='%s/model/level1/model-%s/%s'%(os.path.join(a.basedir,a.studyid),a.modelname,subid)
+    model_subdir='%s/model/level2/model-%s/%s'%(os.path.join(a.basedir,a.studyid),a.modelname,subid)
+    if a.sesname!='':
+        lev1_model_subdir+='/ses-%s'%(a.sesname)
+        model_subdir+='/ses-%s'%(a.sesname)
+    model_subdir=os.path.join(model_subdir,'task-%s'%a.taskname)
     if not os.path.exists(model_subdir):
         os.makedirs(model_subdir)
 
 
     ## read the conditions_key file
     # if it's a json file
-    cond_key_json = os.path.join(basedir,studyid,'model/level1/model-%s/condition_key.json'%modelname)
+    cond_key_json = os.path.join(a.basedir,a.studyid,'model/level1/model-%s/condition_key.json'%a.modelname)
     # if it's a text file
-    cond_key_txt = os.path.join(basedir,studyid,'model/level1/model-%s/condition_key.txt'%modelname)
+    cond_key_txt = os.path.join(a.basedir,a.studyid,'model/level1/model-%s/condition_key.txt'%a.modelname)
     if os.path.exists(cond_key_json):
         cond_key = json.load(open(cond_key_json), object_pairs_hook=OrderedDict) # keep the order of the keys as they were in the json file 
-        if taskname in cond_key.keys():
-            cond_key = cond_key[taskname]
+        if a.taskname in cond_key.keys():
+            cond_key = cond_key[a.taskname]
         else:
             print "ERROR: Task name was not found in JSON file %s. Make sure the JSON file is formatted correctly"%(cond_key_json)
             sys.exit(-1)
@@ -117,21 +109,21 @@ def mk_level2_fsf(studyid,subid,taskname,runs,basedir,modelname,sesname='',callf
         conditions=[]
         # get the EV file names and the condition names
         for ev in ev_keys:
-            ev_files.append('%s_task-%s_run-%s_ev-%03d'%(subid_ses,taskname,runs[0],int(ev))) 
+            ev_files.append('%s_task-%s_run-%s_ev-%03d'%(subid_ses,a.taskname,a.runs[0],int(ev))) 
             conditions.append(cond_key[ev])  
     elif os.path.exists(cond_key_txt):
         cond_key=load_condkey(cond_key_txt)
-        conditions=cond_key[taskname].values()
-        cond_key = cond_key[taskname]
+        conditions=cond_key[a.taskname].values()
+        cond_key = cond_key[a.taskname]
     else:
-        print "ERROR: Could not find condition key in %s"%(os.path.join(basedir,studyid,'model/level1/model-%s'%modelname))
+        print "ERROR: Could not find condition key in %s"%(os.path.join(a.basedir,a.studyid,'model/level1/model-%s'%a.modelname))
         sys.exit(-1)
 
     ## get contrasts
     # if it's a json file
-    contrastsfile_json=os.path.join(basedir,studyid,'model/level1/model-%s/task_contrasts.json'%modelname)
+    contrastsfile_json=os.path.join(a.basedir,a.studyid,'model/level1/model-%s/task_contrasts.json'%a.modelname)
     # if it's a txt file
-    contrastsfile_txt=os.path.join(basedir,studyid,'model/level1/model-%s/task_contrasts.txt'%modelname)
+    contrastsfile_txt=os.path.join(a.basedir,a.studyid,'model/level1/model-%s/task_contrasts.txt'%a.modelname)
     if os.path.exists(contrastsfile_json):
         all_addl_contrasts = json.load(open(contrastsfile_json), object_pairs_hook=OrderedDict)
         all_addl_contrasts = dict(all_addl_contrasts)
@@ -140,20 +132,20 @@ def mk_level2_fsf(studyid,subid,taskname,runs,basedir,modelname,sesname='',callf
     elif os.path.exists(contrastsfile_txt):
         all_addl_contrasts=load_contrasts(contrastsfile)
     else:
-        print "WARNING: Could not find task_contrasts file in %s"%(os.path.join(basedir,studyid,'model/level1/model-%s'%modelname))
+        print "WARNING: Could not find task_contrasts file in %s"%(os.path.join(a.basedir,a.studyid,'model/level1/model-%s'%a.modelname))
         all_addl_contrasts={}
-    if all_addl_contrasts.has_key(taskname):
-        addl_contrasts=all_addl_contrasts[taskname]
+    if all_addl_contrasts.has_key(a.taskname):
+        addl_contrasts=all_addl_contrasts[a.taskname]
         n_addl_contrasts=len(addl_contrasts)
     else:
         n_addl_contrasts=0
 
-    nruns=len(runs)
+    nruns=len(a.runs)
 
     # get fsf template with default values
     stubfilename=os.path.join(_thisDir,'design_level2.stub')
-    customstubfilename=os.path.join(basedir,studyid,'model/level2/model-%s/design_level2_custom.stub'%modelname)
-    outfilename=os.path.join(model_subdir,'%s_task-%s.fsf'%(subid_ses,taskname))
+    customstubfilename=os.path.join(a.basedir,a.studyid,'model/level2/model-%s/design_level2_custom.stub'%a.modelname)
+    outfilename=os.path.join(model_subdir,'%s_task-%s.fsf'%(subid_ses,a.taskname))
     outfile=open(outfilename,'w')
     outfile.write('# Automatically generated by mk_fsf.py\n')
 
@@ -199,7 +191,7 @@ def mk_level2_fsf(studyid,subid,taskname,runs,basedir,modelname,sesname='',callf
     # first check for empty EV file
     empty_evs=[]
     for r in range(nruns):
-        empty_ev_file= "%s/task-%s_run-%s/onsets/%s_task-%s_run-%s_empty_evs.txt"%(lev1_model_subdir,taskname,runs[r],subid_ses,taskname,runs[r])
+        empty_ev_file= "%s/task-%s_run-%s/onsets/%s_task-%s_run-%s_empty_evs.txt"%(lev1_model_subdir,a.taskname,a.runs[r],subid_ses,a.taskname,a.runs[r])
         if os.path.exists(empty_ev_file):
             evfile=open(empty_ev_file,'r')
             empty_evs=[int(x.strip()) for x in evfile.readlines()]
@@ -217,7 +209,7 @@ def mk_level2_fsf(studyid,subid,taskname,runs,basedir,modelname,sesname='',callf
     regstandard=os.path.join(FSLDIR,'data/standard/MNI152_T1_2mm_brain')
     outfile.write('set fmri(regstandard) "%s"\n'%regstandard)
 
-    outfile.write('set fmri(outputdir) "%s/%s_task-%s.gfeat"\n'%(model_subdir,subid_ses,taskname))
+    outfile.write('set fmri(outputdir) "%s/%s_task-%s.gfeat"\n'%(model_subdir,subid_ses,a.taskname))
     outfile.write('set fmri(npts) %d\n'%nruns) # number of runs
     outfile.write('set fmri(multiple) %d\n'%nruns) # number of runs
     outfile.write('set fmri(ncopeinputs) %d\n'%int(len(cond_key)+1+n_addl_contrasts)) # number of copes
@@ -225,16 +217,16 @@ def mk_level2_fsf(studyid,subid,taskname,runs,basedir,modelname,sesname='',callf
     # iterate through runs
     for r in range(nruns):
         # check that feat folder for this run for this subject exists in the level 1 directory
-        feat_folder="%s/task-%s_run-%s/%s_task-%s_run-%s.feat"%(lev1_model_subdir,taskname,runs[r],subid_ses,taskname,runs[r])
+        feat_folder="%s/task-%s_run-%s/%s_task-%s_run-%s.feat"%(lev1_model_subdir,a.taskname,a.runs[r],subid_ses,a.taskname,a.runs[r])
         if not os.path.exists(feat_folder):
             print "ERROR: Feat folder for level 1 analysis does not exist here: %s"%feat_folder
             sys.exit(-1)
 
-        feat_folder_loc="%s/task-%s_run-%s"%(lev1_model_subdir,taskname,runs[r])
+        feat_folder_loc="%s/task-%s_run-%s"%(lev1_model_subdir,a.taskname,a.runs[r])
         folders=os.listdir(feat_folder_loc)
         feat_folders=[]
         for f in folders:
-            if f.startswith('%s_task-%s_run-%s'%(subid_ses,taskname,runs[r])) and f.endswith('.feat'):
+            if f.startswith('%s_task-%s_run-%s'%(subid_ses,a.taskname,a.runs[r])) and f.endswith('.feat'):
                 feat_folders.append(f)
         if len(feat_folders) > 1:
             print "WARNING: Multiple feat folders found. Using %s"%(feat_folder)
@@ -287,7 +279,7 @@ def mk_level2_fsf(studyid,subid,taskname,runs,basedir,modelname,sesname='',callf
 
     print 'outfilename: '+outfilename
 
-    if callfeat:
+    if a.callfeat:
         featargs = ["feat",outfilename]
         print "Calling", ' '.join(featargs)
         sub.call(featargs)
