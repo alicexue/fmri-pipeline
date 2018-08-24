@@ -1,7 +1,7 @@
 # fmri-pipeline
 
 ## Overview:
-- manage_flywheel_downloads.py downloads fmriprep outputs and raw BIDS from Flywheel
+- manage_flywheel_downloads.py can download fmriprep outputs (including freesurfer outputs + html/svg reports) and can export raw BIDS from Flywheel
 
 - Creates *.fsf files for level 1, level 2, and level 3 analysis of fmri data.
 - Runs fsl's feat on the created *.fsf files in a slurm job array (or runs feat serially if not running on a cluster).
@@ -10,7 +10,7 @@
 
 #### For downloading data from Flywheel:
 - Have the [Flywheel Python SDK](https://flywheel-io.github.io/core/branches/master/python/getting_started.html) installed to download fmriprep outputs from Flywheel. 
-- Have your Flywheel API key handy (see your user profile)
+- Have your Flywheel API key handy (see your user profile). 
 - To export raw BIDS, you must have [Docker](https://docs.docker.com/install/#cloud) installed and running and the [Flywheel CLI](https://docs.flywheel.io/pages/viewpage.action?pageId=983739) installed. Make sure to log into the CLI with your API key.
 - Requirements listed in requirements.txt
 
@@ -30,7 +30,7 @@
 
 #### For running fmri analyses:
 1. Run setup.py to create the model directory and all necessary sub-directories. This will also create empty/sample *.json files (model_params.json, condition_key.json, task_contrasts.json) and onset directories for the EV files. 
-2. Fill out model_params.json under model00\<N>, see Terminology below for explanation of the abbreviations.
+2. Fill out model_params.json under model00\<N>, see abbreviation explanations below.
 3. Fill out condition_key.json under model00\<N>, where the task name is the key and the value is a json object with EV names as keys and the conditions as values. (Note: The EV files, *_ev-00\<N>, are always padded with leading zeros so that there are 3 digits)
 4. If you need to specify task contrasts, fill out task_contrasts.json, where the key is the task name and the value is a json object in which the key is the name of the contrast and the value is a list that represents the contrast vector. If you don't want to specify task contrasts for this model, remove the file.
 5. Create the EV files, which belong in the 'onsets' directories under each run folder. Make sure the EV files are named correctly (see the diagram below). Confound files should be saved in the same location as the EV files (the file name ends in *_ev-confounds, see below).
@@ -38,7 +38,8 @@
 7. To run level 1, use run_level1.py, which will create a job array where each job creates a *.fsf file for one run and runs feat on that run. (By default, if the argument specificruns is not specified, fsf's will be created for all runs)
 8. Level 2 and level 3 are run similarly. Use the -h option to see explanations of the parameters
 
-## File Structure:
+## Directory Structure:
+- Session directories are optional. If there aren't multiple sessions, omit the session label from EV file names.
 ```
 basedir
 │
@@ -50,9 +51,9 @@ basedir
     │
     └───fmriprep
     │	│
-    │	└───anat (can have preprocessed data here or below, under ses-01)
+    │	└───anat (can have preprocessed data here or below, under ses-<sesname>)
     │	│
-    │	└───ses-01
+    │	└───ses-<sesname>
     │	    │
     │	    └───anat (can have preprocessed data here)
     │	    │
@@ -70,12 +71,16 @@ basedir
 	    	│
 		└───sub-<subid>
 		    │
-		    └───task-<taskname>_run-<runname>
-		        │
-			└───onsets
-			    │   sub-<subid>_task-<taskname>_run-<runname>_ev-00<N> (can be .txt or .tsv file) 
-			    |   sub-<subid>_task-<taskname>_run-<runname>_ev-confounds (can be .txt or .tsv file) 
+		    │
+		    └───ses-<sesname>
+			│
+		        └───task-<taskname>_run-<runname>
 			    │
+			    └───onsets
+			        │   sub-<subid>_ses-<sesname>_task-<taskname>_run-<runname>_ev-00<N> (can be .txt or .tsv file) 
+			        |   sub-<subid>_ses-<sesname>_task-<taskname>_run-<runname>_ev-confounds (can be .txt or .tsv file) 
+			        │
+	
 ```
 
 ## Explanations of abbreviations:
