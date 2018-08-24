@@ -8,6 +8,7 @@ Runs the generated sbatch file
 # Created by Alice Xue, 06/2018
 
 import argparse
+import datetime
 from joblib import Parallel, delayed
 import json
 import multiprocessing
@@ -48,6 +49,7 @@ def call_feat_job(i,jobsdict,level):
 
 def main(argv=None):
 	level=3
+	d=datetime.datetime.now()
 
 	args=parse_command_line(argv)
 	email=args.email
@@ -81,6 +83,7 @@ def main(argv=None):
 		print '\n%s *.fsf files created.'%(njobs)
 	else:
 		# create an sbatch file to run the job array
+		j='level3-feat'
 		with open('run_level3.sbatch', 'w') as qsubfile:
 			qsubfile.write('#!/bin/sh\n')
 			qsubfile.write('#\n')
@@ -92,6 +95,7 @@ def main(argv=None):
 			qsubfile.write('#SBATCH --mail-user=%s\n'%(email))
 			qsubfile.write('#SBATCH --mail-type=ALL\n')
 			qsubfile.write('#SBATCH --array=%s-%s\n'%(0,njobs-1))
+			qsubfile.write('#SBATCH -o %s_%s_%s.o\n'%(j,d.strftime("%d_%B_%Y_%Hh_%Mm_%Ss"),'%a'))
 			qsubfile.write('#----------------\n')
 			qsubfile.write('# Job Submission\n')
 			qsubfile.write('#----------------\n')

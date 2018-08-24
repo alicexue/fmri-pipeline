@@ -520,17 +520,16 @@ def mk_level1_fsf_bbr(a):
 
             contrastctr+=1
     
-    if a.confound:
-        # Add confound EVs text file
-        confoundfile='%s/onsets/%s_task-%s_run-%s_ev-confounds.tsv'%(model_subdir,subid_ses,a.taskname,a.runname)
-        if not os.path.exists(confoundfile):
-            confoundfile='%s/onsets/%s_task-%s_run-%s_ev-confounds.txt'%(model_subdir,subid_ses,a.taskname,a.runname)
-        if os.path.exists(confoundfile) and a.confound:
-            outfile.write('set fmri(confoundevs) 1\n')
-            outfile.write('set confoundev_files(1) "%s"\n'%confoundfile)
-        else:
-            print "No confounds file found"
-            outfile.write('set fmri(confoundevs) 0\n')
+    # Add confound EVs text file
+    confoundfile='%s/onsets/%s_task-%s_run-%s_ev-confounds.tsv'%(model_subdir,subid_ses,a.taskname,a.runname)
+    if not os.path.exists(confoundfile):
+        confoundfile='%s/onsets/%s_task-%s_run-%s_ev-confounds.txt'%(model_subdir,subid_ses,a.taskname,a.runname)
+    if os.path.exists(confoundfile) and a.confound:
+        outfile.write('set fmri(confoundevs) 1\n')
+        outfile.write('set confoundev_files(1) "%s"\n'%confoundfile)
+    else:
+        print "No confounds file found"
+        outfile.write('set fmri(confoundevs) 0\n')
         
     outfile.close()
 
