@@ -19,7 +19,7 @@ def main():
 	studyid=sys.argv[1]
 	basedir=sys.argv[2]
 	modelname=sys.argv[3]
-	create_model_level1_dir(studyid,basedir,modelname)
+	hasSessions=create_model_level1_dir(studyid,basedir,modelname)
 	create_empty_condition_key(studyid,basedir,modelname)
 	create_empty_task_contrasts_file(studyid,basedir,modelname)
 	create_level1_model_params_json(studyid,basedir,modelname)
@@ -29,7 +29,10 @@ def main():
 	print '\t', modeldir+'/condition_key.json'
 	print '\t', modeldir+'/task_contrasts.json'
 	print '\tand set the EV files under the onset directories'
-	print '\tThe EV files (can be .tsv or .txt) must be named like so: sub-<subid>_task-<taskname>_run-<runname>_ev-00<N>'
+	if hasSessions:
+		print '\tThe EV files (can be .tsv or .txt) must be named like so: sub-<subid>_ses-<sesname>_task-<taskname>_run-<runname>_ev-00<N>'
+	else:
+		print '\tThe EV files (can be .tsv or .txt) must be named like so: sub-<subid>_task-<taskname>_run-<runname>_ev-00<N>'
 
 
 if __name__ == '__main__':

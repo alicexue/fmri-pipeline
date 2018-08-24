@@ -118,6 +118,7 @@ def create_model_level1_dir(studyid,basedir,modelname):
 					i+=1
 	#print "Created %d onset directories and empty sample ev files"%(i)
 	print "Created %d onset directories"%(i)
+	return hasSessions
 
 def create_level1_model_params_json(studyid,basedir,modelname):
 	# Creates model_params.json file to define arguments 
@@ -131,6 +132,8 @@ def create_level1_model_params_json(studyid,basedir,modelname):
 		with open(modeldir+'/model_params.json','w') as outfile:
 			json.dump(params,outfile)
 		print "Created sample model_params.json with default values"
+	else:
+		print "Found existing model_params.json"
 
 def create_empty_condition_key(studyid,basedir,modelname):
 	# Creates an empty sample condition key 
@@ -172,6 +175,8 @@ def create_empty_condition_key(studyid,basedir,modelname):
 				condition_key[task]={"1":""}
 			json.dump(condition_key,outfile)
 		print "Created empty condition_key.json"
+	else:
+		print "Found existing condition_key.json"
 
 def create_empty_task_contrasts_file(studyid,basedir,modelname):
 	# Creates an empty task_contrasts file with the task names as keys
@@ -212,6 +217,8 @@ def create_empty_task_contrasts_file(studyid,basedir,modelname):
 				condition_key[task]={"1":[0,0,0]}
 			json.dump(condition_key,outfile)
 		print "Created empty task_contrasts.json"
+	else:
+		print "Found existing task_contrasts.json"
 
 def check_model_params_cli(studyid,basedir,modelname):
 	# Modifies model_params by interacting with user through the command line
@@ -222,21 +229,25 @@ def check_model_params_cli(studyid,basedir,modelname):
 			params = json.load(f)
 			new_params['modelname']=params['modelname']
 			# not including modelname
-			ordered_params=['specificruns','studyid','basedir','anatimg','nohpf','use_inplane','nowhiten','nonlinear','altBETmask','smoothing','doreg','noconfound','spacetag']
+			ordered_params=['studyid','basedir','specificruns','anatimg','nohpf','use_inplane','nowhiten','nonlinear','altBETmask','smoothing','doreg','noconfound','spacetag']
+			
 			for param in ordered_params:
 				cur_val=params[param]
-				pprint_ver=cur_val
-				if cur_val=='':
-					pprint_ver="\'\'"
-				print '\n', param+':', pprint_ver
+				if type(cur_val) == dict:
+					pprint_val=json.dumps(cur_val)
+				else:
+					pprint_val=cur_val
+				if ((type(cur_val) == str) or (type(cur_val) == unicode)) and len(cur_val) == 0:
+					pprint_val='\"\"'
+				print '\n', param+':', pprint_val
 				rsp=None
 				while rsp != 'y' and rsp != '':
 					rsp=raw_input('Do you want to change %s? (y/ENTER) '%(param))
 				if rsp == 'y':
-					if type(cur_val) == type(True): # if it's a boolean
+					if type(cur_val) == bool: # if it's a boolean, just reverse it 
 						new_params[param] = not cur_val
 					else:
-						if param == 'specificruns':
+						if param == 'specificruns': # this is a dictionary/json object
 							validinput=False
 							while not validinput:
 								try:
@@ -247,16 +258,37 @@ def check_model_params_cli(studyid,basedir,modelname):
 									print "Invalid value for specificruns. Must be able to call json.loads on the input."
 									print """Example: {"sub-01": {"ses-01": {"flanker": ["1", "2"]}}, "sub-02": {"ses-01": {"flanker": ["1", "2"]}}}"""
 						else:
-							new_param_val=raw_input('New value of %s: '%param)
-							new_params[param] = new_param_val
-					print '%s changed to %s'%(param,new_params[param])
+							validinput=False
+							while not validinput:
+								new_param_val=raw_input('New value of %s: '%param)
+								if type(cur_val) == int: 
+									try: # make sure input is integer 
+									    new_param_val=int(new_param_val)
+									    new_params[param]=new_param_val
+									    validinput=True
+									except ValueError:
+									    validinput=False
+								else:
+									new_params[param]=new_param_val
+									validinput=True
+
+					if type(cur_val) == dict:
+						print '%s changed to %s'%(param,json.dumps(new_params[param]))
+					else:
+						pprint_val = new_params[param]
+						if ((type(pprint_val) == str) or (type(pprint_val) == unicode)) and (len(pprint_val) == 0):
+							pprint_val='\"\"'
+						print '%s changed to %s'%(param,pprint_val)
 				else:
 					new_params[param]=params[param]
 	with open(modeldir+'/model_params.json','w') as outfile:
 		json.dump(new_params,outfile)
 		print '\nUpdated %s.'%(modeldir+'/model_params.json')
 		for param in ['modelname']+ordered_params:
-			pprint_val=new_params[param]
-			if pprint_val == '':
-				pprint_val="\'\'"
+			if type(new_params[param]) == dict:
+				pprint_val=json.dumps(new_params[param])
+			else:
+				pprint_val=new_params[param]
+			if ((type(pprint_val) == str) or (type(pprint_val) == unicode)) and (len(pprint_val) == 0):
+				pprint_val='\"\"'
 			print param+':', pprint_val
