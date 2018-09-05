@@ -134,6 +134,8 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downlo
 										print 'Downloading', sub+'/ses-'+session['label'] + ':', file.name
 										filepath=os.path.join(tmpdir,outfile)
 										fw.download_output_from_session_analysis(session.id, most_recent_analysis_id, file.name, filepath)
+										#download_request = fw.download_session_analysis_outputs(session.id, most_recent_analysis_id, ticket='')
+										#fw.download_ticket(download_request.ticket, filepath)
 										unzippedfilepath=filepath[:-4]
 										# unzip the file
 										unzip_dir(filepath,unzippedfilepath)
@@ -199,6 +201,8 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downlo
 										print 'Downloading', sub+'/ses-'+session['label'] + ':', file.name
 										filepath=os.path.join(tmpdir,outfile)
 										fw.download_output_from_session_analysis(session.id, most_recent_analysis_id, file.name, filepath)
+										#download_request = fw.download_session_analysis_outputs(session.id, most_recent_analysis_id, ticket='')
+										#fw.download_ticket(download_request.ticket, filepath)
 										# unzips outputs
 										unzippedfilepath=filepath[:-4] # removes .zip from name 
 										unzip_dir(filepath,unzippedfilepath)
@@ -212,6 +216,7 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downlo
 										i=3
 										curdir=''
 										fullcurdir=unzippedfilepath
+										desireddir=os.path.join(fullcurdir,'fmriprep',sub)
 										moved=False
 										while i > 0 and curdir!='fmriprep':
 											if downloadFmriprep and continueFmriprepDownload and 'fmriprep' in os.listdir(fullcurdir):

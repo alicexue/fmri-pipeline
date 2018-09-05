@@ -136,7 +136,7 @@ while rsp!='n' and rsp!='':
 		downloadReports=True
 rsp=None
 while rsp!='n' and rsp!='':
-	rsp=raw_input('Do you want to download the freesurfer outputs? (ENTER/n) ')
+	rsp=raw_input('Do you want to download freesurfer outputs? (ENTER/n) ')
 	if rsp=='':
 		downloadFreesurfer=True
 
