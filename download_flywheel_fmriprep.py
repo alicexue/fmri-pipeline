@@ -19,6 +19,7 @@ Notes:
 import flywheel
 import os
 from pprint import pprint
+import re
 import subprocess as sp
 import sys
 
@@ -83,12 +84,14 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downlo
 			for session in fw.get_project_sessions(project.id):
 				dates=[]
 				analysis_ids={} # key is date, value is analysis.id
+				analysis_objs={} # key is analysis.id, value is analysis object
 				for analysis in fw.get_session_analyses(session.id):
 					# looks for fmriprep analyses
 					if 'fmriprep' in analysis.label:
 						print('\tAnalysis: %s: %s' % (analysis.id, analysis.label))
 						date_created=analysis.created
 						analysis_ids[date_created]=analysis.id
+						analysis_objs[analysis.id]=analysis
 						if analysis.files!=None: # checks for output files - that fmriprep succeeded 
 							dates.append(date_created)
 						
@@ -104,7 +107,7 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downlo
 						print 'Could not use fw.download_session_analysis_outputs'
 						print('API Error: %d -- %s' % (e.status, e.reason))
 					"""
-					for file in analysis.files:
+					for file in analysis_objs[most_recent_analysis_id].files:
 						#print file.name
 						name = file.name
 						# assumes subject ID is between sub- and _ or between sub- and .
@@ -122,16 +125,18 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downlo
 								# get fmriprep reports (html and svg files)
 								if downloadReports and 'html' in file.name: # sub-<id>.html.zip
 									subreportsdir=os.path.join(reportsdir,sub)
-									subsesreportsdir=os.path.join(reportsdir,sub,'ses-'+session['label'])
+									session_label=session['label']
+									session_label=re.sub(r'[^a-zA-Z0-9]+', '', session_label) # remove non-alphanumeric characters
+									subsesreportsdir=os.path.join(reportsdir,sub,'ses-'+session_label)
 									if os.path.exists(subsesreportsdir):
-										print 'Skipping downloading and processing of fmriprep reports for %s/ses-%s'%(sub,session['label'])
+										print 'Skipping downloading and processing of fmriprep reports for %s/ses-%s'%(sub,session_label)
 									else:
 										downloadSessionOnly=False
 										if os.path.exists(subreportsdir):
 											downloadSessionOnly=True
 										# download the file
 										outfile=sub+'.html.zip'
-										print 'Downloading', sub+'/ses-'+session['label'] + ':', file.name
+										print 'Downloading', sub+'/ses-'+session_label + ':', file.name
 										filepath=os.path.join(tmpdir,outfile)
 										fw.download_output_from_session_analysis(session.id, most_recent_analysis_id, file.name, filepath)
 										#download_request = fw.download_session_analysis_outputs(session.id, most_recent_analysis_id, ticket='')
@@ -151,7 +156,7 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downlo
 												desireddir=os.path.join(fullcurdir,sub)
 												targetdir=reportsdir
 												if downloadSessionOnly:
-													desireddir=os.path.join(fullcurdir,sub,'ses-'+session['label'])
+													desireddir=os.path.join(fullcurdir,sub,'ses-'+session_label)
 													targetdir=os.path.join(reportsdir,sub)
 												#if not os.path.exists(targetdir):
 												#	os.mkdir(targetdir)
@@ -173,7 +178,7 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downlo
 											subreportsdir=os.path.join(reportsdir,sub)
 											move_dir(indexhtmlpath,subreportsdir)
 											oldindexhtml=os.path.join(subreportsdir,'index.html')
-											newindexhtml=os.path.join(subreportsdir,'ses-'+session['label'],'%s.html'%sub)
+											newindexhtml=os.path.join(subreportsdir,'ses-'+session_label,'%s.html'%sub)
 											move_dir(oldindexhtml,newindexhtml)
 										# remove originally downloaded files
 										remove_dir(filepath)
@@ -183,11 +188,13 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downlo
 								elif (downloadFmriprep or downloadFreesurfer) and file.name.startswith('fmriprep_'+sub): # fmriprep_sub-<subid>_<random alphanumericcode?>.zip
 									subfmriprepdir=os.path.join(fmriprepdir,sub)
 									subfreesurferdir=os.path.join(freesurferdir,sub)
-									subsesfmriprepdir=os.path.join(fmriprepdir,sub,'ses-'+session['label'])
+									session_label=session['label']
+									session_label=re.sub(r'[^a-zA-Z0-9]+', '', session_label) # remove non-alphanumeric characters
+									subsesfmriprepdir=os.path.join(fmriprepdir,sub,'ses-'+session_label)
 									continueFmriprepDownload=downloadFmriprep
 									continueFreesurferDownload=downloadFreesurfer
 									if downloadFmriprep and os.path.exists(subsesfmriprepdir):
-										print 'Skipping downloading and processing of fmriprep outputs for %s/ses-%s'%(sub,session['label'])
+										print 'Skipping downloading and processing of fmriprep outputs for %s/ses-%s'%(sub,session_label)
 										continueFmriprepDownload=False
 									if downloadFreesurfer and os.path.exists(subfreesurferdir):
 										print 'Skipping downloading and processing of freesurfer outputs for %s'%sub
@@ -198,7 +205,7 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downlo
 											downloadSessionOnly=True
 										outfile=sub+'.zip'
 										# downloads outputs
-										print 'Downloading', sub+'/ses-'+session['label'] + ':', file.name
+										print 'Downloading', sub+'/ses-'+session_label + ':', file.name
 										filepath=os.path.join(tmpdir,outfile)
 										fw.download_output_from_session_analysis(session.id, most_recent_analysis_id, file.name, filepath)
 										#download_request = fw.download_session_analysis_outputs(session.id, most_recent_analysis_id, ticket='')
@@ -223,7 +230,7 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downlo
 												desireddir=os.path.join(fullcurdir,'fmriprep',sub)
 												targetdir=fmriprepdir
 												if downloadSessionOnly:
-													desireddir=os.path.join(fullcurdir,'fmriprep',sub,'ses-'+session['label'])
+													desireddir=os.path.join(fullcurdir,'fmriprep',sub,'ses-'+session_label)
 													targetdir=os.path.join(fmriprepdir,sub)
 
 												tmpsubfmriprepdir=os.path.join(fullcurdir,'fmriprep',sub)
