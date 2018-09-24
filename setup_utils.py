@@ -148,7 +148,7 @@ def create_level1_model_params_json(studyid,basedir,modelname):
 				
 	if not os.path.exists(modeldir+'/model_params.json'):
 		with open(modeldir+'/model_params.json','w') as outfile:
-			json.dump(params,outfile)
+			json.dump(params,outfile,sort_keys=True, indent=4)
 		print "Created sample model_params.json with default values"
 	else:
 		print "Found existing model_params.json"
@@ -194,7 +194,7 @@ def create_empty_condition_key(studyid,basedir,modelname):
 			condition_key={}
 			for task in all_tasks:
 				condition_key[task]={"1":""}
-			json.dump(condition_key,outfile)
+			json.dump(condition_key,outfile,sort_keys=True, indent=4)
 		print "Created empty condition_key.json"
 	else:
 		print "Found existing condition_key.json"
@@ -239,7 +239,7 @@ def create_empty_task_contrasts_file(studyid,basedir,modelname):
 			condition_key={}
 			for task in all_tasks:
 				condition_key[task]={"1":[0,0,0]}
-			json.dump(condition_key,outfile)
+			json.dump(condition_key,outfile,sort_keys=True, indent=4)
 		print "Created empty task_contrasts.json"
 	else:
 		print "Found existing task_contrasts.json"
@@ -313,7 +313,7 @@ def check_model_params_cli(studyid,basedir,modelname):
 				else:
 					new_params[param]=params[param]
 	with open(modeldir+'/model_params.json','w') as outfile:
-		json.dump(new_params,outfile)
+		json.dump(new_params,outfile,sort_keys=True, indent=4)
 		print '\nUpdated %s.'%(modeldir+'/model_params.json')
 		for param in ['modelname']+ordered_params:
 			if isinstance(new_params[param],dict):
