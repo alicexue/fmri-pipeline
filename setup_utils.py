@@ -50,14 +50,19 @@ def model_params_json_to_list(studyid,basedir,modelname):
 		action_params={'nonlinear':False,'nohpf':True,'nowhiten':True,'noconfound':True,'doreg':False,'altBETmask':False}
 		# keys in action_params are arguments that have action that stores parameter as true/false
 		# values in action_params are default arguments
+		params_with_diff_dest=['nohpf','nowhiten','noconfound']
 		args=[]
 		for p in no_action_params:
 			args.append('--'+p)
 			args.append(str(params[p]))
 
 		for p in action_params.keys():
-			if params[p] != action_params[p]: # if the passed parameter is not the same as the default value
-				args.append('--'+p)
+			if p not in params_with_diff_dest: 
+				if params[p] != action_params[p]: # if the passed parameter is not the same as the default value
+					args.append('--'+p)
+			else:
+				if params[p] == action_params[p]: # if the passed parameter is same as the default value, then add this arg to do the opposite
+					args.append('--'+p)
 		return args
 	else:
 		print "model_params.json does not exist in %s"%modeldir

@@ -75,11 +75,20 @@ def main(argv=None):
 	print '\t%s/model_params.json'%modeldir
 	print '\t%s/condition_key.json'%modeldir
 	print '\t%s/task_contrasts.json (optional but must be removed if not using)'%modeldir
+	print '\t%s/confounds.json (optional but must be removed if not using)'%modeldir
 	print '\t%s/design_level1_custom.stub (optional)'%modeldir
 	print '\tEV files under the onset directories'
 	while rsp != '':
 		rsp=raw_input('Press ENTER to continue:')	
 	
+	hasSessions=False
+	studydir=os.path.join(basedir,studyid)
+	study_info=setup_utils.get_study_info(studydir,hasSessions)
+	if len(study_info.keys()) > 0:
+		if not study_info[study_info.keys()[0]]: # if empty
+			hasSessions=True
+	setup_utils.generate_confounds_files(studyid,basedir,hasSessions,modelname)
+
 	# get specificruns from model_params
 	args=setup_utils.model_params_json_to_namespace(studyid,basedir,modelname) 
 	if specificruns == {}: # if specificruns from sys.argv is empty (default), use specificruns from model_param
