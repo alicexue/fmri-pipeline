@@ -24,6 +24,9 @@ def main():
 	create_empty_task_contrasts_file(studyid,basedir,modelname)
 	create_level1_model_params_json(studyid,basedir,modelname)
 	check_model_params_cli(studyid,basedir,modelname)
+	model_params_ns=model_params_json_to_namespace(studyid,basedir,modelname)
+	if model_params_ns.confound: # want to include confounds
+		create_default_confounds_json(studyid,basedir,hasSessions,modelname)
 	modeldir=os.path.join(basedir,studyid,'model','level1','model-%s'%modelname)
 	print '\nMake sure to modify:'
 	print '\t', modeldir+'/condition_key.json'
@@ -33,6 +36,8 @@ def main():
 		print '\tThe EV files (can be .tsv or .txt) must be named like so: sub-<subid>_ses-<sesname>_task-<taskname>_run-<runname>_ev-00<N>'
 	else:
 		print '\tThe EV files (can be .tsv or .txt) must be named like so: sub-<subid>_task-<taskname>_run-<runname>_ev-00<N>'
+	if model_params_ns.confound:
+		print '\tSince you want to include confound modeling, make sure to modify %s/confounds.json with the confounds you wish to include.'%(modeldir)
 
 
 if __name__ == '__main__':

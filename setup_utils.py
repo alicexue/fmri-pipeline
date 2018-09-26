@@ -3,12 +3,13 @@ Functions for interacting with model_params, condition_key, and task_contrasts
 """
 
 # Created by Alice Xue, 06/2018
-
+from argparse import Namespace
 import copy
 import json
+import numpy as np
 import os
+import pandas as pd
 import sys
-from argparse import Namespace
 from directory_struct_utils import *
 
 def model_params_json_to_namespace(studyid,basedir,modelname):
@@ -23,14 +24,14 @@ def model_params_json_to_namespace(studyid,basedir,modelname):
 		args.studyid=params['studyid']
 		args.basedir=params['basedir']
 		args.anatimg=params['anatimg']
-		args.hpf=params['nohpf']
+		args.hpf=not params['nohpf']
 		args.use_inplane=params['use_inplane']
-		args.whiten=params['nowhiten']
+		args.whiten=not params['nowhiten']
 		args.nonlinear=params['nonlinear']
 		args.altBETmask=params['altBETmask']
 		args.smoothing=params['smoothing']
 		args.doreg=params['doreg']
-		args.confound=params['noconfound'] # args.confound instead of noconfound bc of dest 
+		args.confound=not params['noconfound'] # args.confound instead of noconfound bc of dest 
 		args.spacetag=params['spacetag']
 		return args
 	else:
@@ -152,6 +153,152 @@ def create_level1_model_params_json(studyid,basedir,modelname):
 		print "Created sample model_params.json with default values"
 	else:
 		print "Found existing model_params.json"
+
+class RunObj:
+	def __init__(self, sub, ses, task, run):
+		self.sub = sub
+		self.ses = ses # should be None if there are no sessions
+		self.task = task
+		self.run = run
+
+"""
+Get list of file name prefixes for all runs in specificruns
+A list of 'sub-<sub>[_ses-<ses>]_task-<task>_run-<run>'
+Checks if functional file exists
+"""
+def traverse_specificruns(studyid,basedir,specificruns,hasSessions):
+	run_objects=[]
+	study_info=specificruns
+	subs=study_info.keys()
+	list.sort(subs) 
+	# iterate through each subject, session, task, and runs
+	for subid in subs:
+		sub=subid[len('sub-'):] # sub is the subject ID without the prefix 'sub-'
+		if hasSessions:
+			sessions=study_info[subid].keys()
+			list.sort(sessions)
+			for ses in sessions:
+				sesname=ses[len('ses-'):]
+				tasks=study_info[subid][ses].keys()
+				list.sort(tasks)
+				for task in tasks:
+					runs=study_info[subid][ses][task]
+					list.sort(runs)
+					for run in runs:
+						funcdir=os.path.join(basedir,studyid,'fmriprep','sub-'+sub,'ses-'+sesname,'func')
+						fileprefix='sub-'+sub+'_ses-'+sesname+'_task-'+task+'_run-'+run
+						funcdirfiles=os.listdir(funcdir)
+						runfilesexists=False # check if any files in the func directory start with fileprefix
+						if os.path.exists(funcdir):
+							for f in funcdirfiles:
+								if f.startswith(fileprefix):
+									runfilesexists=True
+							run_objects.append(RunObj(sub,sesname,task,run))
+							#if runfilesexists:
+							#	file_prefixes.append(fileprefix)
+		else: # no sessions
+			tasks=study_info[subid].keys()
+			list.sort(tasks)
+			for task in tasks:
+				runs=study_info[subid][task]
+				list.sort(runs)
+				for run in runs:
+					funcdir=os.path.join(basedir,studyid,'fmriprep','sub-'+sub,'func')
+					fileprefix='sub-'+sub+'_task-'+task+'_run-'+run
+					funcdirfiles=os.listdir(funcdir)
+					runfilesexists=False # check if any files in the func directory start with fileprefix
+					if os.path.exists(funcdir):
+						for f in funcdirfiles:
+							if f.startswith(fileprefix):
+								runfilesexists=True
+						#if runfilesexists:
+						#	file_prefixes.append(fileprefix)
+						run_objects.append(RunObj(sub,None,task,run))
+	return run_objects
+
+"""
+Create default confounds.json file
+"""
+def get_possible_confounds(studyid,basedir,hasSessions,modelname):
+	studydir=os.path.join(basedir,studyid)
+	study_info=get_study_info(studydir,hasSessions)
+	run_objects=traverse_specificruns(studyid,basedir,study_info,hasSessions)
+	if len(run_objects)>0:
+		spef_run=run_objects[0]
+		if spef_run.ses != None: # there are sessions
+			funcdir=os.path.join(basedir,studyid,'fmriprep','sub-'+spef_run.sub,'ses-'+spef_run.ses,'func')
+			fileprefix='sub-'+spef_run.sub+'_ses-'+spef_run.ses+'_task-'+spef_run.task+'_run-'+spef_run.run
+		else: # no sessions
+			funcdir=os.path.join(basedir,studyid,'fmriprep','sub-'+sub,'func')
+			fileprefix='sub-'+sub+'_task-'+task+'_run-'+run
+		confounds_filepath=os.path.join(funcdir,fileprefix+'_bold_confounds.tsv')
+		if os.path.exists(confounds_filepath):
+			df=pd.read_csv(confounds_filepath,delim_whitespace=True)
+			possible_confounds=df.columns.tolist()
+			return possible_confounds
+		else:
+			print 'Could not find confounds %s'%(confounds_filepath)
+			return []
+
+def create_default_confounds_json(studyid,basedir,hasSessions,modelname):
+	modeldir=os.path.join(basedir,studyid,'model','level1','model-%s'%modelname)
+	possible_confounds=get_possible_confounds(studyid,basedir,hasSessions,modelname)
+	confounds_dict={'confounds':possible_confounds}
+	overwrite = False
+	if os.path.exists(modeldir+'/confounds.json'):
+		rsp=None
+		while rsp!='' and rsp!='n':
+			rsp=raw_input('Do you want to overwrite the existing confounds.json file with all possible confounds? (ENTER/n) ')
+		if rsp=='':
+			overwrite=True
+		else:
+			overwrite=False
+	if overwrite or not os.path.exists(modeldir+'/confounds.json'):
+		with open(modeldir+'/confounds.json','w') as outfile:
+			json.dump(confounds_dict,outfile,indent=4)
+		print 'Created confounds.json with list of all possible confounds from *_bold_confounds.tsv. File is located here: %s'%(modeldir+'/confounds.json')
+		print 'Make sure to modify this file before running level 1 analysis'
+	else:
+		print 'Did not overwrite existing confounds file found here: %s'%(modeldir+'/confounds.json')
+		
+
+def generate_confounds_files(studyid,basedir,hasSessions,modelname):
+	modeldir=os.path.join(basedir,studyid,'model','level1','model-%s'%modelname)
+	if os.path.exists(modeldir+'/confounds.json'):
+		with open(modeldir+'/confounds.json','r') as f:
+			confounds_dict = json.load(f)
+			confounds_list=confounds_dict['confounds']
+		studydir=os.path.join(basedir,studyid)
+		study_info=get_study_info(studydir,hasSessions)
+		run_objects=traverse_specificruns(studyid,basedir,study_info,hasSessions)
+		runs_without_bold_confounds=[]
+		for spef_run in run_objects:
+			if spef_run.ses != None: # there are sessions
+				funcdir=os.path.join(basedir,studyid,'fmriprep','sub-'+spef_run.sub,'ses-'+spef_run.ses,'func')
+				fileprefix='sub-'+spef_run.sub+'_ses-'+spef_run.ses+'_task-'+spef_run.task+'_run-'+spef_run.run
+				modeldir=os.path.join(basedir,studyid,'model','level1','model-'+modelname,'sub-'+spef_run.sub,'ses-'+spef_run.ses,'task-'+spef_run.task+'_run-'+spef_run.run,'onsets')
+			else: # no sessions
+				funcdir=os.path.join(basedir,studyid,'fmriprep','sub-'+sub,'func')
+				fileprefix='sub-'+sub+'_task-'+task+'_run-'+run
+				modeldir=os.path.join(basedir,studyid,'model','level1','model-'+modelname,'sub-'+spef_run.sub,'task-'+spef_run.task+'_run-'+spef_run.run,'onsets')
+			confounds_filepath=os.path.join(funcdir,fileprefix+'_bold_confounds.tsv')
+			if os.path.exists(confounds_filepath):
+				confounds_tsv=pd.read_csv(confounds_filepath,delim_whitespace=True)
+				cf=confounds_tsv.reindex(columns=confounds_list)
+				# replace np values with 0's
+				cf=cf.replace({np.nan:0})
+				output_confounds_filename=fileprefix+'_ev-confounds.tsv'
+				cf.to_csv(os.path.join(modeldir,output_confounds_filename),sep='\t',header=0,index=False)
+				print 'Created confounds file for %s'%(fileprefix)
+			else:
+				# print error message listing all of these runs for which *_bold_confounds.tsv files can't be found 
+				runs_without_bold_confounds.append(run_obj)
+				print 'WARNING: *_bold_confounds.tsv files were not found for the following runs:'
+				for spef_run in run_obj:
+					if spef_run.ses != None:
+						print '\t'+'sub-'+spef_run.sub+'ses-'+spef_run.ses+'task-'+spef_run.task+'_run-'+spef_run.run
+					else:
+						print '\t'+'sub-'+spef_run.sub+'task-'+spef_run.task+'_run-'+spef_run.run
 
 """
 Creates empty condition_key.json if not found

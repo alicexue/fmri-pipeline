@@ -147,16 +147,16 @@ if dockerExists:
 	print ''
 	while rsp!='' and rsp!='n':
 		rsp=raw_input('Do you want to download the raw BIDS data for your subjects? (ENTER/n) ')
-		if rsp=='y':
-			exportRawBids=True
-			rsp2=''
-			while rsp2!='' and rsp2!='n':
-				rsp2=raw_input('Docker is needed to export the raw BIDS data. Is docker running? (ENTER/n) ')
-			if rsp2=='n':
-				print 'Since docker is not running, raw BIDS won\'t be exported.'
-				exportRawBids=False
-			elif rsp2=='' and not fwExists: 
-				print 'Flywheel CLI not installed, which is necessary for exporting raw BIDS.'
+	if rsp=='':
+		exportRawBids=True
+		rsp2=None
+		while rsp2!='' and rsp2!='n':
+			rsp2=raw_input('Docker is needed to export the raw BIDS data. Is docker running? (ENTER/n) ')
+		if rsp2=='n':
+			print 'Since docker is not running, raw BIDS won\'t be exported.'
+			exportRawBids=False
+		elif rsp2=='' and not fwExists: 
+			print 'Flywheel CLI not installed, which is necessary for exporting raw BIDS.'
 else:
 	print 'Note: docker is not installed. Raw BIDS cannot be exported.'
 
