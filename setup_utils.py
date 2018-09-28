@@ -296,14 +296,16 @@ def generate_confounds_files(studyid,basedir,hasSessions,modelname):
 				cf.to_csv(os.path.join(modeldir,output_confounds_filename),sep='\t',header=0,index=False)
 				print 'Created confounds file for %s'%(fileprefix)
 			else:
-				# print error message listing all of these runs for which *_bold_confounds.tsv files can't be found 
-				runs_without_bold_confounds.append(run_obj)
-				print 'WARNING: *_bold_confounds.tsv files were not found for the following runs:'
-				for spef_run in run_obj:
-					if spef_run.ses != None:
-						print '\t'+'sub-'+spef_run.sub+'ses-'+spef_run.ses+'task-'+spef_run.task+'_run-'+spef_run.run
-					else:
-						print '\t'+'sub-'+spef_run.sub+'task-'+spef_run.task+'_run-'+spef_run.run
+				# keep track of all runs for which *_bold_confounds.tsv files can't be found 
+				runs_without_bold_confounds.append(spef_run)
+
+		# print warning message for runs without confounds
+		print 'WARNING: *_bold_confounds.tsv files were not found for the following runs:'
+		for spef_run in runs_without_bold_confounds:
+			if spef_run.ses != None:
+				print '\t'+'sub-'+spef_run.sub+'_ses-'+spef_run.ses+'_task-'+spef_run.task+'_run-'+spef_run.run
+			else:
+				print '\t'+'sub-'+spef_run.sub+'_task-'+spef_run.task+'_run-'+spef_run.run
 
 """
 Creates empty condition_key.json if not found
