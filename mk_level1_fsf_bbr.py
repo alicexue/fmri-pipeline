@@ -229,7 +229,6 @@ def mk_level1_fsf_bbr(a):
             print "ERROR: Task name was not found in JSON file. Make sure the JSON file is formatted correctly"
             sys.exit(-1)
         ev_keys = conddict.keys()
-        list.sort(ev_keys)
         ev_files=[]
         conditions=[]
         # get the names of the EV files and the names of the conditions
@@ -275,7 +274,6 @@ def mk_level1_fsf_bbr(a):
     contrastsfile_txt=os.path.join(a.basedir,a.studyid,'model/level1/model-%s/task_contrasts.txt'%a.modelname)
     if os.path.exists(contrastsfile_json):
         contrasts_all = json.load(open(contrastsfile_json), object_pairs_hook=OrderedDict)
-        contrasts_all = dict(contrasts_all)
         for contrast in contrasts_all:
             contrasts_all[contrast] = dict(contrasts_all[contrast])
     elif os.path.exists(contrastsfile_txt):
