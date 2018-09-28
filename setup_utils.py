@@ -294,8 +294,9 @@ def generate_confounds_files(studyid,basedir,hasSessions,modelname):
 			confounds_dict = json.load(f)
 			confounds_list=confounds_dict['confounds']
 		studydir=os.path.join(basedir,studyid)
-		study_info=get_study_info(studydir,hasSessions)
-		run_objects=traverse_specificruns(studyid,basedir,study_info,hasSessions)
+		model_params=model_params_json_to_namespace(studyid,basedir,modelname)
+		specificruns=model_params.specificruns
+		run_objects=traverse_specificruns(studyid,basedir,specificruns,hasSessions)
 		runs_without_bold_confounds=[]
 		for spef_run in run_objects:
 			if spef_run.ses != None: # there are sessions
@@ -320,12 +321,13 @@ def generate_confounds_files(studyid,basedir,hasSessions,modelname):
 				runs_without_bold_confounds.append(spef_run)
 
 		# print warning message for runs without confounds
-		print 'WARNING: *_bold_confounds.tsv files were not found for the following runs:'
-		for spef_run in runs_without_bold_confounds:
-			if spef_run.ses != None:
-				print '\t'+'sub-'+spef_run.sub+'_ses-'+spef_run.ses+'_task-'+spef_run.task+'_run-'+spef_run.run
-			else:
-				print '\t'+'sub-'+spef_run.sub+'_task-'+spef_run.task+'_run-'+spef_run.run
+		if len(runs_without_bold_confounds) > 0:
+			print 'WARNING: *_bold_confounds.tsv files were not found for the following runs:'
+			for spef_run in runs_without_bold_confounds:
+				if spef_run.ses != None:
+					print '\t'+'sub-'+spef_run.sub+'_ses-'+spef_run.ses+'_task-'+spef_run.task+'_run-'+spef_run.run
+				else:
+					print '\t'+'sub-'+spef_run.sub+'_task-'+spef_run.task+'_run-'+spef_run.run
 
 """
 Creates empty condition_key.json if not found
