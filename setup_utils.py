@@ -66,12 +66,19 @@ def model_params_json_to_list(studyid,basedir,modelname):
 			args.append(str(params[p]))
 
 		for p in action_params.keys():
-			if p not in params: # p is usebrainmask
+			if p not in params: # if parameter in action_params is not a parameter in model_params.json
 				r_params = get_replacement_params()
 				d_params = get_default_params()
-				if r_params[p] != None and r_params[p] in params:
+				if r_params[p] != None and r_params[p] in params: 
+					# if p has been replaced with something else (like altBETmask has been replaced by usebrainmask), 
+					# find the replacement in r_params (usebrainmask)
+					# take the original value of the parameter (altBETmask = True) and set the value of the new parameter to that
+					print 'WARNING: "%s" has been deprecated and replaced by "%s", see README for details'%(r_params[p],p)
+					print 'WARNING: %s has been set to the original value of %s: %s'%(p,r_params[p],params[r_params[p]])
 					params[p] = params[r_params[p]]
 				else:
+					print 'WARNING: "%s" has been deprecated and replaced by "%s"'%(r_params[p],p)
+					print "%s has been set to the default value: %s"%(d_params[p])
 					params[p] = d_params[p]
 			if p not in params_with_diff_dest: 
 				if params[p] != action_params[p]: # if the passed parameter is not the same as the default value
@@ -519,7 +526,7 @@ def check_model_params_cli(studyid,basedir,modelname):
 							pprint_val='\"\"'
 						print '%s changed to %s'%(param,pprint_val)
 				else:
-					new_params[param]=params[param]
+					new_params[param]=cur_val
 	with open(modeldir+'/model_params.json','w') as outfile:
 		json.dump(new_params,outfile,sort_keys=True, indent=4)
 		print '\nUpdated %s.'%(modeldir+'/model_params.json')
