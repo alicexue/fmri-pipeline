@@ -238,8 +238,7 @@ def mk_level3_fsf(a):
                 print "WARNING: featfile not found: %s, was not added to *.fsf\n"%featfile, 
                 
         if ngoodsubs==0:
-            print "ERROR: No subjects with feat files found"
-            sys.exit(-1)
+            print "ERROR: No subjects with feat files found for cope%d"%(copenum)
 
         #Note: "feat won't run if zero feat_files are added to this fsf."
         outfile.write('set fmri(npts) %d\n'%ngoodsubs) # number of runs
