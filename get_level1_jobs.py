@@ -74,6 +74,7 @@ def get_level1_jobs(studyid,basedir,modelname,specificruns,sys_args_specificruns
 	# gets parameters set in model_param.json
 	args=setup_utils.model_params_json_to_namespace(studyid,basedir,modelname) 
 
+	"""
 	smoothing=args.smoothing
 	use_inplane=args.use_inplane
 	nonlinear=args.nonlinear
@@ -83,7 +84,7 @@ def get_level1_jobs(studyid,basedir,modelname,specificruns,sys_args_specificruns
 	whiten=args.whiten
 	doreg=args.doreg
 	spacetag=args.spacetag
-	altBETmask=args.altBETmask
+	"""
 	
 	# gets dictionary of study information
 	study_info=specificruns

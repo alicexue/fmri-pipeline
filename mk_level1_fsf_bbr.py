@@ -77,10 +77,10 @@ def parse_command_line(argv):
         default=False,help='Do registration')
     parser.add_argument('--spacetag', dest='spacetag',
         default='',help='Space tag for preprocessed data')
-    parser.add_argument('--altBETmask', dest='altBETmask', action='store_true',
-        default=False,help='Use brainmask from fmriprep')
     parser.add_argument('--sesname', dest='sesname',
         default='',help='Name of session (not including "ses-")')
+    parser.add_argument('--usebrainmask', dest='usebrainmask', action='store_true',
+        default=False,help='Apply custom brain mask to preproc file using fslmaths mas when calling feat')
     parser.add_argument('--callfeat', dest='callfeat', action='store_true',
         default=False,help='Call fsl\'s feat on the .fsf file that is created')
     
@@ -99,7 +99,7 @@ def main(argv=None):
 def mk_level1_fsf_bbr(a):
 
     # attributes in a:
-    #studyid,subid,taskname,runname,smoothing,use_inplane,basedir,nonlinear,modelname,anatimg,confound,hpf,whiten,doreg,sesname,spacetag,altBETmask,callfeat
+    #studyid,subid,taskname,runname,smoothing,use_inplane,basedir,nonlinear,modelname,anatimg,confound,hpf,whiten,doreg,sesname,spacetag,usebrainmask,callfeat
 
     _thisDir = os.path.dirname(os.path.abspath(__file__)).decode(sys.getfilesystemencoding())
     tasknum = 1
@@ -182,12 +182,15 @@ def mk_level1_fsf_bbr(a):
     funchead='%s_task-%s_run-%s_bold_space-'%(subid_ses,a.taskname,a.runname)
     functail='_preproc.nii.gz'
     fmriprep_brainmask=""
+    fslmaths_preproc_brainmask=""
     for fname in funcdircontent:
         if fname.startswith(funchead) and fname.endswith(functail):
             func_preproc_files.append(fname)
-        if a.altBETmask: # if using alternative brain mask, get the brain mask file from the func dir
+        if a.usebrainmask: # if creating custom brain mask using fslmaths, get the brain mask file from the func dir
             if fname.startswith(funchead) and fname.endswith('_brainmask.nii.gz'):
                 fmriprep_brainmask=fname
+                i=fname.find('_brainmask.nii.gz')
+                fslmaths_preproc_brainmask=fname[:i+1]+'preproc_brain.nii.gz'
      # find initial_high_res_file in func_preproc_files found above
     if len(func_preproc_files) == 1:
         func_preproc_file = func_preproc_files[0]
@@ -198,10 +201,12 @@ def mk_level1_fsf_bbr(a):
         if a.spacetag!='' and os.path.exists(fmriprep_subdir+'/func/'+funchead+a.spacetag+functail):
             func_preproc_file = funchead+a.spacetag+functail
         else:
-            print "ERROR: Found multiple preprocessed func files here: %s. Please specify the label in the arguments."%s(funcdir)
+            print "ERROR: Found multiple preprocessed func files here: %s. Please specify the label in the arguments."%(funcdir)
             print func_preproc_files
             sys.exit(-1)
-
+    if a.usebrainmask and fslmaths_preproc_brainmask=="":
+        print "ERROR: usebrainmask is true, but %s..._brainmask.nii.gz was not found in %s"%(funchead,funcdir)
+        sys.exit(-1)
 
     if "MNI152NLin2009cAsym" not in func_preproc_file and not a.doreg:
         print "\nWARNING: It appears that your preprocessed functional file %s is not in MNI152NLin2009cAsym space. You may want to do registration."%(func_preproc_file)
@@ -220,7 +225,10 @@ def mk_level1_fsf_bbr(a):
     cond_key_txt = os.path.join(a.basedir,a.studyid,'model/level1/model-%s/condition_key.txt'%a.modelname)
     if os.path.exists(cond_key_json):
         conddict = json.load(open(cond_key_json), object_pairs_hook=OrderedDict) # keep the order of the keys as they were in the json file 
-        if a.taskname in conddict.keys():
+        conddict_keys=[]
+        for key,value in conddict.items():
+            conddict_keys.append(key)
+        if a.taskname in conddict_keys:
             # set conddict to the dictionary for this task where 
                 # the EV names are the keys
                 # and the names of the conditions are the values
@@ -273,9 +281,10 @@ def mk_level1_fsf_bbr(a):
     # if it's a txt file
     contrastsfile_txt=os.path.join(a.basedir,a.studyid,'model/level1/model-%s/task_contrasts.txt'%a.modelname)
     if os.path.exists(contrastsfile_json):
+        print contrastsfile_json
         contrasts_all = json.load(open(contrastsfile_json), object_pairs_hook=OrderedDict)
-        for contrast in contrasts_all:
-            contrasts_all[contrast] = dict(contrasts_all[contrast])
+        #for contrast in contrasts_all:
+        #    contrasts_all[contrast] = dict(contrasts_all[contrast])
     elif os.path.exists(contrastsfile_txt):
         contrasts_all=load_contrasts(contrastsfile)
     else:
@@ -364,12 +373,6 @@ def mk_level1_fsf_bbr(a):
     outfile.write('set fmri(reghighres_yn) %d\n'%a.doreg)
     outfile.write('set fmri(regstandard_yn) %d\n'%a.doreg)
 
-    # use alternative brain mask
-    if a.altBETmask:
-        outfile.write('set fmri(alternative_mask) "%s/func/%s"\n'%(fmriprep_subdir,fmriprep_brainmask))
-    else:
-        outfile.write('set fmri(alternative_mask) ""\n')
-
     # look for standard brain fsl provides
     env = os.environ.copy()
     FSLDIR='/usr/local/fsl'
@@ -381,7 +384,10 @@ def mk_level1_fsf_bbr(a):
     outfile.write('set fmri(regstandard) "%s"\n'%regstandard)
 
     outfile.write('set fmri(outputdir) "%s/%s_task-%s_run-%s.feat"\n'%(model_subdir,subid_ses,a.taskname,a.runname))
-    outfile.write('set feat_files(1) "%s"\n'%(os.path.join(funcdir,func_preproc_file)))
+    if not a.usebrainmask:
+        outfile.write('set feat_files(1) "%s"\n'%(os.path.join(funcdir,func_preproc_file)))
+    else:
+        outfile.write('set feat_files(1) "%s"\n'%(os.path.join(funcdir,fslmaths_preproc_brainmask)))
 
     if a.use_inplane==1:
         outfile.write('set fmri(reginitial_highres_yn) 1\n')
@@ -532,6 +538,10 @@ def mk_level1_fsf_bbr(a):
     outfile.close()
 
     if a.callfeat:
+        if a.usebrainmask:
+            fslmathsargs = ["fslmaths",os.path.join(funcdir,func_preproc_file),"-mas",os.path.join(funcdir,fmriprep_brainmask),os.path.join(funcdir,fslmaths_preproc_brainmask)]
+            print "Applying fslmath's mas, creating the following file: %s"%(fslmaths_preproc_brainmask)
+            sub.call(fslmathsargs)
         featargs = ["feat",outfilename]
         print "Calling", ' '.join(featargs)
         sub.call(featargs)

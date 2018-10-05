@@ -17,6 +17,7 @@ Converts parameters in model_params.json to Namespace object
 """
 def model_params_json_to_namespace(studyid,basedir,modelname):
 	modeldir=os.path.join(basedir,studyid,'model','level1','model-%s'%modelname)
+	default_params=get_default_params()
 	if os.path.exists(modeldir+'/model_params.json'):
 		with open(modeldir+'/model_params.json','r') as f:
 			params = json.load(f)
@@ -30,11 +31,14 @@ def model_params_json_to_namespace(studyid,basedir,modelname):
 		args.use_inplane=params['use_inplane']
 		args.whiten=not params['nowhiten']
 		args.nonlinear=params['nonlinear']
-		args.altBETmask=params['altBETmask']
 		args.smoothing=params['smoothing']
 		args.doreg=params['doreg']
 		args.confound=not params['noconfound'] # args.confound instead of noconfound bc of dest
 		args.spacetag=params['spacetag']
+		if 'usebrainmask' in params:
+			args.usebrainmask=params['usebrainmask']
+		else:
+			args.usebrainmask=default_params['usebrainmask']
 		return args
 	else:
 		print "ERROR: model_params.json does not exist in %s"%modeldir
@@ -52,7 +56,7 @@ def model_params_json_to_list(studyid,basedir,modelname):
 		
 		# no_action_params: parameters that don't have store_true or store_false as an action
 		no_action_params=['studyid','basedir','smoothing','use_inplane','modelname','anatimg','spacetag']
-		action_params={'nonlinear':False,'nohpf':True,'nowhiten':True,'noconfound':True,'doreg':False,'altBETmask':False}
+		action_params={'nonlinear':False,'nohpf':True,'nowhiten':True,'noconfound':True,'doreg':False,'usebrainmask':False}
 		# keys in action_params are arguments that have action that stores parameter as true/false
 		# values in action_params are default arguments
 		params_with_diff_dest=['nohpf','nowhiten','noconfound']
@@ -62,6 +66,13 @@ def model_params_json_to_list(studyid,basedir,modelname):
 			args.append(str(params[p]))
 
 		for p in action_params.keys():
+			if p not in params: # p is usebrainmask
+				r_params = get_replacement_params()
+				d_params = get_default_params()
+				if r_params[p] != None and r_params[p] in params:
+					params[p] = params[r_params[p]]
+				else:
+					params[p] = d_params[p]
 			if p not in params_with_diff_dest: 
 				if params[p] != action_params[p]: # if the passed parameter is not the same as the default value
 					args.append('--'+p)
@@ -136,6 +147,22 @@ def create_model_level1_dir(studyid,basedir,modelname):
 	return hasSessions
 
 """
+Returns dictionary with parameters from model_params.json as keys and defaults values as values
+Excludes studyid, basedir, specificruns, and modelname
+"""
+def get_default_params():
+	default_params={'smoothing':0,'use_inplane':0,'nonlinear':False,'nohpf':True,'nowhiten':True,'noconfound':True,'anatimg':'','doreg':False,'spacetag':'','usebrainmask':False}
+	return default_params
+
+"""
+Returns dictionary with replacements as keys and old parameters as values (or None if param isn't being replaced)
+altBETmask is deprecated. Use usebrainmask instead 
+"""
+def get_replacement_params():
+	new_params={'usebrainmask':'altBETmask'}
+	return new_params
+
+"""
 Creates model_params.json if not found with default parameters
 specificruns is set to all possible runs
 """
@@ -152,7 +179,8 @@ def create_level1_model_params_json(studyid,basedir,modelname):
 			study_info=get_study_info(studydir,hasSessions)
 	subs=study_info.keys()
 
-	params={'studyid':studyid,'basedir':basedir,'specificruns':study_info,'smoothing':0,'use_inplane':0,'nonlinear':False,'nohpf':True,'nowhiten':True,'noconfound':True,'modelname':modelname,'anatimg':'','doreg':False,'spacetag':'','altBETmask':False}
+	params={'studyid':studyid,'basedir':basedir,'specificruns':study_info,'modelname':modelname,}
+	params.update(get_default_params())
 	modeldir=os.path.join(basedir,studyid,'model','level1','model-%s'%modelname)
 	if not os.path.exists(modeldir):
 		os.makedirs(modeldir)
@@ -432,10 +460,14 @@ def check_model_params_cli(studyid,basedir,modelname):
 			params = json.load(f)
 			new_params['modelname']=params['modelname']
 			# not including modelname
-			ordered_params=['studyid','basedir','specificruns','anatimg','nohpf','use_inplane','nowhiten','nonlinear','altBETmask','smoothing','doreg','noconfound','spacetag']
+			ordered_params=['studyid','basedir','specificruns','anatimg','nohpf','use_inplane','nowhiten','nonlinear','smoothing','doreg','noconfound','spacetag','usebrainmask']
 			
 			for param in ordered_params:
-				cur_val=params[param]
+				if param not in params: # param from ordered_params isn't in model_param.json
+					default_params=get_default_params()
+					cur_val=default_params[param]
+				else:
+					cur_val=params[param]
 				if isinstance(cur_val,dict):
 					pprint_val=json.dumps(cur_val)
 				else:
