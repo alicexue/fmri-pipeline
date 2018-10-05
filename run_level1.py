@@ -51,7 +51,8 @@ def parse_command_line(argv):
 	return args
 
 def call_feat_job(i,jobsdict,level):
-	subprocess.call(['python', 'run_feat_job.py', '--jobs', '%s'%json.dumps(jobsdict),'-i',str(i), '--level', str(level)])
+	fmripipelinedir=os.path.dirname(__file__)
+	subprocess.call(['python',os.path.join(fmripipelinedir,'run_feat_job.py'), '--jobs', '%s'%json.dumps(jobsdict),'-i',str(i), '--level', str(level)])
 
 def main(argv=None):
 	level=1
