@@ -52,7 +52,7 @@ def parse_command_line(argv):
     parser.add_argument('--sub', dest='subid',
         required=True,help='subject identifier (not including prefix "sub-")')
     parser.add_argument('--taskname', dest='taskname',
-	   required=True,help='Task name')
+       required=True,help='Task name')
     parser.add_argument('--runname', dest='runname',
         required=True,help='Run name')
     parser.add_argument('--basedir', dest='basedir',
@@ -226,17 +226,17 @@ def mk_level1_fsf_bbr(a):
     if os.path.exists(cond_key_json):
         conddict = json.load(open(cond_key_json), object_pairs_hook=OrderedDict) # keep the order of the keys as they were in the json file 
         conddict_keys=[]
-        for key,value in conddict.items():
-            conddict_keys.append(key)
-        if a.taskname in conddict_keys:
+        if a.taskname in conddict.keys():
             # set conddict to the dictionary for this task where 
                 # the EV names are the keys
                 # and the names of the conditions are the values
             conddict = conddict[a.taskname] 
+            for key,value in conddict.items():
+                conddict_keys.append(key)
         else:
-            print "ERROR: Task name was not found in JSON file. Make sure the JSON file is formatted correctly"
+            print "ERROR: Task name %s was not found in condition_key.json. Make sure the JSON file is formatted correctly"%(a.taskname)
             sys.exit(-1)
-        ev_keys = conddict.keys()
+        ev_keys = conddict_keys
         ev_files=[]
         conditions=[]
         # get the names of the EV files and the names of the conditions
@@ -281,10 +281,10 @@ def mk_level1_fsf_bbr(a):
     # if it's a txt file
     contrastsfile_txt=os.path.join(a.basedir,a.studyid,'model/level1/model-%s/task_contrasts.txt'%a.modelname)
     if os.path.exists(contrastsfile_json):
-        print contrastsfile_json
         contrasts_all = json.load(open(contrastsfile_json), object_pairs_hook=OrderedDict)
-        #for contrast in contrasts_all:
-        #    contrasts_all[contrast] = dict(contrasts_all[contrast])
+        contrasts_keys=[]
+        for contrast,value in contrasts_all.items():
+            contrasts_keys.append(contrast)
     elif os.path.exists(contrastsfile_txt):
         contrasts_all=load_contrasts(contrastsfile)
     else:

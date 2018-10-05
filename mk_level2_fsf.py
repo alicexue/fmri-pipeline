@@ -98,13 +98,19 @@ def mk_level2_fsf(a):
     cond_key_txt = os.path.join(a.basedir,a.studyid,'model/level1/model-%s/condition_key.txt'%a.modelname)
     if os.path.exists(cond_key_json):
         cond_key = json.load(open(cond_key_json), object_pairs_hook=OrderedDict) # keep the order of the keys as they were in the json file 
+        conddict_keys=[]
         if a.taskname in cond_key.keys():
-            cond_key = cond_key[a.taskname]
+            # set conddict to the dictionary for this task where 
+                # the EV names are the keys
+                # and the names of the conditions are the values
+            cond_key = cond_key[a.taskname] 
+            for key,value in cond_key.items():
+                conddict_keys.append(key)
         else:
             print "ERROR: Task name was not found in JSON file %s. Make sure the JSON file is formatted correctly"%(cond_key_json)
             sys.exit(-1)
-        ev_keys = cond_key.keys()
-        list.sort(ev_keys)
+
+        ev_keys = conddict_keys
         ev_files=[]
         conditions=[]
         # get the EV file names and the condition names
@@ -126,9 +132,9 @@ def mk_level2_fsf(a):
     contrastsfile_txt=os.path.join(a.basedir,a.studyid,'model/level1/model-%s/task_contrasts.txt'%a.modelname)
     if os.path.exists(contrastsfile_json):
         all_addl_contrasts = json.load(open(contrastsfile_json), object_pairs_hook=OrderedDict)
-        all_addl_contrasts = dict(all_addl_contrasts)
-        for contrast in all_addl_contrasts:
-            all_addl_contrasts[contrast] = dict(all_addl_contrasts[contrast])
+        #all_addl_contrasts = dict(all_addl_contrasts)
+        #for contrast in all_addl_contrasts:
+        #    all_addl_contrasts[contrast] = dict(all_addl_contrasts[contrast])
     elif os.path.exists(contrastsfile_txt):
         all_addl_contrasts=load_contrasts(contrastsfile)
     else:

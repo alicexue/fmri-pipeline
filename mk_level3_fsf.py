@@ -111,9 +111,9 @@ def mk_level3_fsf(a):
     contrastsfile_txt=os.path.join(a.basedir,a.studyid,'model/level1/model-%s/task_contrasts.txt'%a.modelname)
     if os.path.exists(contrastsfile_json):
         all_addl_contrasts = json.load(open(contrastsfile_json), object_pairs_hook=OrderedDict)
-        all_addl_contrasts = dict(all_addl_contrasts)
-        for contrast in all_addl_contrasts:
-            all_addl_contrasts[contrast] = dict(all_addl_contrasts[contrast])
+        #all_addl_contrasts = dict(all_addl_contrasts)
+        #for contrast in all_addl_contrasts:
+        #    all_addl_contrasts[contrast] = dict(all_addl_contrasts[contrast])
     elif os.path.exists(contrastsfile_txt):
         all_addl_contrasts=load_contrasts(contrastsfile)
     else:
