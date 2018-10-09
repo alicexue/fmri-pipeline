@@ -32,6 +32,8 @@ def parse_command_line(argv):
 		required=True,help='Study ID')
 	parser.add_argument('--basedir', dest='basedir',
 		required=True,help='Base directory (above studyid directory)')
+	parser.add_argument('--outdir', dest='outdir',
+		default="",help='Full path of directory where sbatch output should be saved')
 	parser.add_argument('--nofeat',dest='nofeat',action='store_true',
 		default=False,help='Only create the fsf\'s, don\'t call feat')
 	parser.add_argument('-s', '--specificruns', dest='specificruns', type=json.loads,
@@ -48,23 +50,28 @@ def parse_command_line(argv):
 	return args
 
 def call_feat_job(i,jobsdict,level):
-	fmripipelinedir=os.path.dirname(__file__)
+	fmripipelinedir=os.path.dirname(os.path.abspath(__file__))
 	subprocess.call(['python',os.path.join(fmripipelinedir,'run_feat_job.py'), '--jobs', '%s'%json.dumps(jobsdict),'-i',str(i), '--level', str(level)])
 
 def main(argv=None):
 	level=2
 	d=datetime.datetime.now()
 	args=parse_command_line(argv)
+	studyid=args.studyid
+	basedir=args.basedir
 	email=args.email
 	account=args.account
 	time=args.time
 	nodes=args.nodes
 	specificruns=args.specificruns
 	nofeat=args.nofeat
+	outdir=args.outdir
+
+	studydir=os.path.join(basedir,studyid)
 
 	sys_argv=sys.argv[:] # copies over the arguments passed in through the command line
 	# removes the arguments that shouldn't be passed into get_level2_jobs.main() (removes the arguments only relevant to run_level2)
-	params_to_remove=['--email','-e','-A','--account','-t','--time','-N','--nodes']
+	params_to_remove=['--email','-e','-A','--account','-t','--time','-N','--nodes','--outdir']
 	for param in params_to_remove:
 		if param in sys_argv:
 			i=sys_argv.index(param)
@@ -92,9 +99,23 @@ def main(argv=None):
 		while rsp != '':
 			rsp=raw_input('Press ENTER to continue:')
 		
-		# create an sbatch file to run the job array
 		j='level2-feat'
-		with open('run_level2.sbatch', 'w') as qsubfile:
+		fmripipelinedir=os.path.dirname(os.path.abspath(__file__))
+		# save sbatch output to a folder in studydir by default
+		if outdir == '':
+			homedir=studydir
+		else:
+			homedir=outdir
+			if not os.path.exists(homedir):
+				os.makedirs(homedir)
+		dateandtime=d.strftime("%d_%B_%Y_%Hh_%Mm_%Ss")
+		outputdir=os.path.join(homedir,'%s_%s'%(j,dateandtime))
+		if not os.path.exists(outputdir):
+			os.mkdir(outputdir)
+
+		# create an sbatch file to run the job array
+		sbatch_path=os.path.join(outputdir,'run_level2.sbatch')
+		with open(sbatch_path, 'w') as qsubfile:
 			qsubfile.write('#!/bin/sh\n')
 			qsubfile.write('#\n')
 			qsubfile.write('#SBATCH -J run_level2_feat\n')
@@ -105,16 +126,20 @@ def main(argv=None):
 			qsubfile.write('#SBATCH --mail-user=%s\n'%(email))
 			qsubfile.write('#SBATCH --mail-type=ALL\n')
 			qsubfile.write('#SBATCH --array=%s-%s\n'%(0,njobs-1))
-			qsubfile.write('#SBATCH -o %s_%s_%s.o\n'%(j,d.strftime("%d_%B_%Y_%Hh_%Mm_%Ss"),'%a'))
+			qsubfile.write('#SBATCH -o %s_%s_%s.o\n'%(os.path.join(outputdir,j),dateandtime,'%a'))
 			qsubfile.write('#----------------\n')
 			qsubfile.write('# Job Submission\n')
 			qsubfile.write('#----------------\n')
-			qsubfile.write("python run_feat_job.py --jobs '%s' -i $SLURM_ARRAY_TASK_ID --level 2"%json.dumps(jobsdict))
+			qsubfile.write("python %s --jobs '%s' -i $SLURM_ARRAY_TASK_ID --level 2"%(os.path.join(fmripipelinedir,'run_feat_job.py'),json.dumps(jobsdict)))
 			
 		try:
-			subprocess.call(['sbatch','run_level2.sbatch'])
+			subprocess.call(['sbatch',sbatch_path])
+			print 'Saving sbatch output to %s'%(outputdir)
 		except:
 			print "\nNOTE: sbatch command was not found."
+			# since not running sbatch, should remove created .sbatch file and outputdir
+			os.remove(sbatch_path)
+			os.rmdir(outputdir)
 			rsp=None
 			while rsp != 'n' and rsp != '':
 				rsp=raw_input('Do you want to run the jobs in parallel using multiprocessing? (ENTER/n) ')

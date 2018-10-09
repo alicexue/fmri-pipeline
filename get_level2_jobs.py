@@ -86,7 +86,7 @@ def main(argv=None):
 
 	sys_argv=sys.argv[:] # copy over the arguments passed in through the command line
 	# remove the parameters that are not passed to mk_level2_fsf (keep everything that IS passed to mk_level2_fsf)
-	params_to_remove=['--email','-e','-A','--account','-t','--time','-N','--nodes','-s','--specificruns']
+	params_to_remove=['--email','-e','-A','--account','-t','--time','-N','--nodes','-s','--specificruns','--outdir']
 	for param in params_to_remove:
 		if param in sys_argv:
 			i=sys_argv.index(param)
