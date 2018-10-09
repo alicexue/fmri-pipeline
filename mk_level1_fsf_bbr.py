@@ -508,13 +508,9 @@ def mk_level1_fsf_bbr(a):
             cveclen=len(contrasts[c])
             con_real_ctr=1
             for evt in range(nevs):
-                if contrasts[c][evt]!=0:
-                    outfile.write('set fmri(con_real%d.%d) %s\n'%(contrastctr,con_real_ctr,contrasts[c][evt]))
-                    outfile.write('set fmri(con_real%d.%d) 0\n'%(contrastctr,con_real_ctr+1))
-                    con_real_ctr+=2
-                    
-                else:
-                    outfile.write('set fmri(con_real%d.%d) 0\n'%(contrastctr,evt+1))
+                outfile.write('set fmri(con_real%d.%d) %s\n'%(contrastctr,con_real_ctr,contrasts[c][evt]))
+                outfile.write('set fmri(con_real%d.%d) 0\n'%(contrastctr,con_real_ctr+1))
+                con_real_ctr+=2
                     
             for evt in range(nevs):
                 if evt<cveclen:
