@@ -221,6 +221,8 @@ def mk_level3_fsf(a):
         else:
             sublist=a.subids
 
+        missing_feat_files=[]
+
         # iterate through all subjects
         for sub in sublist: # sub doesn't include prefix 'sub-'
             subid_ses="sub-"+sub
@@ -235,10 +237,13 @@ def mk_level3_fsf(a):
                 outfile.write('set fmri(groupmem.%d) 1\n'%int(ngoodsubs+1))
                 ngoodsubs+=1
             else:
-                print "WARNING: featfile not found: %s, was not added to *.fsf\n"%featfile, 
+                missing_feat_files.append(featfile)
                 
         if ngoodsubs==0:
             print "ERROR: No subjects with feat files found for cope%d"%(copenum)
+        elif len(missing_feat_files) > 0:
+            for featfile in missing_feat_files:
+                print "WARNING: featfile not found: %s, was not added to *.fsf\n"%featfile
 
         #Note: "feat won't run if zero feat_files are added to this fsf."
         outfile.write('set fmri(npts) %d\n'%ngoodsubs) # number of runs

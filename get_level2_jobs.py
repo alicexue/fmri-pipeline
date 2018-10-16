@@ -14,6 +14,7 @@ import sys
 
 from directory_struct_utils import *
 import mk_level2_fsf
+import setup_utils
 
 def parse_command_line(argv):
     parser = argparse.ArgumentParser(description='get_jobs')
@@ -60,7 +61,7 @@ def main(argv=None):
 	modelname=args.modelname
 	nofeat=args.nofeat
 
-	sys_args_specificruns=args.specificruns # specificruns passed in through the command line
+	sys_args_specificruns=args.specificruns # specificruns passed in through argv
 
 	# gets dictionary of study information
 	study_info=specificruns
@@ -68,17 +69,13 @@ def main(argv=None):
 	if specificruns=={}: # if specificruns passed into command line was empty
 		# tries getting study info first with hasSessions set to false
 		# determines that hasSessions is true if the values of the subjects are empty
-		studydir=os.path.join(basedir,studyid)
-		study_info=get_study_info(studydir,hasSessions)
-		if len(study_info.keys()) > 0:
-			if not study_info[study_info.keys()[0]]: # if empty
-				hasSessions=True
-				study_info=get_study_info(studydir,hasSessions)
-	else:
-		l1=study_info.keys()
-		l2=study_info[l1[0]].keys()[0]
-		if l2.startswith('ses-'):
-			hasSessions=True
+		mp_args=setup_utils.model_params_json_to_namespace(studyid,basedir,modelname)
+		study_info=mp_args.specificruns
+		
+	l1=study_info.keys()
+	l2=study_info[l1[0]].keys()[0]
+	if l2.startswith('ses-'):
+		hasSessions=True
 
 	print json.dumps(study_info)
 
@@ -116,11 +113,13 @@ def main(argv=None):
 					model_subdir='%s/model/level2/model-%s/%s/%s/task-%s'%(os.path.join(basedir,studyid),modelname,subid,ses,task)
 					feat_file="%s/%s_%s_task-%s.gfeat"%(model_subdir,subid,ses,task)
 					if sys_args_specificruns=={} and os.path.exists(feat_file): # if subject didn't pass in specificruns and a feat file for this task exists
+						print "WARNING: Existing feat file found: %s"%feat_file
 						existing_feat_files.append(feat_file)
 						tasks_copy=study_info_copy[subid][ses]
 						tasks_copy.pop(task, None) # removes the task from study_info_copy if a feat file was found
 					else: # if subject passed in specificruns
 						if os.path.exists(feat_file):
+							existing_feat_files.append(feat_file)
 							print "WARNING: Existing feat file found: %s"%feat_file
 						runs=study_info[subid][ses][task]
 						list.sort(runs)
@@ -141,11 +140,13 @@ def main(argv=None):
 				model_subdir='%s/model/level2/model-%s/%s/task-%s'%(os.path.join(basedir,studyid),modelname,subid,task)
 				feat_file="%s/%s_task-%s.gfeat"%(model_subdir,subid,task)
 				if sys_args_specificruns=={} and os.path.exists(feat_file):
+					print "WARNING: Existing feat file found: %s"%feat_file
 					existing_feat_files.append(feat_file)
 					tasks_copy=study_info_copy[subid] 
 					tasks_copy.pop(task, None) # remove the task from the dictionary if a feat file was found
 				else:
 					if os.path.exists(feat_file):
+						existing_feat_files.append(feat_file)
 						print "WARNING: Existing feat file found: %s"%feat_file
 					runs=study_info[subid][task]
 					list.sort(runs)
@@ -155,16 +156,31 @@ def main(argv=None):
 			if len(study_info_copy[subid].keys())==0: # if there are no tasks for this subject
 				del study_info_copy[subid] # remove the subject from the dictionary
 
+	additional_existing_feat_files = []
+	# get additional existing feat files - any with + characters in their name
+	for feat_file in existing_feat_files:
+		upper_feat_dir = os.path.dirname(feat_file)
+		dircontents = os.listdir(upper_feat_dir)
+		for f in dircontents:
+			if os.path.join(upper_feat_dir,f) not in existing_feat_files and len(os.path.split(f)) > 0 and os.path.split(f)[-1]: # get file NAME without path
+				filename = os.path.split(f)[-1]
+				if filename.endswith('.gfeat'):
+					filename = filename[:-1*len('.gfeat')] # remove .feat from file name
+					additional_existing_feat_files.append(os.path.join(upper_feat_dir,f))
+					print "WARNING: Existing feat file found: %s"%(os.path.join(upper_feat_dir,f))
+
+	existing_feat_files = existing_feat_files + additional_existing_feat_files
+
 	if len(study_info_copy.keys()) == 0:
-		print "ERROR: All tasks for all subjects have been run on this model. Remove the feat files if you want to rerun them."
-		sys.exit(-1)
+		print "WARNING: All tasks for all subjects have been run on this model. Remove the feat files if you want to rerun them."
+		return existing_feat_files, jobs
 	elif sys_args_specificruns=={} and len(existing_feat_files)!=0: # if the user didn't pass in specificruns and existing feat files were found
-		print "ERROR: Some subjects' tasks have already been run on this model. If you want to rerun these subjects, remove their feat directories first. To run the remaining subjects, rerun run_level2.py and add:"
+		print "WARNING: Some subjects' tasks have already been run on this model. If you want to rerun these subjects, remove their feat directories first. To run the remaining subjects, rerun run_level2.py and add:"
 		print "-s \'%s\'"%(json.dumps(study_info_copy))
-		sys.exit(-1)
+		return existing_feat_files, jobs
 	else: # no existing feat files were found
 		print len(jobs), "jobs"
-		return jobs
+		return existing_feat_files, jobs
 
 if __name__ == '__main__':
     main()

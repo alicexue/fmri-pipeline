@@ -12,6 +12,7 @@ import sys
 
 from directory_struct_utils import *
 import mk_level3_fsf
+import setup_utils
 
 def parse_command_line(argv):
 	parser = argparse.ArgumentParser(description='setup_jobs')
@@ -44,6 +45,7 @@ def main(argv=None):
 	subids=args.subids
 	randomise=args.randomise
 
+	"""
 	# gets fmriprep directory structure and stores it in study_info
 	# since we don't know if there are sessions or not, tries without sessions first
 	hasSessions=False
@@ -53,6 +55,17 @@ def main(argv=None):
 		if not study_info[study_info.keys()[0]]: # if empty
 			hasSessions=True
 			study_info=get_study_info(studydir,hasSessions)
+	"""
+
+	# gets dictionary of study information
+	hasSessions=False
+	mp_args=setup_utils.model_params_json_to_namespace(studyid,basedir,modelname)
+	study_info=mp_args.specificruns
+		
+	l1=study_info.keys()
+	l2=study_info[l1[0]].keys()[0]
+	if l2.startswith('ses-'):
+		hasSessions=True
 
 	print json.dumps(study_info)
 
@@ -105,8 +118,28 @@ def main(argv=None):
 		copes=mk_level3_fsf.mk_level3_fsf(job_args)
 		all_copes+=copes
 
-	print len(all_copes), "jobs"
-	return all_copes
+	# find existing cope gfeats
+	existing_copes = []
+	for cope_fsf in all_copes:
+		upper_cope_dir = os.path.dirname(cope_fsf)
+		dircontents = os.listdir(upper_cope_dir)
+		
+		filename = os.path.split(cope_fsf)[-1]
+		if 'cope-' in filename:
+			i=cope_fsf.find('_cope-')
+			cope_gfeat_name=cope_fsf[i+1:-1*len('.fsf')] 
+			cope_gfeat=cope_gfeat_name + '.gfeat'
+			cope_gfeat_path=os.path.join(upper_cope_dir,cope_gfeat)
+			if cope_gfeat in dircontents:
+				existing_copes.append(cope_gfeat_path)
+				print "WARNING: Existing cope found here: %s"%(cope_gfeat_path)
+			for f in dircontents:
+				if f.startswith(cope_gfeat_name) and f.endswith('.gfeat') and f not in existing_copes:
+					existing_copes.append(os.path.join(upper_cope_dir,f))
+
+	if len(existing_copes) == 0:
+		print len(all_copes), "jobs"
+	return existing_copes, all_copes
 
 if __name__ == '__main__':
 	main()

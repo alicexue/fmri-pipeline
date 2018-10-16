@@ -135,10 +135,12 @@ def get_level1_jobs(studyid,basedir,modelname,specificruns,sys_args_specificruns
 						feat_file="%s/%s_%s_task-%s_run-%s.feat"%(model_subdir,subid,ses,task,run)
 						if sys_args_specificruns=={} and os.path.exists(feat_file): # if subject didn't pass in specificruns and a feat file for this run exists
 							existing_feat_files.append(feat_file)
+							print "WARNING: Existing feat file found: %s"%feat_file
 							runs_copy=study_info_copy[subid][ses][task]
 							runs_copy.remove(run) # removes the run since a feat file for it already exists
 						else: # if subject passed in specificruns 
 							if os.path.exists(feat_file):
+								existing_feat_files.append(feat_file)
 								print "WARNING: Existing feat file found: %s"%feat_file
 							args=sys_argv[:] # copies over the list of model params
 							args=add_args(args,sub,task,run,nofeat) # adds subject, task, and run 
@@ -161,10 +163,12 @@ def get_level1_jobs(studyid,basedir,modelname,specificruns,sys_args_specificruns
 					feat_file="%s/%s_task-%s_run-%s.feat"%(model_subdir,subid,task,run)
 					if sys_args_specificruns=={} and os.path.exists(feat_file): # if subject didn't pass in specificruns and a feat file for this run exists
 						existing_feat_files.append(feat_file)
+						print "WARNING: Existing feat file found: %s"%feat_file
 						runs_copy=study_info_copy[subid][task]
 						runs_copy.remove(run) # removes the run since a feat file for it already exists
 					else: # if subject passed in specificruns
 						if os.path.exists(feat_file):
+							existing_feat_files.append(feat_file)
 							print "WARNING: Existing feat file found: %s"%feat_file
 						args=sys_argv[:]
 						args=add_args(args,sub,task,run,nofeat)
@@ -174,16 +178,31 @@ def get_level1_jobs(studyid,basedir,modelname,specificruns,sys_args_specificruns
 		if len(study_info_copy[subid])==0: # if there are no sessions or tasks for this subject left
 			del study_info_copy[subid]
 
+	additional_existing_feat_files = []
+	# get additional existing feat files - any with + characters in their name
+	for feat_file in existing_feat_files:
+		upper_feat_dir = os.path.dirname(feat_file)
+		dircontents = os.listdir(upper_feat_dir)
+		for f in dircontents:
+			if os.path.join(upper_feat_dir,f) not in existing_feat_files and len(os.path.split(f)) > 0 and os.path.split(f)[-1]: # get file NAME without path
+				filename = os.path.split(f)[-1]
+				if filename.endswith('.feat'):
+					filename = filename[:-1*len('.feat')] # remove .feat from file name
+					additional_existing_feat_files.append(os.path.join(upper_feat_dir,f))
+					print "WARNING: Existing feat file found: %s"%(os.path.join(upper_feat_dir,f))
+
+	existing_feat_files = existing_feat_files + additional_existing_feat_files
+
 	if len(study_info_copy.keys()) == 0: 
-		print "ERROR: All runs for all subjects have been run on this model. Remove the feat files if you want to rerun them."
-		sys.exit(-1)
+		print "WARNING: All runs for all subjects have been run on this model. Remove the feat files if you want to rerun them."
+		return existing_feat_files, jobs
 	elif sys_args_specificruns=={} and len(existing_feat_files)!=0: # if the user didn't pass in specificruns and existing feat files were found
-		print "ERROR: Some subjects' runs have already been run on this model. If you want to rerun these subjects, remove their feat directories first. To run the remaining subjects, rerun run_level1.py and add:"
+		print "WARNING: Some subjects' runs have already been run on this model. If you want to rerun these subjects, remove their feat directories first. To run the remaining subjects, rerun run_level1.py and add:"
 		print "-s \'%s\'"%(json.dumps(study_info_copy))
-		sys.exit(-1)
+		return existing_feat_files, jobs
 	else: # no existing feat files were found
 		print len(jobs), "jobs"
-		return jobs
+		return existing_feat_files, jobs
 
 if __name__ == '__main__':
     main()

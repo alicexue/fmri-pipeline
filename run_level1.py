@@ -12,6 +12,7 @@ from joblib import Parallel, delayed
 import json
 import multiprocessing
 import os
+import shutil
 import subprocess
 import sys
 
@@ -68,7 +69,7 @@ def main(argv=None):
 	studyid=args.studyid
 	basedir=args.basedir
 	modelname=args.modelname
-	specificruns=args.specificruns
+	sys_args_specificruns=args.specificruns
 	nofeat=args.nofeat
 	outdir=args.outdir
 
@@ -95,11 +96,31 @@ def main(argv=None):
 
 	# get specificruns from model_params
 	args=setup_utils.model_params_json_to_namespace(studyid,basedir,modelname) 
-	if specificruns == {}: # if specificruns from sys.argv is empty (default), use specificruns from model_param
+	if sys_args_specificruns == {}: # if specificruns from sys.argv is empty (default), use specificruns from model_params
 		specificruns=args.specificruns
+	else:
+		specificruns = sys_args_specificruns
 
 	# get the list of jobs to run
-	jobs=get_level1_jobs.get_level1_jobs(studyid,basedir,modelname,specificruns,specificruns,nofeat) 
+	existing_feat_files, jobs=get_level1_jobs.get_level1_jobs(studyid,basedir,modelname,specificruns,sys_args_specificruns,nofeat) 
+	if len(existing_feat_files) > 0: 
+		rsp=None
+		while rsp!= 'y' and rsp!='':
+			rsp=raw_input('Do you want to remove existing feat dirs? (y/ENTER) ')
+		if rsp == 'y':
+			for feat_file in existing_feat_files:
+				print 'Removing %s'%(feat_file)
+				if os.path.exists(feat_file):
+					shutil.rmtree(feat_file)
+			existing_feat_files, jobs=get_level1_jobs.get_level1_jobs(studyid,basedir,modelname,specificruns,sys_args_specificruns,nofeat) 
+			# existing_feat_files should all have been removed
+		else:
+			print 'Not removing feat_files'
+			# pass in specificruns both times to ignore existing feat files
+			existing_feat_files, jobs=get_level1_jobs.get_level1_jobs(studyid,basedir,modelname,specificruns,specificruns,nofeat) 
+	 	if rsp == 'y': # wanted to remove feat files
+		 	assert len(existing_feat_files) == 0, 'There are still existing feat files, there was a problem removing those files.'
+
 	njobs=len(jobs)
 	# turn the list of jobs into a dictionary with the index as the key
 	jobsdict={}
@@ -111,7 +132,8 @@ def main(argv=None):
 			call_feat_job(i,jobsdict,level)
 		print '\n%s *.fsf files created.'%(njobs)
 	else:
-		print "WARNING: If any feat files exist (warnings would be printed above), they will not be overwritten if you continue."
+		if len(existing_feat_files) > 0:
+			print "WARNING: The existing feat files (see printed warnings above) will not be overwritten if you continue."
 		rsp=None
 		while rsp != '':
 			rsp=raw_input('Press ENTER to continue:')

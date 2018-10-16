@@ -13,6 +13,7 @@ from joblib import Parallel, delayed
 import json
 import multiprocessing
 import os
+import shutil
 import subprocess
 import sys
 
@@ -82,7 +83,25 @@ def main(argv=None):
 	print sys_argv
 
 	# get the list of jobs to run
-	jobs=mk_all_level3_fsf.main(argv=sys_argv[:])
+	existing_copes, jobs=mk_all_level3_fsf.main(argv=sys_argv[:])
+
+	if len(existing_copes) > 0:
+		rsp=None
+		while rsp!= 'y' and rsp!='':
+			rsp=raw_input('Do you want to remove existing gfeat dirs? (y/ENTER) ')
+		if rsp == 'y':
+			for feat_file in existing_copes:
+				print 'Removing %s'%(feat_file)
+				if os.path.exists(feat_file):
+					shutil.rmtree(feat_file)
+			existing_copes, jobs=mk_all_level3_fsf.main(argv=sys_argv[:])
+			# existing_feat_files should all have been removed
+		else:
+			print 'Not removing feat_files'
+			print "WARNING: The existing feat files (see printed warnings above) will not be overwritten if you continue."
+	 	if rsp == 'y': # wanted to remove feat files
+		 	assert len(existing_copes) == 0, 'There are still existing feat files, there was a problem removing those files.'
+
 	njobs=len(jobs)
 	# turn the list of jobs into a dictionary with the index as the key
 	jobsdict={}
