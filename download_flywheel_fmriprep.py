@@ -248,7 +248,6 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downlo
 													if downloadSessionOnly:
 														desireddir=os.path.join(fullcurdir,'fmriprep',sub,'ses-'+session_label)
 														targetdir=os.path.join(fmriprepdir,sub)
-														print "HERE!! Found desired dir %s"%(desireddir)
 
 													tmpsubfmriprepdir=os.path.join(fullcurdir,'fmriprep',sub)
 													if os.path.exists(desireddir):
