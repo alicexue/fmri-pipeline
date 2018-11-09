@@ -117,7 +117,60 @@ studydir=os.path.join(basedir,studyid)
 if not os.path.exists(studydir):
 	print '\nNote: %s does not exist. It will be created.'%studydir
 else:
-	print '\nNote: %s already exists. Only the remaining subjects\' data will be downloaded.'%studydir
+	print '\nNote: %s already exists.'%studydir
+
+
+subs = download_flywheel_fmriprep.get_flywheel_subjects(key,group_id,project_label,studyid,basedir)
+print '\nHere are your subjects with fmriprep outputs:'
+print subs
+
+continuePrompt=False
+restrictedDownload=False
+rsp=None
+while rsp!='y' and rsp!='':
+	rsp=raw_input('Do you want to specify which subjects you would like to download data for? (y/ENTER) ')
+	if rsp=='y':
+		restrictedDownload=True
+		continuePrompt=True
+	else:
+		print 'Only the remaining subjects\' data will be downloaded.'
+
+new_subs=[]
+if continuePrompt:
+	continuePrompt=True
+	rsp=None
+	print 'You may choose to (1) remove subjects from the list printed above or (2) create a new list of subjects to download outputs for.'
+	while rsp!='1' and rsp!='2':
+		rsp=raw_input('Enter 1 or 2: ')
+	if rsp == '1': # remove subjects from list
+		while continuePrompt and (rsp in subs or rsp!=''):
+			print 'Subjects to download outputs for: ',subs
+			print 'Press ENTER when you are finished'
+			rsp=raw_input('Enter subject id to remove: ')
+			if rsp in subs:
+				subs.remove(rsp)
+			elif rsp == '':
+				break
+			else:
+				print 'ERROR: Invalid subject id.\n'
+	elif rsp == '2': # add subjects to list
+		while continuePrompt and (rsp in subs or rsp!=''):
+			print 'Subjects to download outputs for:', new_subs
+			print 'Press ENTER when you are finished'
+			rsp=raw_input('Enter subject id to add: ')
+			if rsp in subs:
+				new_subs.append(rsp)
+			elif rsp == '':
+				break
+			else:
+				print 'ERROR: Invalid subject id\n'
+
+if len(new_subs) > 0:
+	subs = new_subs
+
+if rsp != '1': # user isn't removing subjects from the original list
+	print '\nDownloads from Flywheel will be restricted to the following subjects:', subs
+	print '\nNote again that subjects in this list with existing folders will be skipped'
 
 # Ignore session label on flywheel (website) for purposes of downloading data?
 ignoreSessionLabel=False
@@ -171,7 +224,7 @@ else:
 
 # downloads fmriprep outputs 
 if downloadFmriprep or downloadFreesurfer or downloadReports:
-	download_flywheel_fmriprep.download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downloadReports,downloadFmriprep,downloadFreesurfer,ignoreSessionLabel)
+	download_flywheel_fmriprep.download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downloadReports,downloadFmriprep,downloadFreesurfer,ignoreSessionLabel,subs)
 # exports raw BIDS (export of raw BIDS should happen after downloading fmriprep output because export_raw_bids looks for subjects in fmriprep folder)
 if exportRawBids:
 	export_raw_bids.export_raw_bids(studyid,basedir,key,group_id,project_label)
