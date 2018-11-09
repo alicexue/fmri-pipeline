@@ -109,7 +109,7 @@ print '\nThe base directory is the full path of where the study id directory wil
 basedir=raw_input('Enter the base directory: ')
 # Checks if base directory exists and asks again if it doesn't
 while not os.path.exists(basedir):
-	print 'Invalid base directory.'
+	print 'Invalid path for the base directory.'
 	basedir=raw_input('Enter the base directory: ')
 	basedir=basedir.strip()
 
@@ -118,6 +118,15 @@ if not os.path.exists(studydir):
 	print '\nNote: %s does not exist. It will be created.'%studydir
 else:
 	print '\nNote: %s already exists. Only the remaining subjects\' data will be downloaded.'%studydir
+
+# Ignore session label on flywheel (website) for purposes of downloading data?
+ignoreSessionLabel=False
+rsp=None
+while rsp!='y' and rsp!='n':
+	print '\nDo you want to ignore the session labels provided by Flywheel for the purposes of downloading data?'
+	rsp=raw_input('Enter "y" if the session labels on the Flywheel website do NOT match the session labels in the data. Otherwise, enter "n": ')
+	if rsp=='y':
+		ignoreSessionLabel=True
 
 # Ask which outputs to download
 print ''
@@ -162,7 +171,7 @@ else:
 
 # downloads fmriprep outputs 
 if downloadFmriprep or downloadFreesurfer or downloadReports:
-	download_flywheel_fmriprep.download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downloadReports,downloadFmriprep,downloadFreesurfer)
+	download_flywheel_fmriprep.download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downloadReports,downloadFmriprep,downloadFreesurfer,ignoreSessionLabel)
 # exports raw BIDS (export of raw BIDS should happen after downloading fmriprep output because export_raw_bids looks for subjects in fmriprep folder)
 if exportRawBids:
 	export_raw_bids.export_raw_bids(studyid,basedir,key,group_id,project_label)
