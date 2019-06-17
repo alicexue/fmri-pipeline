@@ -59,7 +59,7 @@ def get_runs(funcdir,task):
 	runs=[]
 	files=os.listdir(funcdir)
 	for f in files:
-		if f.endswith('_preproc.nii.gz'):
+		if ('preproc' in f) and ('bold' in f) and ('brain' not in f):
 			flag='_task-'+task+'_run-'
 			if flag in f:
 				i1=f.find(flag)+len(flag)
@@ -87,7 +87,7 @@ def get_task_runs(funcdir):
 	if os.path.exists(funcdir):
 		files=os.listdir(funcdir)
 		for f in files:
-			if f.endswith('_preproc.nii.gz'):
+			if ('preproc' in f) and ('bold' in f) and ('brain' not in f):
 				runs=[]
 				# find task name
 				flag='_task-'

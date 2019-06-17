@@ -142,19 +142,19 @@ def mk_level1_fsf_bbr(a):
     anat_preproc_files = []
 
     # check directory directly under subject folder
-    anathead='%s_T1w_space-'%(subid)
-    anattail='_preproc.nii.gz'
+    anathead='%s'%(subid)
+    anattail='.nii.gz'
     for fname in anatdircontent:
-        if fname.startswith(anathead) and fname.endswith(anattail):
+        if fname.startswith(anathead) and ('space' in fname) and ('preproc' in fname) and ('T1w' in fname) and fname.endswith(anattail):
             anat_preproc_files.append(os.path.join(anatdir,fname))
 
     # check directory under session folder
     if a.sesname!="":
-        anathead='%s_T1w_space-'%(subid)
-        sesanathead='%s_ses-%s_T1w_space-'%(subid,a.sesname)
-        anattail='_preproc.nii.gz'
+        anathead='%s'%(subid)
+        sesanathead='%s_ses-%s'%(subid,a.sesname)
+        anattail='.nii.gz'
         for fname in sesanatdircontent:
-            if (fname.startswith(anathead) or fname.startswith(sesanathead)) and fname.endswith(anattail):
+            if (fname.startswith(anathead) or fname.startswith(sesanathead)) and ('space' in fname) and ('preproc' in fname) and ('T1w' in fname) and fname.endswith(anattail):
                 anat_preproc_files.append(os.path.join(sesanatdir,fname))
 
     # find initial_high_res_file in anat_preproc_files found above
@@ -163,8 +163,10 @@ def mk_level1_fsf_bbr(a):
     elif len(anat_preproc_files) == 0:
         if a.sesname=="":
             print "ERROR: Could not find preprocessed anat file in %s. Make sure this directory points to the output of fmriprep."%(anatdir)
+            print "\tNOTE: Looked for 'T1w', 'space', 'preproc' in file name."
         else:
             print "ERROR: Could not find preprocessed anat file in %s or %s. Make sure this directory points to the output of fmriprep."%(anatdir,sesanatdir)
+            print "\tNOTE: Looked for 'T1w', 'space', 'preproc' in file name."
         sys.exit(-1)
     else:
         print fmriprep_subdir+'/'+anathead+a.spacetag+anattail
@@ -180,23 +182,24 @@ def mk_level1_fsf_bbr(a):
     funcdir = os.path.join(fmriprep_subdir,'func')
     funcdircontent = os.listdir(funcdir)
     func_preproc_files = []
-    funchead='%s_task-%s_run-%s_bold_space-'%(subid_ses,a.taskname,a.runname)
-    functail='_preproc.nii.gz'
+    funchead='%s_task-%s_run-%s'%(subid_ses,a.taskname,a.runname)
+    functail='.nii.gz'
     fmriprep_brainmask=""
     fslmaths_preproc_brainmask=""
     for fname in funcdircontent:
-        if fname.startswith(funchead) and fname.endswith(functail):
+        if fname.startswith(funchead) and ('preproc' in fname) and ('bold' in fname) and ('brain' not in fname) and fname.endswith(functail):
             func_preproc_files.append(fname)
         if a.usebrainmask: # if creating custom brain mask using fslmaths, get the brain mask file from the func dir
-            if fname.startswith(funchead) and fname.endswith('_brainmask.nii.gz'):
+            if fname.startswith(funchead) and ('brain' in fname) and ('mask' in fname):
                 fmriprep_brainmask=fname
-                i=fname.find('_brainmask.nii.gz')
-                fslmaths_preproc_brainmask=fname[:i+1]+'preproc_brain.nii.gz'
+                i=fname.find('.nii.gz')
+                fslmaths_preproc_brainmask=fname[:i]+'preproc_brain.nii.gz'
      # find initial_high_res_file in func_preproc_files found above
     if len(func_preproc_files) == 1:
         func_preproc_file = func_preproc_files[0]
     elif len(func_preproc_files) == 0:
         print "ERROR: Could not find preprocessed functional file in %s. Make sure this directory points to the output of fmriprep."%(funcdir)
+        print "\tNOTE: Looked for 'preproc' and 'bold' in the file name. (Excluded files with 'brain' in file name)."
         sys.exit(-1)
     else:
         if a.spacetag!='' and os.path.exists(fmriprep_subdir+'/func/'+funchead+a.spacetag+functail):
@@ -206,7 +209,7 @@ def mk_level1_fsf_bbr(a):
             print func_preproc_files
             sys.exit(-1)
     if a.usebrainmask and fslmaths_preproc_brainmask=="":
-        print "ERROR: usebrainmask is true, but %s..._brainmask.nii.gz was not found in %s"%(funchead,funcdir)
+        print "ERROR: usebrainmask is true, but brain mask was not found in %s"%(funcdir)
         sys.exit(-1)
 
     if "MNI152NLin2009cAsym" not in func_preproc_file and not a.doreg:
