@@ -30,6 +30,7 @@
 
 import argparse
 from collections import OrderedDict
+import inspect
 import json
 import numpy as N
 import os
@@ -72,7 +73,7 @@ def mk_level2_fsf(a):
     # attributes in a:
     # studyid,subid,taskname,runs,basedir,modelname,sesname,callfeat
 
-    _thisDir = os.path.dirname(os.path.abspath(__file__)).decode(sys.getfilesystemencoding())
+    _thisDir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
     # set up variables 
     subid='sub-%s'%(a.subid)

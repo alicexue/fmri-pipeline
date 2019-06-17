@@ -35,6 +35,7 @@ USAGE: mk_level1_fsf_bbr.py <studyid> <sub> <taskname> <runname> <smoothing - mm
 
 import argparse
 from collections import OrderedDict
+import inspect
 import json
 import numpy as N
 import os
@@ -101,7 +102,7 @@ def mk_level1_fsf_bbr(a):
     # attributes in a:
     #studyid,subid,taskname,runname,smoothing,use_inplane,basedir,nonlinear,modelname,anatimg,confound,hpf,whiten,doreg,sesname,spacetag,usebrainmask,callfeat
 
-    _thisDir = os.path.dirname(os.path.abspath(__file__)).decode(sys.getfilesystemencoding())
+    _thisDir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
     tasknum = 1
 
     # Create the folders that are needed

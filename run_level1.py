@@ -9,6 +9,7 @@ Runs the generated sbatch file
 import argparse
 import datetime
 from joblib import Parallel, delayed
+import inspect
 import json
 import multiprocessing
 import os
@@ -30,9 +31,10 @@ def parse_command_line(argv):
 		default="02:00:00",help='Estimated time to run each job - hh:mm:ss')
 	parser.add_argument('-N', '--nodes',dest='nodes',type=int,
 		default=1,help='Number of nodes')
+	parser.add_argument('-M', '--mem',dest='mem',type=int,
+		default=1024,help='Memory allocation in MB. Defaults to 1024 MB.')
 	parser.add_argument('--nofeat',dest='nofeat',action='store_true',
 		default=False,help='Only create the fsf\'s, don\'t call feat')
-	
 	parser.add_argument('--studyid', dest='studyid',
 		required=True,help='Study ID')
 	parser.add_argument('--basedir', dest='basedir',
@@ -54,7 +56,7 @@ def parse_command_line(argv):
 	return args
 
 def call_feat_job(i,jobsdict,level):
-	fmripipelinedir=os.path.dirname(os.path.abspath(__file__))
+	fmripipelinedir=os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 	subprocess.call(['python',os.path.join(fmripipelinedir,'run_feat_job.py'), '--jobs', '%s'%json.dumps(jobsdict),'-i',str(i), '--level', str(level)])
 
 def main(argv=None):
@@ -66,6 +68,7 @@ def main(argv=None):
 	account=args.account
 	time=args.time
 	nodes=args.nodes
+	mem=args.mem
 	studyid=args.studyid
 	basedir=args.basedir
 	modelname=args.modelname
@@ -139,7 +142,7 @@ def main(argv=None):
 			rsp=raw_input('Press ENTER to continue:')
 
 		j='level1-feat'
-		fmripipelinedir=os.path.dirname(os.path.abspath(__file__))
+		fmripipelinedir=os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 		# save sbatch output to studydir by default
 		if outdir == '':
 			homedir=studydir
@@ -162,6 +165,7 @@ def main(argv=None):
 			qsubfile.write('#SBATCH -N %d\n'%(nodes))
 			qsubfile.write('#SBATCH -c 1\n')
 			qsubfile.write('#SBATCH --time=%s\n'%(time))
+			qsubfile.write('#SBATCH --mem=%d\n'%(mem))
 			qsubfile.write('#SBATCH --mail-user=%s\n'%(email))
 			qsubfile.write('#SBATCH --mail-type=ALL\n')
 			qsubfile.write('#SBATCH --array=%s-%s\n'%(0,njobs-1))

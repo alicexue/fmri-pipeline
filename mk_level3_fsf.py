@@ -30,6 +30,7 @@
 
 import argparse
 from collections import OrderedDict
+import inspect
 import json
 import numpy as N
 import os
@@ -72,7 +73,7 @@ def mk_level3_fsf(a):
     # studyid,subids,taskname,basedir,modelname,sesname,randomise
 
     # Set up directories
-    _thisDir = os.path.dirname(os.path.abspath(__file__)).decode(sys.getfilesystemencoding())
+    _thisDir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
     studydir=os.path.join(a.basedir,a.studyid)
 
     modeldir='%s/model/level3/model-%s'%(studydir,a.modelname)
