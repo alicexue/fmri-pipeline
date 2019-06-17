@@ -90,14 +90,7 @@ def get_level1_jobs(studyid,basedir,modelname,specificruns,sys_args_specificruns
 	study_info=specificruns
 	hasSessions=False
 	if specificruns=={}: # if specificruns in model_params was empty
-		# tries getting study info first with hasSessions set to false
-		# determines that hasSessions is true if the values of the subjects are empty
-		studydir=os.path.join(basedir,studyid)
-		study_info=get_study_info(studydir,hasSessions)
-		if len(study_info.keys()) > 0:
-			if not study_info[study_info.keys()[0]]: # if empty
-				hasSessions=True
-				study_info=get_study_info(studydir,hasSessions)
+		study_info, hasSessions=get_study_info(studydir)
 	else:
 		l1=study_info.keys()
 		l2=study_info[l1[0]].keys()[0]

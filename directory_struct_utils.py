@@ -102,8 +102,19 @@ def get_task_runs(funcdir):
 							task_runs[task]=get_runs(funcdir,task)
 	return task_runs
 
+"""
+Return structure of fmriprep directory (see documentation below) and whether studydir BIDS directory has sessions 
+"""
+def get_study_info(studydir):
+	hasSessions = False
+	study_info=get_study_info_sessions_unknown(studydir,hasSessions)
+	if len(study_info.keys()) > 0:
+		if len(study_info[study_info.keys()[0]]) == 0: # if empty
+			hasSessions=True
+			study_info=get_study_info_sessions_unknown(studydir,hasSessions)
+	return study_info, hasSessions
 
-def get_study_info(studydir,hasSessions):
+def get_study_info_sessions_unknown(studydir,hasSessions):
 	"""Gets the structure of the fmriprep directory
 
     Args:

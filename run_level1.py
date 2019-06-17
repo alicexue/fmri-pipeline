@@ -89,12 +89,8 @@ def main(argv=None):
 	while rsp != '':
 		rsp=raw_input('Press ENTER to continue:')	
 	
-	hasSessions=False
 	studydir=os.path.join(basedir,studyid)
-	study_info=setup_utils.get_study_info(studydir,hasSessions)
-	if len(study_info.keys()) > 0:
-		if not study_info[study_info.keys()[0]]: # if empty
-			hasSessions=True
+	study_info, hasSessions=setup_utils.get_study_info(studydir)
 	setup_utils.generate_confounds_files(studyid,basedir,hasSessions,modelname)
 
 	# get specificruns from model_params

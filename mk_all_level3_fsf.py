@@ -50,11 +50,7 @@ def main(argv=None):
 	# since we don't know if there are sessions or not, tries without sessions first
 	hasSessions=False
 	studydir=os.path.join(basedir,studyid)
-	study_info=get_study_info(studydir,hasSessions)
-	if len(study_info.keys()) > 0:
-		if not study_info[study_info.keys()[0]]: # if empty
-			hasSessions=True
-			study_info=get_study_info(studydir,hasSessions)
+	study_info, hasSessions=get_study_info(studydir)
 	"""
 
 	# gets dictionary of study information

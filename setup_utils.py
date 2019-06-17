@@ -97,13 +97,8 @@ Creates subject and onset directories within level 1 model directory
 def create_model_level1_dir(studyid,basedir,modelname):
 	# Creates model dir, the subject dirs, onset dirs
 	# no longer creates empty EV files - causes fsl errors if not removed by user
-	hasSessions=False
 	studydir=os.path.join(basedir,studyid)
-	study_info=get_study_info(studydir,hasSessions)
-	if len(study_info.keys()) > 0:
-		if not study_info[study_info.keys()[0]]: # if empty
-			hasSessions=True
-			study_info=get_study_info(studydir,hasSessions)
+	study_info, hasSessions=get_study_info(studydir)
 	subs=study_info.keys()
 	print json.dumps(study_info)
 	list.sort(subs)
@@ -179,11 +174,7 @@ def create_level1_model_params_json(studyid,basedir,modelname):
 
 	hasSessions=False
 	studydir=os.path.join(basedir,studyid)
-	study_info=get_study_info(studydir,hasSessions)
-	if len(study_info.keys()) > 0:
-		if not study_info[study_info.keys()[0]]: # if empty
-			hasSessions=True
-			study_info=get_study_info(studydir,hasSessions)
+	study_info, hasSessions=get_study_info(studydir)
 	subs=study_info.keys()
 
 	params={'studyid':studyid,'basedir':basedir,'specificruns':study_info,'modelname':modelname,}
@@ -271,7 +262,7 @@ Returns an empty list if no *_bold_confounds.tsv file is found
 """
 def get_possible_confounds(studyid,basedir,hasSessions,modelname):
 	studydir=os.path.join(basedir,studyid)
-	study_info=get_study_info(studydir,hasSessions)
+	study_info, hasSessions=get_study_info(studydir)
 	run_objects=traverse_specificruns(studyid,basedir,study_info,hasSessions)
 	#if len(run_objects)>0:
 	run_objects_count = 0
@@ -376,11 +367,7 @@ def create_empty_condition_key(studyid,basedir,modelname):
 
 	hasSessions=False
 	studydir=os.path.join(basedir,studyid)
-	study_info=get_study_info(studydir,hasSessions)
-	if len(study_info.keys()) > 0:
-		if not study_info[study_info.keys()[0]]: # if empty
-			hasSessions=True
-			study_info=get_study_info(studydir,hasSessions)
+	study_info, hasSessions=get_study_info(studydir)
 	all_tasks=[]
 	subs=study_info.keys()
 	list.sort(subs)
@@ -421,11 +408,7 @@ def create_empty_task_contrasts_file(studyid,basedir,modelname):
 
 	hasSessions=False
 	studydir=os.path.join(basedir,studyid)
-	study_info=get_study_info(studydir,hasSessions)
-	if len(study_info.keys()) > 0:
-		if not study_info[study_info.keys()[0]]: # if empty
-			hasSessions=True
-			study_info=get_study_info(studydir,hasSessions)
+	study_info, hasSessions=get_study_info(studydir)
 	all_tasks=[]
 	subs=study_info.keys()
 	list.sort(subs)
@@ -548,11 +531,7 @@ def input_to_modify_specificruns(studyid,basedir,specificruns):
 	if len(specificruns) == 0:
 		hasSessions=False
 		studydir=os.path.join(basedir,studyid)
-		study_info=get_study_info(studydir,hasSessions)
-		if len(study_info.keys()) > 0:
-			if not study_info[study_info.keys()[0]]: # if empty
-				hasSessions=True
-				study_info=get_study_info(studydir,hasSessions)
+		study_info, hasSessions=get_study_info(studydir)
 		subs=study_info.keys()
 		print 'Here are all of the runs in %s:'%(os.path.join(basedir,studyid,'fmriprep'))
 		print '\n',json.dumps(study_info),'\n'
