@@ -27,6 +27,7 @@
 
 #### For downloading data from Flywheel:
 1. Run manage_flywheel_downloads.py, which will ask for the necessary information via the command line
+2. Run rm_fmriprep_ses_directories.py if Flywheel adds unwanted session directories to fmriprep outputs
 
 #### For running fmri analyses:
 1. Run setup.py to create the model directory and all necessary sub-directories. This will also create empty/sample *.json files (model_params.json, condition_key.json, task_contrasts.json) and onset directories for the EV files. 
