@@ -91,7 +91,6 @@ def main(argv=None):
 	
 	studydir=os.path.join(basedir,studyid)
 	study_info, hasSessions=setup_utils.get_study_info(studydir)
-	setup_utils.generate_confounds_files(studyid,basedir,hasSessions,modelname)
 
 	# get specificruns from model_params
 	args=setup_utils.model_params_json_to_namespace(studyid,basedir,modelname) 
@@ -99,6 +98,8 @@ def main(argv=None):
 		specificruns=args.specificruns
 	else:
 		specificruns = sys_args_specificruns
+
+	setup_utils.generate_confounds_files(studyid,basedir,specificruns,modelname,hasSessions)
 
 	# get the list of jobs to run
 	existing_feat_files, jobs=get_level1_jobs.get_level1_jobs(studyid,basedir,modelname,specificruns,sys_args_specificruns,nofeat) 

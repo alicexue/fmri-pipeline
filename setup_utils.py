@@ -281,6 +281,12 @@ def get_possible_confounds(studyid,basedir,hasSessions,modelname):
 			df=pd.read_csv(confounds_filepath,delim_whitespace=True)
 			possible_confounds=df.columns.tolist()
 			return possible_confounds
+		else:
+			confounds_filepath=os.path.join(funcdir,fileprefix+'_desc-confounds_regressors.tsv')
+			if os.path.exists(confounds_filepath):
+				df=pd.read_csv(confounds_filepath,delim_whitespace=True)
+				possible_confounds=df.columns.tolist()
+				return possible_confounds
 		run_objects_count+=1
 	print 'Could not find confounds %s'%(confounds_filepath)
 	return []
@@ -313,15 +319,13 @@ def create_default_confounds_json(studyid,basedir,hasSessions,modelname):
 """
 Auto-generates confounds files in onset directories based on list of confounds in confounds.json
 """
-def generate_confounds_files(studyid,basedir,hasSessions,modelname):
+def generate_confounds_files(studyid,basedir,specificruns,modelname,hasSessions):
 	modeldir=os.path.join(basedir,studyid,'model','level1','model-%s'%modelname)
 	if os.path.exists(modeldir+'/confounds.json'):
 		with open(modeldir+'/confounds.json','r') as f:
 			confounds_dict = json.load(f)
 			confounds_list=confounds_dict['confounds']
 		studydir=os.path.join(basedir,studyid)
-		model_params=model_params_json_to_namespace(studyid,basedir,modelname)
-		specificruns=model_params.specificruns
 		run_objects=traverse_specificruns(studyid,basedir,specificruns,hasSessions)
 		runs_without_bold_confounds=[]
 		for spef_run in run_objects:
@@ -333,8 +337,16 @@ def generate_confounds_files(studyid,basedir,hasSessions,modelname):
 				funcdir=os.path.join(basedir,studyid,'fmriprep','sub-'+spef_run.sub,'func')
 				fileprefix='sub-'+spef_run.sub+'_task-'+spef_run.task+'_run-'+spef_run.run
 				modeldir=os.path.join(basedir,studyid,'model','level1','model-'+modelname,'sub-'+spef_run.sub,'task-'+spef_run.task+'_run-'+spef_run.run,'onsets')
-			confounds_filepath=os.path.join(funcdir,fileprefix+'_bold_confounds.tsv')
-			if os.path.exists(confounds_filepath):
+			confounds_filepath1=os.path.join(funcdir,fileprefix+'_bold_confounds.tsv')
+			confounds_filepath2=os.path.join(funcdir,fileprefix+'_desc-confounds_regressors.tsv')
+			foundConfounds = False
+			if os.path.exists(confounds_filepath1):
+				confounds_filepath = confounds_filepath1
+				foundConfounds = True
+			elif os.path.exists(confounds_filepath2):
+				confounds_filepath = confounds_filepath2
+				foundConfounds = True
+			if foundConfounds:
 				confounds_tsv=pd.read_csv(confounds_filepath,delim_whitespace=True)
 				cf=confounds_tsv.reindex(columns=confounds_list)
 				# replace np values with 0's
