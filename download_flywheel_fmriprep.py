@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Downloads each subject's fmriprep outputs (func and anat, reports, freesurfer) from flywheel
 Iterates through all the sessions and analyses
@@ -53,17 +54,39 @@ def get_flywheel_subjects(key,group_id,project_label,studyid,basedir):
 			# Iterates through sessions in project
 			for session in fw.get_project_sessions(project.id):
 				# Finds subject id for session
-				sub=session.info['BIDS']['Subject']
-				for analysis in fw.get_session_analyses(session.id):
-					# looks for fmriprep analyses
-					if 'fmriprep' in analysis.label:
-						if analysis.files!=None: # checks for output files - that fmriprep succeeded 
-							if sub not in subs:
-								subs.append(sub)
+				if 'BIDS' in session.info:
+					sub=session.info['BIDS']['Subject']
+					for analysis in fw.get_session_analyses(session.id):
+						# looks for fmriprep analyses
+						if 'fmriprep' in analysis.label:
+							if analysis.files!=None: # checks for output files - that fmriprep succeeded 
+								if sub not in subs:
+									subs.append(sub)
 	subs.sort()
 	return subs
 
-def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downloadReports,downloadFmriprep,downloadFreesurfer,ignoreSessionLabel,subjectList):
+def remove_existing_sub_dirs_to_overwrite_later(studyid,basedir,subjectList,downloadReports,downloadFmriprep,downloadFreesurfer):
+	studydir=os.path.join(basedir,studyid)
+	fmriprepdir=os.path.join(studydir,'fmriprep')
+	freesurferdir=os.path.join(studydir,'freesurfer')
+	reportsdir=os.path.join(studydir,'reports')
+	print 'Removing directories to overwrite them later on:'
+	for sub in subjectList:
+		if downloadReports and os.path.exists(reportsdir):
+			subdir = os.path.join(reportsdir,'sub-'+sub)
+			remove_dir(subdir)
+			subdir = os.path.join(reportsdir,'sub-'+sub+'.html')
+			remove_dir(subdir)
+		if downloadFmriprep and os.path.exists(fmriprepdir):
+			subdir = os.path.join(fmriprepdir,'sub-'+sub)
+			remove_dir(subdir)
+		if downloadFreesurfer and os.path.exists(freesurferdir):
+			subdir = os.path.join(freesurferdir,'sub-'+sub)
+			remove_dir(subdir)
+	print '\n'
+
+
+def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downloadReports,downloadFmriprep,downloadFreesurfer,ignoreSessionLabel,subjectList,overwriteSubjectOutputs):
 	# Creates tmp, fmriprep, and reports directories if they don't exist
 	studydir=os.path.join(basedir,studyid)
 	if not os.path.exists(studydir):
@@ -84,12 +107,17 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downlo
 	# Create client
 	fw = flywheel.Flywheel(key) # API key
 
+	if overwriteSubjectOutputs:
+		remove_existing_sub_dirs_to_overwrite_later(studyid,basedir,subjectList,downloadReports,downloadFmriprep,downloadFreesurfer)
+
 	print '\n## Downloading fmriprep outputs now ##\n'
 	# Iterates through given project
 	for project in fw.get_group_projects(group_id):
 		if project.label==project_label:
 			print('Project: %s: %s' % (project.id, project.label))
 			for session in fw.get_project_sessions(project.id):
+				if 'BIDS' not in session.info:
+					break
 				sub=session.info['BIDS']['Subject']
 				if sub in subjectList:
 					dates=[]
@@ -138,9 +166,9 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downlo
 										session_label=session['label']
 										session_label=re.sub(r'[^a-zA-Z0-9]+', '', session_label) # remove non-alphanumeric characters
 										subsesreportsdir=os.path.join(reportsdir,sub,'ses-'+session_label)
-										if not ignoreSessionLabel and os.path.exists(subsesreportsdir):
+										if not ignoreSessionLabel and os.path.exists(subsesreportsdir) and not overwriteSubjectOutputs:
 											print 'Skipping downloading and processing of fmriprep reports for %s/ses-%s'%(sub,session_label)
-										elif ignoreSessionLabel and os.path.exists(subreportsdir):
+										elif ignoreSessionLabel and os.path.exists(subreportsdir) and not overwriteSubjectOutputs:
 											print 'Skipping downloading and processing of fmriprep reports for %s'%(sub)
 										else:
 											downloadSessionOnly=False
@@ -156,6 +184,7 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downlo
 											unzippedfilepath=filepath[:-4]
 											# unzip the file
 											unzip_dir(filepath,unzippedfilepath)
+
 											# Move sub folder in sub-<id>.html->flywheel->...->sub-<id> to the reportsdir
 											# iterates through the flywheel folder to find sub folder buried inside
 											# the variable i is used to avoid an infinite loop
@@ -190,8 +219,16 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downlo
 												subreportsdir=os.path.join(reportsdir,sub)
 												move_dir(indexhtmlpath,subreportsdir)
 												oldindexhtml=os.path.join(subreportsdir,'index.html')
-												newindexhtml=os.path.join(subreportsdir,'ses-'+session_label,'%s.html'%sub)
+												#newindexhtml=os.path.join(subreportsdir,'ses-'+session_label,'%s.html'%sub)
+												newindexhtml=os.path.join(reportsdir,'%s.html'%sub)
 												move_dir(oldindexhtml,newindexhtml)
+											# move figures directory 
+											figurespath=os.path.join(unzippedfilepath,sub,'figures')
+											print figurespath
+											if os.path.exists(figurespath):
+												subreportsdir=os.path.join(reportsdir,sub)
+												move_dir(figurespath,subreportsdir)
+
 											# remove originally downloaded files
 											remove_dir(filepath)
 											remove_dir(unzippedfilepath)
@@ -205,13 +242,13 @@ def download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downlo
 										subsesfmriprepdir=os.path.join(fmriprepdir,sub,'ses-'+session_label)
 										continueFmriprepDownload=downloadFmriprep
 										continueFreesurferDownload=downloadFreesurfer
-										if not ignoreSessionLabel and downloadFmriprep and os.path.exists(subsesfmriprepdir):
+										if not ignoreSessionLabel and downloadFmriprep and os.path.exists(subsesfmriprepdir) and not overwriteSubjectOutputs:
 											print 'Skipping downloading and processing of fmriprep outputs for %s/ses-%s'%(sub,session_label)
 											continueFmriprepDownload=False
-										elif ignoreSessionLabel and downloadFmriprep and os.path.exists(subfmriprepdir):
+										elif ignoreSessionLabel and downloadFmriprep and os.path.exists(subfmriprepdir) and not overwriteSubjectOutputs:
 											print 'Skipping downloading and processing of fmriprep outputs for %s'%(sub)
 											continueFmriprepDownload=False
-										if not ignoreSessionLabel and downloadFreesurfer and os.path.exists(subfreesurferdir):
+										if not ignoreSessionLabel and downloadFreesurfer and os.path.exists(subfreesurferdir) and not overwriteSubjectOutputs:
 											print 'Skipping downloading and processing of freesurfer outputs for %s'%sub
 											continueFreesurferDownload=False
 

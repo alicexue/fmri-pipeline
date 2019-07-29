@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Takes command line input and runs download_flywheel_fmriprep and export_raw_bids accordingly
 """
@@ -170,7 +171,17 @@ if len(new_subs) > 0:
 
 if rsp != '1': # user isn't removing subjects from the original list
 	print '\nDownloads from Flywheel will be restricted to the following subjects:', subs
-	print '\nNote again that subjects in this list with existing folders will be skipped'
+	#print '\nNote again that subjects in this list with existing folders will be skipped'
+
+overwriteSubjectOutputs = False
+rsp=None
+while rsp!='y' and rsp!='':
+	rsp=raw_input("If subject outputs exist, do you want to overwrite them? (y/ENTER) ")
+	if rsp=='y':
+		overwriteSubjectOutputs=True
+	else:
+		print 'Existing output folders will be overwritten.'
+
 
 # Ignore session label on flywheel (website) for purposes of downloading data?
 ignoreSessionLabel=False
@@ -224,7 +235,7 @@ else:
 
 # downloads fmriprep outputs 
 if downloadFmriprep or downloadFreesurfer or downloadReports:
-	download_flywheel_fmriprep.download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downloadReports,downloadFmriprep,downloadFreesurfer,ignoreSessionLabel,subs)
+	download_flywheel_fmriprep.download_flywheel_fmriprep(key,group_id,project_label,studyid,basedir,downloadReports,downloadFmriprep,downloadFreesurfer,ignoreSessionLabel,subs,overwriteSubjectOutputs)
 # exports raw BIDS (export of raw BIDS should happen after downloading fmriprep output because export_raw_bids looks for subjects in fmriprep folder)
 if exportRawBids:
 	export_raw_bids.export_raw_bids(studyid,basedir,key,group_id,project_label)
