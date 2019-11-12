@@ -347,7 +347,7 @@ def generate_confounds_files(studyid,basedir,specificruns,modelname,hasSessions)
 				confounds_filepath = confounds_filepath2
 				foundConfounds = True
 			if foundConfounds:
-				confounds_tsv=pd.read_csv(confounds_filepath,delim_whitespace=True,header=None)
+				confounds_tsv=pd.read_csv(confounds_filepath,delim_whitespace=True)
 				cf=confounds_tsv.reindex(columns=confounds_list)
 				# replace np values with 0's
 				cf=cf.replace({np.nan:0})
