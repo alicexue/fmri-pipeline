@@ -205,8 +205,8 @@ def mk_level1_fsf_bbr(a):
             # for post fmriprep 1.4.0
         elif fname.startswith(funchead) and fname.endswith('-brain_mask.nii.gz'):
             fmriprep_brainmask=fname
-        i=fname.find('-brain_mask.nii.gz')
-        fslmaths_preproc_brainmask=fname[:i]+'-preproc_brain.nii.gz'
+            i=fname.find('-brain_mask.nii.gz')
+            fslmaths_preproc_brainmask=fname[:i]+'-preproc_brain.nii.gz'
     # find initial_high_res_file in func_preproc_files found above
     if len(func_preproc_files) == 1:
         func_preproc_file = func_preproc_files[0]
