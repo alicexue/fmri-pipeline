@@ -35,13 +35,13 @@ APIKeyFile = 'flywheel_API_key.txt'
 if os.path.exists(APIKeyFile):
     with open(APIKeyFile, 'r') as f:
         key = f.readline()
-        fw = flywheel.Flywheel(key)
+        fw = flywheel.Client(key)
 else:  # asks for the key from the command line
     loggedIn = False
     while not loggedIn:
         key = input('Enter Your Flywheel API Key: ')
         try:
-            fw = flywheel.Flywheel(key)
+            fw = flywheel.Client(key)
             loggedIn = True
         except:
             print('Invalid API key.')

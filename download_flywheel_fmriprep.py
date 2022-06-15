@@ -47,7 +47,7 @@ def remove_dir(dir_name):
 # get subjects on flywheel that have fmriprep outputs
 def get_flywheel_subjects(key, group_id, project_label):
     # Create client
-    fw = flywheel.Flywheel(key)  # API key
+    fw = flywheel.Client(key)  # API key
     subs = []
     # Iterates through given project
     for project in fw.get_group_projects(group_id):
@@ -110,7 +110,7 @@ def download_flywheel_fmriprep(key, group_id, project_label, studyid, basedir, d
         os.mkdir(reportsdir)
 
     # Create client
-    fw = flywheel.Flywheel(key)  # API key
+    fw = flywheel.Client(key)  # API key
 
     if overwriteSubjectOutputs:
         remove_existing_sub_dirs_to_overwrite_later(studyid, basedir, subjectList, downloadReports, downloadFmriprep,
@@ -185,8 +185,9 @@ def download_flywheel_fmriprep(key, group_id, project_label, studyid, basedir, d
                                             fw.download_output_from_session_analysis(session.id,
                                                                                      most_recent_analysis_id, file.name,
                                                                                      filepath)
-                                            # download_request = fw.download_session_analysis_outputs(session.id, most_recent_analysis_id, ticket='')
-                                            # fw.download_ticket(download_request.ticket, filepath)
+                                            # download_request = fw.download_session_analysis_outputs(session.id,
+                                            # most_recent_analysis_id, ticket='') fw.download_ticket(
+                                            # download_request.ticket, filepath)
                                             unzippedfilepath = filepath[:-4]
                                             # unzip the file
                                             unzip_dir(filepath, unzippedfilepath)
@@ -254,8 +255,8 @@ def download_flywheel_fmriprep(key, group_id, project_label, studyid, basedir, d
                                         if not ignoreSessionLabel and downloadFmriprep and os.path.exists(
                                                 subsesfmriprepdir) and not overwriteSubjectOutputs:
                                             print(
-                                                'Skipping downloading and processing of fmriprep outputs for %s/ses-%s' % (
-                                                    sub, session_label))
+                                                'Skipping downloading and processing of fmriprep outputs for %s/ses-%s'
+                                                 % (sub, session_label))
                                             continueFmriprepDownload = False
                                         elif ignoreSessionLabel and downloadFmriprep and os.path.exists(
                                                 subfmriprepdir) and not overwriteSubjectOutputs:
@@ -279,8 +280,9 @@ def download_flywheel_fmriprep(key, group_id, project_label, studyid, basedir, d
                                             fw.download_output_from_session_analysis(session.id,
                                                                                      most_recent_analysis_id, file.name,
                                                                                      filepath)
-                                            # download_request = fw.download_session_analysis_outputs(session.id, most_recent_analysis_id, ticket='')
-                                            # fw.download_ticket(download_request.ticket, filepath)
+                                            # download_request = fw.download_session_analysis_outputs(session.id,
+                                            # most_recent_analysis_id, ticket='') fw.download_ticket(
+                                            # download_request.ticket, filepath)
                                             # unzips outputs
                                             unzippedfilepath = filepath[:-4]  # removes .zip from name
                                             unzip_dir(filepath, unzippedfilepath)
@@ -327,8 +329,9 @@ def download_flywheel_fmriprep(key, group_id, project_label, studyid, basedir, d
                                             if downloadFmriprep and not moved:
                                                 print("Could not find fmriprep in %s" % fullcurdir)
 
-                                            # Remove figures directory from sub folder in fmriprep
-                                            # the figures directory is a duplicate of the fmriprep reports, which are downloaded separately into the reports directory
+                                            # Remove figures directory from sub folder in fmriprep the figures
+                                            # directory is a duplicate of the fmriprep reports, which are downloaded
+                                            # separately into the reports directory
                                             fmriprepsubfigures = os.path.join(newsubfmriprep, 'figures')
 
                                             remove_dir(fmriprepsubfigures)
