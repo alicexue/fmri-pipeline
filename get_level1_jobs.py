@@ -9,9 +9,10 @@ run_feat_job.py calls mk_level1_fsf_bbr.py
 import argparse
 import copy
 import json
-import setup_utils
+import os
 
-from directory_struct_utils import *
+import directory_struct_utils
+import setup_utils
 
 
 def parse_command_line(argv):
@@ -82,7 +83,7 @@ def get_level1_jobs(studyid, basedir, modelname, specificruns, sys_args_specific
     hasSessions = False
     if specificruns == {}:  # if specificruns in model_params was empty
         studydir = os.path.join(basedir, studyid)
-        study_info, hasSessions = get_study_info(studydir)
+        study_info, hasSessions = directory_struct_utils.get_study_info(studydir)
     else:
         l1 = list(study_info.keys())
         l2 = list(study_info[l1[0]].keys())[0]

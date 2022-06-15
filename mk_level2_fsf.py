@@ -99,8 +99,12 @@ def mk_level2_fsf(a):
     # if it's a text file
     cond_key_txt = os.path.join(a.basedir, a.studyid, 'model/level1/model-%s/condition_key.txt' % a.modelname)
     if os.path.exists(cond_key_json):
-        cond_key = json.load(open(cond_key_json),
+        try:
+            cond_key = json.load(open(cond_key_json),
                              object_pairs_hook=OrderedDict)  # keep the order of the keys as they were in the json file
+        except ValueError:
+            print("\nERROR: Could not read the %s file. Make sure it is formatted correctly." % cond_key_json)
+            sys.exit(-1)
         conddict_keys = []
         if a.taskname in cond_key.keys():
             # set conddict to the dictionary for this task where 
@@ -135,7 +139,11 @@ def mk_level2_fsf(a):
     # if it's a txt file
     contrastsfile_txt = os.path.join(a.basedir, a.studyid, 'model/level1/model-%s/task_contrasts.txt' % a.modelname)
     if os.path.exists(contrastsfile_json):
-        all_addl_contrasts = json.load(open(contrastsfile_json), object_pairs_hook=OrderedDict)
+        try:
+            all_addl_contrasts = json.load(open(contrastsfile_json), object_pairs_hook=OrderedDict)
+        except ValueError:
+            print("\nERROR: Could not read the %s file. Make sure it is formatted correctly." % contrastsfile_json)
+            sys.exit(-1)
         # all_addl_contrasts = dict(all_addl_contrasts)
         # for contrast in all_addl_contrasts:
         #    all_addl_contrasts[contrast] = dict(all_addl_contrasts[contrast])
@@ -194,8 +202,8 @@ def mk_level2_fsf(a):
     if len(customsettings) > 0:
         outfile.write('\n### Additional settings from custom stub file ###\n')
         for setting in customsettings:
-            l = 'set ' + setting + ' ' + customsettings[setting]
-            outfile.write(l)
+            line = 'set ' + setting + ' ' + customsettings[setting]
+            outfile.write(line)
 
     # now add custom lines
 

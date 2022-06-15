@@ -8,8 +8,9 @@ Called by run_level2_feat.py
 import argparse
 import copy
 import json
+import os
+import sys
 
-from directory_struct_utils import *
 import setup_utils
 
 

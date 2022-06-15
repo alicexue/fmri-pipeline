@@ -20,7 +20,7 @@ def read_nifti_header(niftifile):
     l1 = output.split('\n')
     header_vals = {}
     for line in l1:
-        tmp = line.split(' ')
+        tmp = line.replace('\t', ' ').split(' ')
         if tmp[0] != '':
             header_vals[tmp[0]] = tmp[-1]
     return header_vals

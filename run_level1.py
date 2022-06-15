@@ -17,6 +17,7 @@ import shutil
 import subprocess
 
 import get_level1_jobs
+import directory_struct_utils
 import setup_utils
 
 
@@ -96,7 +97,7 @@ def main(argv=None):
         rsp = input('Press ENTER to continue:')
 
     studydir = os.path.join(basedir, studyid)
-    study_info, hasSessions = setup_utils.get_study_info(studydir)
+    study_info, hasSessions = directory_struct_utils.get_study_info(studydir)
 
     # get specificruns from model_params
     args = setup_utils.model_params_json_to_namespace(studyid, basedir, modelname)
@@ -189,7 +190,7 @@ def main(argv=None):
         try:
             subprocess.call(['sbatch', sbatch_path])
             print('Saving sbatch output to %s' % outputdir)
-        except:
+        except FileNotFoundError:
             print("\nNOTE: sbatch command was not found.")
             # since not running sbatch, should remove created .sbatch file and outputdir
             os.remove(sbatch_path)

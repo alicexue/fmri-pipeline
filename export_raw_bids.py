@@ -12,8 +12,10 @@ Note: raw BIDS can only be exported if docker is running
 
 import flywheel
 import subprocess as sp
+import sys
+import os
 
-from directory_struct_utils import *
+import directory_struct_utils
 
 
 def main():
@@ -67,7 +69,7 @@ def export_raw_bids(studyid, basedir, key, group_id, project_label):
                     if sub not in sub_codes:
                         sub_codes.append(session.subject.code)
 
-        all_subs = get_all_subs(studydir)  # subjects with fmriprep outputs downloaded
+        all_subs = directory_struct_utils.get_all_subs(studydir)  # subjects with fmriprep outputs downloaded
         sub_code_dict = {}
         for code in sub_codes:
             code_w_underscore_removed = code.replace("_", "")

@@ -8,7 +8,10 @@ import copy
 import json
 import numpy as np
 import pandas as pd
-from directory_struct_utils import *
+import os
+import sys
+
+import directory_struct_utils
 
 """
 Converts parameters in model_params.json to Namespace object 
@@ -18,9 +21,13 @@ Converts parameters in model_params.json to Namespace object
 def model_params_json_to_namespace(studyid, basedir, modelname):
     modeldir = os.path.join(basedir, studyid, 'model', 'level1', 'model-%s' % modelname)
     default_params = get_default_params()
-    if os.path.exists(modeldir + '/model_params.json'):
-        with open(modeldir + '/model_params.json', 'r') as f:
-            params = json.load(f)
+    model_params_json_path = modeldir + '/model_params.json'
+    if os.path.exists(model_params_json_path):
+        try:
+            params = json.load(open(model_params_json_path, 'r'))
+        except ValueError:
+            print("\nERROR: Could not read the %s file. Make sure it is formatted correctly." % model_params_json_path)
+            sys.exit(-1)
         args = Namespace()
         args.modelname = params['modelname']
         args.specificruns = params['specificruns']
@@ -110,7 +117,7 @@ def create_model_level1_dir(studyid, basedir, modelname):
     # Creates model dir, the subject dirs, onset dirs
     # no longer creates empty EV files - causes fsl errors if not removed by user
     studydir = os.path.join(basedir, studyid)
-    study_info, hasSessions = get_study_info(studydir)
+    study_info, hasSessions = directory_struct_utils.get_study_info(studydir)
     subs = sorted(study_info.keys())
     print(json.dumps(study_info))
     i = 0
@@ -178,7 +185,7 @@ def create_level1_model_params_json(studyid, basedir, modelname):
     # Keys must be spelled correctly
 
     studydir = os.path.join(basedir, studyid)
-    study_info, hasSessions = get_study_info(studydir)
+    study_info, hasSessions = directory_struct_utils.get_study_info(studydir)
 
     params = {'studyid': studyid, 'basedir': basedir, 'specificruns': study_info, 'modelname': modelname, }
     params.update(get_default_params())
@@ -236,11 +243,10 @@ def traverse_specificruns(studyid, basedir, specificruns, hasSessions):
                         funcdir = os.path.join(basedir, studyid, 'fmriprep', 'sub-' + sub, 'ses-' + sesname, 'func')
                         fileprefix = 'sub-' + sub + '_ses-' + sesname + '_task-' + task + '_run-' + run
                         funcdirfiles = os.listdir(funcdir)
-                        runfilesexists = False  # check if any files in the func directory start with fileprefix
                         if os.path.exists(funcdir):
                             for f in funcdirfiles:
                                 if f.startswith(fileprefix):
-                                    runfilesexists = True
+                                    pass
                             run_objects.append(RunObj(sub, sesname, task, run))
         else:  # no sessions
             tasks = sorted(study_info[subid].keys())
@@ -250,11 +256,10 @@ def traverse_specificruns(studyid, basedir, specificruns, hasSessions):
                     funcdir = os.path.join(basedir, studyid, 'fmriprep', 'sub-' + sub, 'func')
                     fileprefix = 'sub-' + sub + '_task-' + task + '_run-' + run
                     funcdirfiles = os.listdir(funcdir)
-                    runfilesexists = False  # check if any files in the func directory start with fileprefix
                     if os.path.exists(funcdir):
                         for f in funcdirfiles:
                             if f.startswith(fileprefix):
-                                runfilesexists = True
+                                pass
                         run_objects.append(RunObj(sub, None, task, run))
     return run_objects
 
@@ -269,7 +274,7 @@ Returns an empty list if no *_bold_confounds.tsv file is found
 
 def get_possible_confounds(studyid, basedir):
     studydir = os.path.join(basedir, studyid)
-    study_info, hasSessions = get_study_info(studydir)
+    study_info, hasSessions = directory_struct_utils.get_study_info(studydir)
     run_objects = traverse_specificruns(studyid, basedir, study_info, hasSessions)
     run_objects_count = 0
     found_bold_confounds = False
@@ -278,7 +283,8 @@ def get_possible_confounds(studyid, basedir):
         spef_run = run_objects[run_objects_count]  # checks one run in list
         if spef_run.ses is not None:  # there are sessions
             funcdir = os.path.join(basedir, studyid, 'fmriprep', 'sub-' + spef_run.sub, 'ses-' + spef_run.ses, 'func')
-            fileprefix = 'sub-' + spef_run.sub + '_ses-' + spef_run.ses + '_task-' + spef_run.task + '_run-' + spef_run.run
+            fileprefix = 'sub-' + spef_run.sub + '_ses-' + spef_run.ses + '_task-' + spef_run.task + '_run-' + \
+                         spef_run.run
         else:  # no sessions
             funcdir = os.path.join(basedir, studyid, 'fmriprep', 'sub-' + spef_run.sub, 'func')
             fileprefix = 'sub-' + spef_run.sub + '_task-' + spef_run.task + '_run-' + spef_run.run
@@ -347,7 +353,8 @@ def generate_confounds_files(studyid, basedir, specificruns, modelname, hasSessi
             if spef_run.ses is not None:  # there are sessions
                 funcdir = os.path.join(basedir, studyid, 'fmriprep', 'sub-' + spef_run.sub, 'ses-' + spef_run.ses,
                                        'func')
-                fileprefix = 'sub-' + spef_run.sub + '_ses-' + spef_run.ses + '_task-' + spef_run.task + '_run-' + spef_run.run
+                fileprefix = 'sub-' + spef_run.sub + '_ses-' + spef_run.ses + '_task-' + spef_run.task + '_run-' + \
+                             spef_run.run
                 modeldir = os.path.join(basedir, studyid, 'model', 'level1', 'model-' + modelname,
                                         'sub-' + spef_run.sub, 'ses-' + spef_run.ses,
                                         'task-' + spef_run.task + '_run-' + spef_run.run, 'onsets')
@@ -384,7 +391,8 @@ def generate_confounds_files(studyid, basedir, specificruns, modelname, hasSessi
             for spef_run in runs_without_bold_confounds:
                 if spef_run.ses is not None:
                     print(
-                        '\t' + 'sub-' + spef_run.sub + '_ses-' + spef_run.ses + '_task-' + spef_run.task + '_run-' + spef_run.run)
+                        '\t' + 'sub-' + spef_run.sub + '_ses-' + spef_run.ses + '_task-' + spef_run.task + '_run-' +
+                        spef_run.run)
                 else:
                     print('\t' + 'sub-' + spef_run.sub + '_task-' + spef_run.task + '_run-' + spef_run.run)
 
@@ -402,7 +410,7 @@ def create_empty_condition_key(studyid, basedir, modelname):
         os.makedirs(modeldir)
 
     studydir = os.path.join(basedir, studyid)
-    study_info, hasSessions = get_study_info(studydir)
+    study_info, hasSessions = directory_struct_utils.get_study_info(studydir)
     all_tasks = []
     subs = sorted(study_info.keys())
     subid = subs[0]
@@ -438,7 +446,7 @@ def create_empty_task_contrasts_file(studyid, basedir, modelname):
         os.makedirs(modeldir)
 
     studydir = os.path.join(basedir, studyid)
-    study_info, hasSessions = get_study_info(studydir)
+    study_info, hasSessions = directory_struct_utils.get_study_info(studydir)
     all_tasks = []
     subs = sorted(study_info.keys())
     subid = subs[0]
@@ -548,7 +556,7 @@ If parameter specificruns is empty, will retrieve all runs and set specificruns 
 def input_to_modify_specificruns(studyid, basedir, specificruns):
     if len(specificruns) == 0:
         studydir = os.path.join(basedir, studyid)
-        study_info, hasSessions = get_study_info(studydir)
+        study_info, hasSessions = directory_struct_utils.get_study_info(studydir)
         print('Here are all of the runs in %s:' % (os.path.join(basedir, studyid, 'fmriprep')))
         print('\n', json.dumps(study_info), '\n')
 
@@ -596,7 +604,7 @@ def remove_from_study_info(item, specificruns):
     try:
         assert specificruns.values()[0].keys()[0].startswith('ses-')
         hasSessions = True
-    except:
+    except AssertionError:
         hasSessions = False
     if item.startswith("sub-") or item.startswith("ses-") or item.startswith("task-") or item.startswith("run-"):
         study_info = specificruns
