@@ -12,7 +12,7 @@
 - Install the [Flywheel Python SDK](https://flywheel-io.gitlab.io/product/backend/sdk/branches/master/python/getting_started.html) to download fmriprep outputs from Flywheel. 
 - Have your Flywheel API key handy (see your user profile). 
 - To export raw BIDS, you must have [Docker](https://docs.docker.com/get-docker/) installed and running and the [Flywheel CLI](https://docs.flywheel.io/hc/en-us/articles/360008162214-Installing-the-Flywheel-Command-Line-Interface-CLI-) installed. Make sure to log into the CLI with your API key.
-- Required packages are listed in requirements.txt. To install all packages in requirements.txt at once, use the command "pip install -r requirements.txt"
+- Required packages are listed in requirements.txt. To install all packages in requirements.txt at once, use the command `pip install -r requirements.txt`
 
 #### For running fmri analyses:
 - directory with fmriprep output named 'fmriprep'
