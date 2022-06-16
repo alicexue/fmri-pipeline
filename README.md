@@ -1,10 +1,10 @@
 # fmri-pipeline
 
 ## Overview:
-- manage_flywheel_downloads.py can download fmriprep outputs (including freesurfer outputs + html/svg reports) and can export raw BIDS from Flywheel
+- Data stored on Flywheel, including raw BIDS data, fmriprep outputs, freesurfer outputs, and html/svg reports can be downloaded using manage_flywheel_downloads.py. Fmriprep outputs is saved in BIDS format.
 
-- Creates *.fsf files (see [FSL FEAT](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FEAT)) for level 1, level 2, and level 3 analysis of fmri data
-- Runs fsl's feat on the created *.fsf files in a slurm job array (or runs feat serially if not running on a cluster)
+- Creates *.fsf files (see [FSL FEAT](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FEAT)) for level 1, level 2, and level 3 analysis of fMRI data
+- Runs fsl's feat on the generated *.fsf files in parallel on a slurm job array (or runs feat serially if not running on a cluster)
 
 ## Requirements:
 
@@ -12,15 +12,15 @@
 - Install the [Flywheel Python SDK](https://flywheel-io.gitlab.io/product/backend/sdk/branches/master/python/getting_started.html) to download fmriprep outputs from Flywheel. 
 - Have your Flywheel API key handy (see your user profile). 
 - To export raw BIDS, you must have [Docker](https://docs.docker.com/get-docker/) installed and running and the [Flywheel CLI](https://docs.flywheel.io/hc/en-us/articles/360008162214-Installing-the-Flywheel-Command-Line-Interface-CLI-) installed. Make sure to log into the CLI with your API key.
-- Requirements listed in requirements.txt. To install everything in requirements.txt, run "pip install -r requirements.txt"
+- Required packages are listed in requirements.txt. To install all packages in requirements.txt at once, use the command "pip install -r requirements.txt"
 
 #### For running fmri analyses:
 - directory with fmriprep output named 'fmriprep'
 - func directories (with preprocessed functional files) should be in the subject folder (if there are no sessions) or in the appropriate session folder
 - anat directories (with preprocessed anatomical files) can be in the subject folder or in the appropriate session folder
 - EV files (see step 1 below)
-- model params must be specified under the model-<modelname> directory (see step 2 below)
-- condition key must be specified under the model-<modelname> directory as condition_key.json or condition_key.txt (see step 3 below)
+- model params must be specified under the model-\<modelname> directory (see step 2 below)
+- condition key must be specified under the model-\<modelname> directory as condition_key.json or condition_key.txt (see step 3 below)
 - task contrasts (not required) may be specified under the model-<modelname> directory as task_contrasts.json or task_contrasts.txt (see step 4 below)
 
 ## Steps:
@@ -31,8 +31,8 @@
 
 #### For running fmri analyses:
 1. Run setup.py to create the model directory and all necessary sub-directories. This will also create empty/sample *.json files (model_params.json, condition_key.json, task_contrasts.json) and onset directories for the EV files. 
-2. Fill out model_params.json under model-<modelname>, see abbreviation explanations below.
-3. Fill out condition_key.json under model-<modelname>, where the task name is the key and the value is a json object with EV names as keys and the conditions as values. (Note: The EV files, *_ev-00\<N>, are always padded with leading zeros so that there are 3 digits)
+2. Fill out model_params.json under model-\<modelname>, see abbreviation explanations below.
+3. Fill out condition_key.json under model-\<modelname>, where the task name is the key and the value is a json object with EV names as keys and the conditions as values. (Note: The EV files, *_ev-00\<N>, are always padded with leading zeros so that there are 3 digits)
 4. If you need to specify task contrasts, fill out task_contrasts.json, where the key is the task name and the value is a json object in which the key is the name of the contrast and the value is a list that represents the contrast vector. If you don't want to specify task contrasts for this model, remove the file.
 5. Create the EV files, which belong in the 'onsets' directories under each run folder. Make sure the EV files are named correctly (see the diagram below). Confound files should be saved in the same location as the EV files (the file name ends in *_ev-confounds, see below).
 6. If customization of fsf files is desired, create a custom stub file named design_level\<N>_custom.stub under the model directory with feat settings (see design_level1_fsl5.stub for examples). If a setting in the custom file is found in the stub file, the custom setting will replace the existing setting. If the custom setting is not found, it will be added to the fsf.
@@ -84,7 +84,7 @@ basedir
 	
 ```
 
-## Explanations of abbreviations:
+## Explanations of input parameters:
 - **studyid**: name of the parent directory of the fmriprep directory
 - **basedir**: full path of the grandparent directory of the fmriprep directory (don't include studyid here)
 - **sub**: subject identifier (not including the prefix 'sub-')
