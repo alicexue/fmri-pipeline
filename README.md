@@ -1,10 +1,9 @@
 # fmri-pipeline
 
 ## Overview:
-- Data stored on Flywheel -- including raw BIDS data, fmriprep outputs, freesurfer outputs, and html/svg reports -- can be downloaded using manage_flywheel_downloads.py. Fmriprep outputs are saved in BIDS format.
-
+- Data stored on Flywheel -- including raw BIDS, fmriprep outputs, freesurfer outputs, and html/svg reports -- can be downloaded using manage_flywheel_downloads.py. Fmriprep outputs are saved in BIDS format.  
 - Creates *.fsf files (see [FSL FEAT](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FEAT)) for level 1, level 2, and level 3 analysis of fMRI data
-- Runs fsl's feat on the generated *.fsf files in parallel on a slurm job array (or runs feat serially if not running on a cluster)
+- Runs fsl's feat on the generated *.fsf files on high performance computing clusters (in parallel using slurm job arrays). If not using a cluster, can run feat serially or in parallel using [joblib](https://joblib.readthedocs.io/en/latest/)
 
 ## Requirements:
 
@@ -14,7 +13,7 @@
 - To export raw BIDS, you must have [Docker](https://docs.docker.com/get-docker/) installed and running and the [Flywheel CLI](https://docs.flywheel.io/hc/en-us/articles/360008162214-Installing-the-Flywheel-Command-Line-Interface-CLI-) installed. Make sure to log into the CLI with your API key.
 - Required packages are listed in requirements.txt. To install all packages in requirements.txt at once, use the command `pip install -r requirements.txt`
 
-#### For running fmri analyses:
+#### For running fMRI analyses:
 - directory with fmriprep output named 'fmriprep'
 - func directories (with preprocessed functional files) should be in the subject folder (if there are no sessions) or in the appropriate session folder
 - anat directories (with preprocessed anatomical files) can be in the subject folder or in the appropriate session folder
@@ -29,7 +28,7 @@
 1. Run manage_flywheel_downloads.py, which will ask for the necessary information via the command line
 2. Run rm_fmriprep_ses_directories.py if Flywheel adds unwanted session directories to fmriprep outputs
 
-#### For running fmri analyses:
+#### For running fMRI analyses:
 1. Run setup.py to create the model directory and all necessary sub-directories. This will also create empty/sample *.json files (model_params.json, condition_key.json, task_contrasts.json) and onset directories for the EV files. 
 2. Fill out model_params.json under model-\<modelname>, see abbreviation explanations below.
 3. Fill out condition_key.json under model-\<modelname>, where the task name is the key and the value is a json object with EV names as keys and the conditions as values. (Note: The EV files, *_ev-00\<N>, are always padded with leading zeros so that there are 3 digits)
