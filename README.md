@@ -2,8 +2,8 @@
 
 ## Overview:
 - Data stored on Flywheel -- including raw BIDS, fmriprep outputs, freesurfer outputs, and html/svg reports -- can be downloaded using manage_flywheel_downloads.py. Fmriprep outputs are saved in BIDS format.  
-- Creates *.fsf files (see [FSL FEAT](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FEAT)) for level 1, level 2, and level 3 analysis of fMRI data
-- Runs fsl's feat on the generated *.fsf files on high performance computing clusters (in parallel using slurm job arrays). If not using a cluster, can run feat serially or in parallel using [joblib](https://joblib.readthedocs.io/en/latest/)
+- Creates *.fsf files (see [FSL FEAT](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FEAT)) for level 1, level 2, and level 3 analysis of fMRI data.
+- Runs fsl's feat on the generated *.fsf files on high performance computing clusters (in parallel using slurm job arrays). If not using a cluster, can run feat serially or in parallel using [joblib](https://joblib.readthedocs.io/en/latest/).
 
 ## Requirements:
 
@@ -110,9 +110,9 @@ basedir
 - In json objects, strings must be in double quotes, not single quotes. You can check the the json files are formatted properly using this [json formatter](https://jsonformatter.org/)
 
 ## Some behaviors to note:
-- If some feats already exist, warnings will be printed out. Existing feats are never overwritten, but there is an option to remove existing feats. 
-- If specificruns isn't specified through the command line, specificruns from modelparams.json is used. If specificruns in modelparams.json is empty, then the script is run on all runs for all tasks for all subjects (based on the data provided in the fmriprep directory).
-- Re: downloading and exporting data from flywheel - if the subject folder for fmriprep/reports/freesurfer does not exist, entire analysis output for that subject will be downloaded. If that subject folder does exist, only the session folder will be moved to the subject directory. (For freesurfer however, only one session will be downloaded. There are no session folders under the subject freesurfer directory)
+- If some feats already exist, warnings will be printed. Existing feat directories are never overwritten, but there is an option to remove existing feats. 
+- If specificruns isn't specified through the command line, specificruns from model_params.json is used. If specificruns in model_params.json is empty, then the script is run on all runs for all tasks for all subjects (based on the data provided in the fmriprep directory).
+- Re: downloading and exporting data from flywheel - if the subject folder for fmriprep/reports/freesurfer does not exist, the entire analysis output for that subject will be downloaded. If the subject folder does exist, only the session folder will be moved to the subject directory. (For freesurfer, however, only one session will be downloaded. There are no session folders under the subject freesurfer directory)
 
 ## Notes:
 - TR is obtained by reading the header of the Nifti file (preproc func file)
