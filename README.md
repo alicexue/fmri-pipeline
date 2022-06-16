@@ -1,7 +1,7 @@
 # fmri-pipeline
 
 ## Overview:
-- Data stored on Flywheel, including raw BIDS data, fmriprep outputs, freesurfer outputs, and html/svg reports can be downloaded using manage_flywheel_downloads.py. Fmriprep outputs is saved in BIDS format.
+- Data stored on Flywheel -- including raw BIDS data, fmriprep outputs, freesurfer outputs, and html/svg reports -- can be downloaded using manage_flywheel_downloads.py. Fmriprep outputs is saved in BIDS format.
 
 - Creates *.fsf files (see [FSL FEAT](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FEAT)) for level 1, level 2, and level 3 analysis of fMRI data
 - Runs fsl's feat on the generated *.fsf files in parallel on a slurm job array (or runs feat serially if not running on a cluster)
