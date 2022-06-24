@@ -97,8 +97,10 @@ def download_flywheel_fmriprep(key, group_id, project_label, studyid, basedir, d
     if not os.path.exists(studydir):
         os.mkdir(studydir)
     tmpdir = os.path.join(studydir, 'tmp')
-    if not os.path.exists(tmpdir):
-        os.mkdir(os.path.join(tmpdir))
+    if os.path.exists(tmpdir):
+        remove_dir(tmpdir)
+    os.mkdir(tmpdir)
+
     fmriprepdir = os.path.join(studydir, 'fmriprep')
     if downloadFmriprep and not os.path.exists(fmriprepdir):
         os.mkdir(fmriprepdir)
@@ -141,20 +143,18 @@ def download_flywheel_fmriprep(key, group_id, project_label, studyid, basedir, d
 
                     if len(dates) != 0:
                         list.sort(dates)
-                        most_recent_analysis_id = analysis_ids[
-                            dates[-1]]  # if fmriprep was run multiple times, uses most recent analysis
+
+                        most_recent_analysis_id = analysis_ids[dates[-1]]
+                        # if fmriprep was run multiple times, uses most recent analysis
+
                         for file in analysis_objs[most_recent_analysis_id].files:
-                            # print(file.name)
                             name = file.name
                             # assumes subject ID is between sub- and _ or between sub- and .
                             if 'sub-' in name:
                                 i1 = name.find('sub-')
                                 tmpname = name[i1:]
-                                if '_' in tmpname:
-                                    i2 = tmpname.find('_')
-                                else:
-                                    i2 = tmpname.find('.')
-                                if i1 > -1 and i2 > -1:
+                                i2 = tmpname.find('_') if '_' in tmpname else tmpname.find('.')
+                                if i1 > -1 and i2 > -1: # if subject ID was found
                                     sub = tmpname[:i2]  # sub is the subject ID with 'sub-' removed
                                     # print("Subject ID:", sub)
 
@@ -162,6 +162,7 @@ def download_flywheel_fmriprep(key, group_id, project_label, studyid, basedir, d
                                     if downloadReports and 'html' in file.name:  # sub-<id>.html.zip
                                         subreportsdir = os.path.join(reportsdir, sub)
                                         session_label = session['label']
+                                        print("SESSION", session_label)
                                         session_label = re.sub(r'[^a-zA-Z0-9]+', '',
                                                                session_label)  # remove non-alphanumeric characters
                                         subsesreportsdir = os.path.join(reportsdir, sub, 'ses-' + session_label)
@@ -175,9 +176,7 @@ def download_flywheel_fmriprep(key, group_id, project_label, studyid, basedir, d
                                             print('Skipping downloading and processing of fmriprep reports for %s' % (
                                                 sub))
                                         else:
-                                            downloadSessionOnly = False
-                                            if os.path.exists(subreportsdir) and not ignoreSessionLabel:
-                                                downloadSessionOnly = True
+                                            downloadSessionOnly = not ignoreSessionLabel
                                             # download the file
                                             outfile = sub + '.html.zip'
                                             print('Downloading', sub + '/ses-' + session_label + ':', file.name)
@@ -185,33 +184,30 @@ def download_flywheel_fmriprep(key, group_id, project_label, studyid, basedir, d
                                             fw.download_output_from_session_analysis(session.id,
                                                                                      most_recent_analysis_id, file.name,
                                                                                      filepath)
-                                            # download_request = fw.download_session_analysis_outputs(session.id,
-                                            # most_recent_analysis_id, ticket='') fw.download_ticket(
-                                            # download_request.ticket, filepath)
                                             unzippedfilepath = filepath[:-4]
                                             # unzip the file
                                             unzip_dir(filepath, unzippedfilepath)
 
-                                            # Move sub folder in sub-<id>.html->flywheel->...->sub-<id> to the reportsdir
-                                            # iterates through the flywheel folder to find sub folder buried inside
-                                            # the variable i is used to avoid an infinite loop
+                                            # Move sub folder in sub-<id>.html->...->sub-<id> to the
+                                            # reportsdir iterates through the flywheel folder to find sub folder buried
+                                            # inside the variable i is used to avoid an infinite loop
                                             i = 10
                                             curdir = ''
-                                            fullcurdir = os.path.join(unzippedfilepath, 'flywheel')
-                                            moved = False
+                                            fullcurdir = os.path.join(unzippedfilepath)
                                             while i > 0 and curdir != sub:
                                                 if sub in os.listdir(fullcurdir):
                                                     desireddir = os.path.join(fullcurdir, sub)
                                                     targetdir = reportsdir
                                                     if downloadSessionOnly:
-                                                        desireddir = os.path.join(fullcurdir, sub,
-                                                                                  'ses-' + session_label)
-                                                        targetdir = os.path.join(reportsdir, sub)
-                                                    # if not os.path.exists(targetdir):
-                                                    #	os.mkdir(targetdir)
+                                                        desireddir = os.path.join(fullcurdir, sub)
+                                                        targetdir = os.path.join(reportsdir, sub,
+                                                                                 'ses-' + session_label)
+                                                        if not os.path.exists(os.path.join(reportsdir, sub,
+                                                                                 'ses-' + session_label)):
+                                                            os.makedirs(os.path.join(reportsdir, sub,
+                                                                                 'ses-' + session_label))
                                                     if os.path.exists(desireddir):
                                                         move_dir(desireddir, targetdir)
-                                                        moved = True
                                                 if len(os.listdir(fullcurdir)) > 0:
                                                     # assuming only one directory in fullcurdir
                                                     for folder in os.listdir(fullcurdir):
@@ -219,22 +215,25 @@ def download_flywheel_fmriprep(key, group_id, project_label, studyid, basedir, d
                                                             curdir = folder
                                                             fullcurdir = os.path.join(fullcurdir, folder)
                                                 i -= 1
-                                            if not moved:
-                                                print("Could not find %s in %s.html" % (sub, sub))
                                             # moves and renames index.html to sub-<id>.html
                                             indexhtmlpath = os.path.join(unzippedfilepath, 'index.html')
                                             if os.path.exists(indexhtmlpath):
                                                 subreportsdir = os.path.join(reportsdir, sub)
                                                 move_dir(indexhtmlpath, subreportsdir)
                                                 oldindexhtml = os.path.join(subreportsdir, 'index.html')
-                                                # newindexhtml=os.path.join(subreportsdir,'ses-'+session_label,'%s.html'%sub)
-                                                newindexhtml = os.path.join(reportsdir, '%s.html' % sub)
+                                                if not os.path.exists(os.path.join(subreportsdir,'ses-'+session_label)):
+                                                    os.makedirs(os.path.join(subreportsdir,'ses-'+session_label))
+                                                newindexhtml = os.path.join(subreportsdir,'ses-'+session_label,
+                                                                            '%s.html'%sub)
+                                                #newindexhtml = os.path.join(reportsdir, '%s.html' % sub)
                                                 move_dir(oldindexhtml, newindexhtml)
                                             # move figures directory
                                             figurespath = os.path.join(unzippedfilepath, sub, 'figures')
-                                            print(figurespath)
                                             if os.path.exists(figurespath):
-                                                subreportsdir = os.path.join(reportsdir, sub)
+                                                if not os.path.exists(os.path.join(reportsdir, sub,
+                                                                                   'ses-'+session_label)):
+                                                    os.mkdir(os.path.join(reportsdir, sub, 'ses-'+session_label))
+                                                subreportsdir = os.path.join(reportsdir, sub, 'ses-'+session_label)
                                                 move_dir(figurespath, subreportsdir)
 
                                             # remove originally downloaded files
@@ -256,7 +255,7 @@ def download_flywheel_fmriprep(key, group_id, project_label, studyid, basedir, d
                                                 subsesfmriprepdir) and not overwriteSubjectOutputs:
                                             print(
                                                 'Skipping downloading and processing of fmriprep outputs for %s/ses-%s'
-                                                 % (sub, session_label))
+                                                % (sub, session_label))
                                             continueFmriprepDownload = False
                                         elif ignoreSessionLabel and downloadFmriprep and os.path.exists(
                                                 subfmriprepdir) and not overwriteSubjectOutputs:
@@ -266,13 +265,13 @@ def download_flywheel_fmriprep(key, group_id, project_label, studyid, basedir, d
                                         if not ignoreSessionLabel and downloadFreesurfer and os.path.exists(
                                                 subfreesurferdir) and not overwriteSubjectOutputs:
                                             print(
-                                                'Skipping downloading and processing of freesurfer outputs for %s' % sub)
+                                                'Skipping downloading and processing of freesurfer outputs for %s'
+                                                % sub)
                                             continueFreesurferDownload = False
 
                                         if continueFmriprepDownload or continueFreesurferDownload:
-                                            downloadSessionOnly = False
-                                            if os.path.exists(subfmriprepdir) and not ignoreSessionLabel:
-                                                downloadSessionOnly = True
+                                            downloadSessionOnly = True if os.path.exists(subfmriprepdir) and \
+                                                    not ignoreSessionLabel else False
                                             outfile = sub + '.zip'
                                             # downloads outputs
                                             print('Downloading', sub + '/ses-' + session_label + ':', file.name)
@@ -288,19 +287,18 @@ def download_flywheel_fmriprep(key, group_id, project_label, studyid, basedir, d
                                             unzip_dir(filepath, unzippedfilepath)
 
                                             # Move downloaded fmriprep folder to fmriprep
-                                            unzippedfmriprep = os.path.join(unzippedfilepath, 'fmriprep', sub)
                                             newsubfmriprep = os.path.join(fmriprepdir, '%s' % sub)
 
-                                            # iterates through the unzipped sub folder to find fmriprep folder buried inside
+                                            # iterates through the unzipped sub folder to find fmriprep folder buried
+                                            # inside
                                             # the variable i is used to avoid an infinite loop
                                             i = 3
                                             curdir = ''
                                             fullcurdir = unzippedfilepath
-                                            desireddir = os.path.join(fullcurdir, 'fmriprep', sub)
                                             moved = False
                                             while i > 0 and curdir != 'fmriprep' and curdir != 'freesurfer':
-                                                if downloadFmriprep and continueFmriprepDownload and 'fmriprep' in os.listdir(
-                                                        fullcurdir):
+                                                if downloadFmriprep and continueFmriprepDownload and 'fmriprep' in \
+                                                        os.listdir(fullcurdir):
                                                     desireddir = os.path.join(fullcurdir, 'fmriprep', sub)
                                                     targetdir = fmriprepdir
                                                     if downloadSessionOnly:
@@ -308,12 +306,11 @@ def download_flywheel_fmriprep(key, group_id, project_label, studyid, basedir, d
                                                                                   'ses-' + session_label)
                                                         targetdir = os.path.join(fmriprepdir, sub)
 
-                                                    tmpsubfmriprepdir = os.path.join(fullcurdir, 'fmriprep', sub)
                                                     if os.path.exists(desireddir):
                                                         move_dir(desireddir, targetdir)
                                                         moved = True
-                                                if downloadFreesurfer and continueFreesurferDownload and 'freesurfer' in os.listdir(
-                                                        fullcurdir):
+                                                if downloadFreesurfer and continueFreesurferDownload and 'freesurfer'\
+                                                        in os.listdir(fullcurdir):
                                                     tmpsubfreesurferdir = os.path.join(fullcurdir, 'freesurfer', sub)
                                                     if os.path.exists(tmpsubfreesurferdir) and not os.path.exists(
                                                             os.path.join(freesurferdir, sub)):

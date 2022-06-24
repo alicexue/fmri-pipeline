@@ -21,7 +21,8 @@ import directory_struct_utils
 def main():
     if len(sys.argv) != 6:
         print(
-            "usage: export_raw_bids <studyid> <basedir> <Flywheel API key> <Flywheel group_id> <Flywheel project_label>")
+            "usage: export_raw_bids <studyid> <basedir> <Flywheel API key> <Flywheel group_id> <Flywheel project_label>"
+        )
         sys.exit(-1)
     studyid = sys.argv[1]
     basedir = sys.argv[2]
@@ -42,7 +43,7 @@ def export_raw_bids(studyid, basedir, key, group_id, project_label):
         FNULL = open(os.devnull, 'w')
         sp.call(['docker'], stdout=FNULL, stderr=sp.STDOUT)
         dockerExists = True
-    except:
+    except FileNotFoundError:
         dockerExists = False
 
     # check if fw CLI is installed - needed for exporting BIDS
@@ -50,7 +51,7 @@ def export_raw_bids(studyid, basedir, key, group_id, project_label):
         FNULL = open(os.devnull, 'w')
         sp.call(['fw'], stdout=FNULL, stderr=sp.STDOUT)
         fwExists = True
-    except:
+    except FileNotFoundError:
         fwExists = False
 
     print('\n## Exporting raw BIDS now ##\n')
@@ -99,44 +100,6 @@ def export_raw_bids(studyid, basedir, key, group_id, project_label):
                 # removes tmp directory that was created
                 print('Removing %s' % tmpsubdir)
                 sp.call(['rm', '-rf', tmpsubdir])
-
-        """
-		# gets all subjects with fmriprep directories
-		#all_subs=get_all_subs(studydir)
-		for sub in all_subs: # sub is missing the prefix 'sub-'
-			rawsubdir=os.path.join(rawdir,'sub-%s'%sub)
-			if os.path.exists(rawsubdir):
-				print("Skipping download of raw bids for sub-%s"%sub)
-			else:
-				# creates tmp dir specific to the subject
-				tmpsubdir=os.path.join(studydir,'tmp_sub-%s_BIDS'%sub)
-				os.mkdir(tmpsubdir)
-				# call subprocess to export BIDS
-				commands=['fw','export','bids',tmpsubdir,'-p',project_label,'--subject',sub]
-				print('Calling:',' '.join(commands))
-				sp.call(commands)
-				# moves the exported directory into the raw directory
-				rawsubout=os.path.join(tmpsubdir,'sub-%s'%sub)
-				print('Moving %s to %s'%(rawsubout,rawdir))
-				sp.call(['mv',rawsubout,rawdir])
-				# removes tmp directory that was created
-				print('Removing %s'%(tmpsubdir))
-				sp.call(['rm','-rf',tmpsubdir])
-		"""
-
-        # to download all raw bids rather than subject by subject
-        """
-		tmpdir=os.path.join(studydir,'tmp_BIDS')
-		commands=['fw','export','bids',tmpdir,'-p',project_label]
-		sp.call(commands)
-		sp.call(['mv',tmpdir, rawdir])
-		subs = os.listdir(tmpdir)
-		for sub in subs:
-			rawsubout = os.path.join(tmpdir,sub)
-			if not os.path.exists(rawsubout):
-				sp.call(['mv',rawsubout,rawdir])
-		sp.call(['rm','-rf',tmpdir])
-		"""
     else:
         if not fwExists:
             print('Flywheel CLI is not installed, which is required for exporting raw BIDS.')

@@ -19,7 +19,7 @@ try:
     FNULL = open(os.devnull, 'w')
     sp.call(['docker'], stdout=FNULL, stderr=sp.STDOUT)
     dockerExists = True
-except:
+except FileNotFoundError:
     dockerExists = False
 
 fwExists = False
@@ -27,7 +27,7 @@ try:
     FNULL = open(os.devnull, 'w')
     sp.call(['fw'], stdout=FNULL, stderr=sp.STDOUT)
     fwExists = True
-except:
+except FileNotFoundError:
     fwExists = False
 
 APIKeyFile = 'flywheel_API_key.txt'
@@ -43,11 +43,11 @@ else:  # asks for the key from the command line
         try:
             fw = flywheel.Client(key)
             loggedIn = True
-        except:
+            print('Your API key will now be saved in %s for future use.' % APIKeyFile)
+            with open(APIKeyFile, 'w') as f:
+                f.write(key)
+        except FileNotFoundError:
             print('Invalid API key.')
-    print('Your API key will now be saved in %s for future use. Don\'t put this file on GitHub!' % APIKeyFile)
-    with open(APIKeyFile, 'w') as f:
-        f.write(key)
 
 print('If you cannot log in, delete flywheel_API_key.txt and run manage_flywheel_downloads.py again.')
 self = fw.get_current_user()
@@ -59,7 +59,7 @@ groups = fw.get_all_groups()
 if len(groups) > 0:
     print('Here are your groups:')
     for group in fw.get_all_groups():
-        print('%s: %s' % (group.id, group.label))
+        print('%s (group id): %s' % (group.id, group.label))
 group_id = input('Enter the group id: ')
 
 # Ask for project label

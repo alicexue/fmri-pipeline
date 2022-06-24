@@ -602,26 +602,26 @@ item: string that starts with "sub-", "ses-", "task-", or "run-"
 
 def remove_from_study_info(item, specificruns):
     try:
-        assert specificruns.values()[0].keys()[0].startswith('ses-')
+        assert list(specificruns.values()[0].keys())[0].startswith('ses-')
         hasSessions = True
     except AssertionError:
         hasSessions = False
     if item.startswith("sub-") or item.startswith("ses-") or item.startswith("task-") or item.startswith("run-"):
         study_info = specificruns
         study_info_copy = copy.deepcopy(study_info)
-        subs = study_info.keys()
+        subs = sorted(study_info.keys())
         if item.startswith('sub-') and item in subs:
             del study_info_copy[item]
         # iterate through each subject, session, task, and runs
         for subid in subs:
             if hasSessions:
-                sessions = study_info[subid].keys()
+                sessions = sorted(study_info[subid].keys())
                 if item.startswith('ses-') and item in sessions:
                     del study_info_copy[subid][item]
                     if len(study_info_copy[subid]) == 0:
                         del study_info_copy[subid]
                 for ses in sessions:
-                    tasks = study_info[subid][ses].keys()
+                    tasks = sorted(study_info[subid][ses].keys())
                     if item.startswith('task-') and item[len('task-'):] in tasks:
                         del study_info_copy[subid][ses][item[len('task-'):]]
                         if len(study_info_copy[subid][ses]) == 0:
@@ -633,12 +633,11 @@ def remove_from_study_info(item, specificruns):
                             if len(study_info_copy[subid][ses][task]) == 0:
                                 del study_info_copy[subid][ses][task]
             else:  # no sessions
-                tasks = study_info[subid].keys()
+                tasks = sorted(study_info[subid].keys())
                 if item.startswith('task-') and item[len('task-'):] in tasks:
                     del study_info_copy[subid][item[len('task-'):]]
                     if len(study_info_copy[subid]) == 0:
                         del study_info_copy[subid]
-                list.sort(tasks)
                 for task in tasks:
                     runs = study_info[subid][task]
                     if item.startswith('run-') and item[len('run-'):] in runs:
