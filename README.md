@@ -3,7 +3,7 @@
 ## Overview
 - Neuroimaging data stored on [Flywheel](https://flywheel.io/) - including raw BIDS, fmriprep outputs, freesurfer outputs, and html/svg reports - can be downloaded using manage_flywheel_downloads.py. Fmriprep outputs are saved in [BIDS](https://bids.neuroimaging.io/) format.  
 - Creates *.fsf files (see [FSL FEAT](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FEAT)) for level 1 (individual runs), level 2 (subject), and level 3 (group) analysis of fMRI data.
-- Runs fsl's feat on the generated *.fsf files on high performance computing clusters (in parallel using slurm job arrays). If a cluster is not being used (sbatch command is unavailable), feat can be run on each .fsf file serially or in parallel using [joblib](https://joblib.readthedocs.io/en/latest/).
+- Runs fsl's feat on the generated *.fsf files on high performance computing clusters (in parallel using [slurm](https://hpc-wiki.info/hpc/SLURM) job arrays). If a cluster is not being used (sbatch command is unavailable), feat can be run on each .fsf file serially or in parallel using [joblib](https://joblib.readthedocs.io/en/latest/).
 
 ## Requirements
 
@@ -14,13 +14,13 @@
 - To export raw BIDS, you must have [Docker](https://docs.docker.com/get-docker/) installed and running and the [Flywheel CLI](https://docs.flywheel.io/hc/en-us/articles/360008162214-Installing-the-Flywheel-Command-Line-Interface-CLI-) installed. You will need to log into the CLI with your API key.
 
 #### For running fMRI analyses:
-- directory with fmriprep output named 'fmriprep'
+- directory with fmriprep output named 'fmriprep' (see Directory Structure below)
   - func directories (with preprocessed functional files) should be in the subject folder (if there are no sessions) or in the appropriate session folder
   - anat directories (with preprocessed anatomical files) can be in the subject folder or in the appropriate session folder
 - EV files (see step 1 below)
-- model parameters must be specified in the model_params.json file under the model-\<modelname> directory (see step 2 below)
-- condition key must be specified under the model-\<modelname> directory as condition_key.json or condition_key.txt (see step 3 below)
-- task contrasts (not required) may be specified under the model-<modelname> directory as task_contrasts.json or task_contrasts.txt (see step 4 below)
+- model parameters must be specified in the model_params.json file under the 'model-\<modelname>' directory (see step 2 below)
+- condition key must be specified under the 'model-\<modelname>' directory as condition_key.json or condition_key.txt (see step 3 below)
+- task contrasts (not required) may be specified under the 'model-<modelname>' directory as task_contrasts.json or task_contrasts.txt (see step 4 below)
 
 ## Steps
 
@@ -29,7 +29,7 @@
 2. Run rm_fmriprep_ses_directories.py if Flywheel adds unwanted session directories to fmriprep outputs.
 
 #### For running fMRI analyses:
-1. Run setup.py to create the model directory and all necessary sub-directories. At this stage of the pipeline, if noconfound is set to False (because the user would like confound modeling), this setup.py script will generate a confounds.json file that lists all confounds that can be included (this list is pulled from *_bold_confounds.tsv or *_confounds_regressors.tsv from the fmriprep output). This should make it easier for the user to select which confounds to include in the model. Alternatively, confounds.json can be created manually. If noconfound is False, the confounds files are generated (in the onsets directories) on the fly when run_level1.py is called. The user can choose to modify the parameters in model_params.json here or in Step 2 by editing the json file manually. This script will also create empty/sample *.json files (model_params.json, condition_key.json, task_contrasts.json) and onset directories for the EV files.  
+1. Run setup.py to create the model directory and all necessary sub-directories. At this stage of the pipeline, if noconfound is set to False (because the user would like confound modeling), this setup.py script will generate a confounds.json file that lists all confounds that can be included (this list is pulled from *_bold_confounds.tsv or *_confounds_regressors.tsv from the fmriprep output). This should make it easier for the user to select which confounds to include in the model. Alternatively, confounds.json can be created manually. If noconfound is False, the confounds files are generated (in the onsets directories) on the fly when run_level1.py is called. The user can choose to modify the parameters in model_params.json here via the command line or by editing the json file manually in Step 2. This script will also create empty/sample *.json files (model_params.json, condition_key.json, task_contrasts.json) and onset directories for the EV files.  
    - Example confounds.json:
         ```
         {
@@ -44,7 +44,7 @@
         }
         ```
 3. Modify model_params.json under the 'model-\<modelname>' directory if needed, see explanations for each parameter abbreviation below.  
-4. Fill out condition_key.json under the 'model-\<modelname>' directory. The keys are the task names and the values are json objects with EV names as keys and the conditions as values. (Note: The EV files, *_ev-00\<N>, are always padded with leading zeros so that there are 3 digits.)
+4. Fill out condition_key.json under the 'model-\<modelname>' directory. The keys are the task names and the values are json objects with EV names as keys and the condition names as values. (Note: The EV files, *_ev-00\<N>, are always padded with leading zeros so that there are 3 digits.)
    - Example condition_key.json:
         ```
         {
@@ -70,9 +70,9 @@
                         }
         }
         ```   
-6. Create the EV files, which belong in the 'onsets' directories under each run folder. Make sure the EV files are named correctly (see the diagram below). Confound files should be saved in the same location as the EV files (the file name ends in *_ev-confounds, see below).
+6. Create the EV files, which belong in the 'onsets' directories under each run folder. Make sure the EV files are named correctly (see the diagram below). Confound files should be saved in the same location as the EV files (the file name ends in *_ev-confounds, see below). (Note that the confounds files can be automatically generated, as mentioned in Step 1.)
 7. If customization of fsf files is desired, create a custom stub file named design_level\<N>_custom.stub under the model directory with feat settings (see design_level1_fsl5.stub for examples). If a setting in the custom file is found in the default stub file, the custom setting will replace the existing setting. If the custom setting is not found in the default stub file, it will be added to the fsf.
-8. To run level 1, use run_level1.py, which will create a job array where each job creates a *.fsf file for one run and runs feat on that run. (By default, if the argument specificruns is not specified, fsf's will be created for all runs.)
+8. To run level 1, use run_level1.py, which will create a job array where each job creates a *.fsf file for one run and runs feat on that fsf file. (By default, if the argument specificruns is not specified, fsf's will be created for all runs.)
 9. Level 2 and level 3 scripts (run_level2.py, run_level3.py) are run similarly. Use the -h option to see explanations of the parameters.
 
 ## Directory Structure
