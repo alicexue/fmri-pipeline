@@ -161,7 +161,7 @@ def main(argv=None):
         try:
             subprocess.call(['sbatch', sbatch_path])
             print('Saving sbatch output to %s' % outputdir)
-        except:
+        except FileNotFoundError:
             print("\nNOTE: sbatch command was not found.")
             # since not running sbatch, should remove created .sbatch file and outputdir
             os.remove(sbatch_path)

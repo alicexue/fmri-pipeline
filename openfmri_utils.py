@@ -99,10 +99,7 @@ def load_contrasts(contrastfile):
 def check_featdir(featdir, verbose=0):
     if verbose == 1:
         print('checking %s' % featdir)
-    feat_info = {}
-    feat_info['problem'] = 0
-    feat_info['featdir'] = featdir
-    feat_info['exists'] = 1
+    feat_info = {'problem': 0, 'featdir': featdir, 'exists': 1}
     if not os.path.exists(featdir):
         print('%s does not exist!' % featdir)
         feat_info['exists'] = 0
@@ -153,8 +150,7 @@ def check_featdir(featdir, verbose=0):
 def load_fsl_design_con(featdir):
     f = open(featdir + '/design.con', 'r')
     l = f.readlines()
-    dcon = {}
-    dcon['contrasts'] = {}
+    dcon = {'contrasts': {}}
     for line in l:
         l_split = line.strip().split('\t')
         if l_split[0].find('/ContrastName') == 0:

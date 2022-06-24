@@ -72,8 +72,12 @@ def main(argv=None):
 def get_level1_jobs(studyid, basedir, modelname, specificruns, sys_args_specificruns, nofeat):
     """
     Args:
+        studyid: name of the parent directory of the fmriprep directory
+        basedir: full path of the grandparent directory of the fmriprep directory
+        modelname: name of model
         specificruns (dict): from model_params.json
         sys_args_specificruns (dict): passed into the program through the command line (sys.args)
+        nofeat: boolean; don't run Feat if True, run Feat if False
     """
     # gets parameters set in model_param.json
     setup_utils.model_params_json_to_namespace(studyid, basedir, modelname)
