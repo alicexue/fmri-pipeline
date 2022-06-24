@@ -3,11 +3,11 @@
 ## Overview
 - Neuroimaging data stored on [Flywheel](https://flywheel.io/) - including raw BIDS, fmriprep outputs, freesurfer outputs, and html/svg reports - can be downloaded using manage_flywheel_downloads.py. Fmriprep outputs are saved in [BIDS](https://bids.neuroimaging.io/) format.  
 - Creates *.fsf files (see [FSL FEAT](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FEAT)) for level 1 (individual runs), level 2 (subject), and level 3 (group) analysis of fMRI data.
-- Runs fsl's feat on the generated *.fsf files on high performance computing clusters (in parallel using [slurm](https://hpc-wiki.info/hpc/SLURM) job arrays). If a cluster is not being used (sbatch command is unavailable), feat can be run on each .fsf file serially or in parallel using [joblib](https://joblib.readthedocs.io/en/latest/).
+- Runs fsl's feat on the generated *.fsf files on high performance computing clusters in parallel using [slurm](https://hpc-wiki.info/hpc/SLURM) job arrays. If a cluster is not being used (the pipeline will detect if the sbatch command is unavailable), feat can be run on each .fsf file serially or in parallel using [joblib](https://joblib.readthedocs.io/en/latest/).
 
 ## Requirements
 
-- Install the packages in requirements.txt. To do so in one fell swoop, use the command `pip install -r requirements.txt`
+- Install the packages in requirements.txt. To do this in one fell swoop, use `pip install -r requirements.txt`. Note that on a cluster you may want to do this in a virtual environment.
 
 #### For downloading data from Flywheel:
 - Have your Flywheel API key handy (see your user profile). 
