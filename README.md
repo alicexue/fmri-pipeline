@@ -1,9 +1,9 @@
 # fmri-pipeline
 
 ## Overview:
-- Data stored on Flywheel -- including raw BIDS, fmriprep outputs, freesurfer outputs, and html/svg reports -- can be downloaded using manage_flywheel_downloads.py. Fmriprep outputs are saved in BIDS format.  
-- Creates *.fsf files (see [FSL FEAT](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FEAT)) for level 1, level 2, and level 3 analysis of fMRI data.
-- Runs fsl's feat on the generated *.fsf files on high performance computing clusters (in parallel using slurm job arrays). If not using a cluster, can run feat serially or in parallel using [joblib](https://joblib.readthedocs.io/en/latest/).
+- Neuroimaging data stored on Flywheel - including raw BIDS, fmriprep outputs, freesurfer outputs, and html/svg reports - can be downloaded using manage_flywheel_downloads.py. Fmriprep outputs are saved in [BIDS](https://bids.neuroimaging.io/) format.  
+- Creates *.fsf files (see [FSL FEAT](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FEAT)) for level 1 (individual runs), level 2 (subject), and level 3 (group) analysis of fMRI data.
+- Runs fsl's feat on the generated *.fsf files on high performance computing clusters (in parallel using slurm job arrays). If a cluster is not being used (sbatch command is unavailable), can run feat serially or in parallel using [joblib](https://joblib.readthedocs.io/en/latest/).
 
 ## Requirements:
 
@@ -29,14 +29,51 @@
 2. Run rm_fmriprep_ses_directories.py if Flywheel adds unwanted session directories to fmriprep outputs
 
 #### For running fMRI analyses:
-1. Run setup.py to create the model directory and all necessary sub-directories. This will also create empty/sample *.json files (model_params.json, condition_key.json, task_contrasts.json) and onset directories for the EV files. 
-2. Fill out model_params.json under model-\<modelname>, see abbreviation explanations below.
-3. Fill out condition_key.json under model-\<modelname>, where the task name is the key and the value is a json object with EV names as keys and the conditions as values. (Note: The EV files, *_ev-00\<N>, are always padded with leading zeros so that there are 3 digits)
-4. If you need to specify task contrasts, fill out task_contrasts.json, where the key is the task name and the value is a json object in which the key is the name of the contrast and the value is a list that represents the contrast vector. If you don't want to specify task contrasts for this model, remove the file.
-5. Create the EV files, which belong in the 'onsets' directories under each run folder. Make sure the EV files are named correctly (see the diagram below). Confound files should be saved in the same location as the EV files (the file name ends in *_ev-confounds, see below).
-6. If customization of fsf files is desired, create a custom stub file named design_level\<N>_custom.stub under the model directory with feat settings (see design_level1_fsl5.stub for examples). If a setting in the custom file is found in the stub file, the custom setting will replace the existing setting. If the custom setting is not found, it will be added to the fsf.
-7. To run level 1, use run_level1.py, which will create a job array where each job creates a *.fsf file for one run and runs feat on that run. (By default, if the argument specificruns is not specified, fsf's will be created for all runs)
-8. Level 2 and level 3 are run similarly. Use the -h option to see explanations of the parameters
+1. Run setup.py to create the model directory and all necessary sub-directories. At this stage of the pipeline, if noconfound is set to False (because the user would like confound modeling), this setup.py script will generate a confounds.json file that lists all confounds that can be included (this list is pulled from *_bold_confounds.tsv or confounds_regressors.tsv from the fmriprep output). This should make it easier for the user to select which confounds to include in the model. Alternatively, confounds.json can be created manually. The user can choose to modify the parameters in model_params.json here or in Step 2 by editing the json file manually. This script will also create empty/sample *.json files (model_params.json, condition_key.json, task_contrasts.json) and onset directories for the EV files.  
+   - Example confounds.json:
+        ```
+        {
+                "confounds": [
+                    "X", 
+                    "Y", 
+                    "Z", 
+                    "RotX", 
+                    "RotY", 
+                    "RotZ"
+                ]
+        }
+        ```
+3. Modify model_params.json under model-\<modelname> if desired, see explanations for each parameter abbreviation below.  
+4. Fill out condition_key.json under model-\<modelname>, where the task name is the key and the value is a json object with EV names as keys and the conditions as values. (Note: The EV files, *_ev-00\<N>, are always padded with leading zeros so that there are 3 digits.)
+   - For example:
+        ```
+        {
+                "flanker":
+                        {
+                                "1":"congruent_correct",
+                                "2":"congruent_incorrect",
+                                "3":"incongruent_correct",
+                                "4":"incongruent_incorrect"
+                        } 
+        }
+        ```
+5. If you need to specify task contrasts, fill out task_contrasts.json, where the key is the task name and the value is a json object in which the key is the name of the contrast and the value is a list that represents the contrast vector. If you don't want to specify task contrasts for this model, remove the file.
+   - For example:
+        ```
+        {
+                "flanker":
+                        {
+                                "incongruent_vs_congruent":[-1,-1,1,1],
+                                "incorrect_vs_correct":[-1,1,-1,1],
+                                "incongruent_vs_congruent_correct":[-1,0,1,0],
+                                "incorrect_vs_correct_incongruent":[0,0,-1,1]
+                        }
+        }
+        ```   
+6. Create the EV files, which belong in the 'onsets' directories under each run folder. Make sure the EV files are named correctly (see the diagram below). Confound files should be saved in the same location as the EV files (the file name ends in *_ev-confounds, see below).
+7. If customization of fsf files is desired, create a custom stub file named design_level\<N>_custom.stub under the model directory with feat settings (see design_level1_fsl5.stub for examples). If a setting in the custom file is found in the stub file, the custom setting will replace the existing setting. If the custom setting is not found, it will be added to the fsf.
+8. To run level 1, use run_level1.py, which will create a job array where each job creates a *.fsf file for one run and runs feat on that run. (By default, if the argument specificruns is not specified, fsf's will be created for all runs.)
+9. Level 2 and level 3 are run similarly. Use the -h option to see explanations of the parameters.
 
 ## Directory Structure:
 - Session directories are optional. If there aren't multiple sessions, omit the session label from EV file names.
@@ -106,14 +143,13 @@ basedir
 
 ## Note on file types:
 - The EV files can be *.tsv or *.txt files. Just make sure the file is named according to the specification above.
-- condition_key and task_contrasts can be *.json or *.txt 
-- In json objects, strings must be in double quotes, not single quotes. You can check the the json files are formatted properly using this [json formatter](https://jsonformatter.org/)
+- You can check that the json files are formatted properly using this [json formatter](https://jsonformatter.org/).
 
 ## Some behaviors to note:
-- If some feats already exist, warnings will be printed. Existing feat directories are never overwritten, but there is an option to remove existing feats. 
-- If specificruns isn't specified through the command line, specificruns from model_params.json is used. If specificruns in model_params.json is empty, then the script is run on all runs for all tasks for all subjects (based on the data provided in the fmriprep directory).
+- If some feat directories already exist, warnings will be printed. Existing feat directories are never overwritten, but run_level<N>.py includes an option to remove existing feats. 
+- If specificruns isn't specified through the command line, specificruns from model_params.json is used. If specificruns in model_params.json is empty, then the script is run on all runs for all tasks for all subjects (based on the fmriprep directory structure).
 - Re: downloading and exporting data from flywheel - if the subject folder for fmriprep/reports/freesurfer does not exist, the entire analysis output for that subject will be downloaded. If the subject folder does exist, only the session folder will be moved to the subject directory. (For freesurfer, however, only one session will be downloaded. There are no session folders under the subject freesurfer directory)
 
-## Notes:
+## Miscellaneous notes:
 - TR is obtained by reading the header of the Nifti file (preproc func file)
 - altBETmask has been deprecated in favor of usebrainmask (see above)
