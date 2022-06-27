@@ -104,8 +104,8 @@ studyid = input('Enter the study id: ')
 studyid = studyid.strip()
 # Asks for base directory
 print(
-    '\nThe base directory is the full path of where the study id directory will be created. (Don\'t include study id '
-    'here.)')
+    '\nThe base directory indicates where the study id directory will be created. Please include the full path, '
+    'but not the study id.')
 basedir = input('Enter the base directory: ')
 # Checks if base directory exists and asks again if it doesn't
 while not os.path.exists(basedir):
@@ -119,6 +119,7 @@ if not os.path.exists(studydir):
 else:
     print('\nNote: %s already exists.' % studydir)
 
+print('Looking for subjects with fmriprep outputs...')
 subs = download_flywheel_fmriprep.get_flywheel_subjects(key, group_id, project_label)
 print('\nHere are your subjects with fmriprep outputs:')
 print(subs)
