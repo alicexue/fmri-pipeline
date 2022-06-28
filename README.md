@@ -11,7 +11,7 @@
 
 #### For downloading data from Flywheel:
 - Have your Flywheel API key handy (see your user profile). 
-- To export raw BIDS, you must have [Docker](https://docs.docker.com/get-docker/) installed and running, and the [Flywheel CLI](https://docs.flywheel.io/hc/en-us/articles/360008162214-Installing-the-Flywheel-Command-Line-Interface-CLI-) installed. You will need to log into the CLI with your API key.
+- To export raw BIDS, you must have [Docker](https://docs.docker.com/get-docker/) installed and running, and the [Flywheel CLI](https://docs.flywheel.io/hc/en-us/articles/360008162214-Installing-the-Flywheel-Command-Line-Interface-CLI-) installed. You will need to log into the CLI with your API key (see your Flywheel user profile - run the command `fw login <API key>`).
 
 #### For running fMRI analyses:
 - directory with fmriprep output named 'fmriprep' (see Directory Structure below)
@@ -29,7 +29,7 @@
 2. Run rm_fmriprep_ses_directories.py if Flywheel adds unwanted session directories to fmriprep outputs.
 
 #### For running fMRI analyses:
-1. Run setup.py to create the model directory and all necessary sub-directories. At this stage of the pipeline, if noconfound is set to False (because the user would like confound modeling), this setup.py script will generate a confounds.json file that lists all confounds that can be included (this list is pulled from *_bold_confounds.tsv or *_confounds_regressors.tsv from the fmriprep output). This should make it easier for the user to select which confounds to include in the model. Alternatively, confounds.json can be created manually. If noconfound is False, the confounds files are generated (in the onsets directories) on the fly when run_level1.py is called. The user can choose to modify the parameters in model_params.json here via the command line or by editing the json file manually in Step 2. This script will also create empty/sample *.json files (model_params.json, condition_key.json, task_contrasts.json) and onset directories for the EV files.  
+1. Run setup.py to create the model directory and all necessary sub-directories. At this stage of the pipeline, if "noconfound" is set to False (because the user would like confound modeling), this setup.py script will generate a confounds.json file that lists all confounds that can be included (this list is pulled from *_bold_confounds.tsv or *_confounds_regressors.tsv from the fmriprep output). This should make it easier for the user to select which confounds to include in the model. Alternatively, confounds.json can be created manually. If "noconfound" is False, the confounds files are generated (in the onsets directories) on the fly when run_level1.py is called. The user can choose to modify the parameters in model_params.json here via the command line or by editing the json file manually in Step 2. This script will also create empty/sample *.json files (model_params.json, condition_key.json, task_contrasts.json) and onset directories for the EV files.  
    - Example confounds.json:
         ```
         {
@@ -70,7 +70,7 @@
                         }
         }
         ```   
-6. Create the EV files, which belong in the 'onsets' directories under each run folder. Make sure the EV files are named correctly (see the diagram below). Confound files should be saved in the same location as the EV files (the file name ends in *_ev-confounds, see below). (Note that the confounds files can be automatically generated, as mentioned in Step 1.)
+6. Create the EV files, which belong in the 'onsets' directories in each run folder. Make sure the EV files are named correctly (see the diagram below). Confound files should be saved in the same location as the EV files (the file name ends in *_ev-confounds, see below). (Note that the confounds files can be generated automatically, as mentioned in Step 1.)
 7. If customization of fsf files is desired, create a custom stub file named design_level\<N>_custom.stub under the model directory with feat settings (see design_level1_fsl5.stub for examples). If a setting in the custom file is found in the default stub file, the custom setting will replace the existing setting. If the custom setting is not found in the default stub file, it will be added to the fsf.
 8. To run level 1, use run_level1.py, which will create a job array where each job creates a *.fsf file for one run and runs feat on that fsf file. (By default, if the argument specificruns is not specified, fsf's will be created for all runs.)
 9. Level 2 and level 3 scripts (run_level2.py, run_level3.py) are run similarly. Use the -h option to see explanations of the parameters.
@@ -142,12 +142,12 @@ basedir
 - **nofeat**: (option for run_level1.py, run_level2.py, get_level1_jobs.py, get_level2_jobs.py, mk_all_level3_fsf.py) don't run feat on each of the *.fsf files created
 
 ## Notes on file types
-- The EV files can be *.tsv or *.txt files. Just make sure the file is named according to the specification above.
+- The EV files can be *.tsv or *.txt files. Just make sure the file is named according to the specification above and that each column is separated by tabs.
 - You can check that the json files are formatted properly using this [json formatter](https://jsonformatter.org/).
 
 ## Some behaviors to note
 - If some feat directories already exist, warnings will be printed. Existing feat directories are never overwritten, but run_level<N>.py includes an option to remove existing feats. 
-- If specificruns isn't specified through the command line, specificruns from model_params.json is used. If specificruns in model_params.json is empty, then the script is run on all runs for all tasks for all subjects (based on the fmriprep directory structure).
+- If "specificruns" isn't specified through the command line, "specificruns" from model_params.json is used. If "specificruns" in model_params.json is empty, then the script is run on all runs for all tasks for all subjects (based on the fmriprep directory structure).
 - Re: downloading and exporting data from flywheel - if the subject folder for fmriprep/reports/freesurfer does not exist, the entire analysis output for that subject will be downloaded. If the subject folder does exist, only the session folder will be moved to the subject directory. (For freesurfer, however, only one session will be downloaded. There are no session folders under the subject freesurfer directory)
 
 ## Miscellaneous notes
