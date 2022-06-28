@@ -58,7 +58,7 @@ def export_raw_bids(studyid, basedir, key, group_id, project_label):
 
     if fwExists and dockerExists:
         # Create client
-        fw = flywheel.Flywheel(key)  # API key
+        fw = flywheel.Client(key)  # API key
 
         sub_codes = []
 
