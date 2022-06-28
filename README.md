@@ -11,7 +11,7 @@
 
 #### For downloading data from Flywheel:
 - Have your Flywheel API key handy (see your user profile). 
-- To export raw BIDS, you must have [Docker](https://docs.docker.com/get-docker/) installed and running, and the [Flywheel CLI](https://docs.flywheel.io/hc/en-us/articles/360008162214-Installing-the-Flywheel-Command-Line-Interface-CLI-) installed. You will need to log into the CLI with your API key.
+- To export raw BIDS, you must have [Docker](https://docs.docker.com/get-docker/) installed and running, and the [Flywheel CLI](https://docs.flywheel.io/hc/en-us/articles/360008162214-Installing-the-Flywheel-Command-Line-Interface-CLI-) installed. You will need to log into the CLI with your API key (see your Flywheel user profile - run the command `fw login <API key>`).
 
 #### For running fMRI analyses:
 - directory with fmriprep output named 'fmriprep' (see Directory Structure below)
