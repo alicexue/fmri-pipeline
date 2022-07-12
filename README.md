@@ -29,7 +29,7 @@
 2. Run rm_fmriprep_ses_directories.py if Flywheel adds unwanted session directories to fmriprep outputs.
 
 #### For running fMRI analyses:
-1. Run setup.py to create the model directory and all necessary sub-directories. At this stage of the pipeline, if "noconfound" is set to False (because the user would like confound modeling), this setup.py script will generate a confounds.json file that lists all confounds that can be included (this list is pulled from *_bold_confounds.tsv or *_confounds_regressors.tsv from the fmriprep output). This should make it easier for the user to select which confounds to include in the model. Alternatively, confounds.json can be created manually. If "noconfound" is False, the confounds files are generated (in the onsets directories) on the fly when run_level1.py is called. The user can choose to modify the parameters in model_params.json here via the command line or by editing the json file manually in Step 2. This script will also create empty/sample *.json files (model_params.json, condition_key.json, task_contrasts.json) and onset directories for the EV files.  
+1. Run setup.py to create the model directory and all necessary sub-directories. At this stage of the pipeline, if "noconfound" is set to False (because the user would like confound modeling), this setup.py script will generate a confounds.json file that lists all confounds that can be included (this list is pulled from *_bold_confounds.tsv, *_confounds_regressors.tsv, or *_confounds_regressors.tsv from the fmriprep output). This should make it easier for the user to select which confounds to include in the model. Alternatively, confounds.json can be created manually. If "noconfound" is False, the confounds files are generated (in the onsets directories) on the fly when run_level1.py is called. The user can choose to modify the parameters in model_params.json here via the command line or by editing the json file manually in Step 2. This script will also create empty/sample *.json files (model_params.json, condition_key.json, task_contrasts.json) and onset directories for the EV files.  
    - Example confounds.json:
         ```
         {
@@ -44,7 +44,7 @@
         }
         ```
 3. Modify model_params.json under the 'model-\<modelname>' directory if needed, see explanations for each parameter abbreviation below.  
-4. Fill out condition_key.json under the 'model-\<modelname>' directory. The keys are the task names and the values are json objects with EV names as keys and the condition names as values. (Note: The EV files, *_ev-00\<N>, are always padded with leading zeros so that there are 3 digits.)
+4. Fill out condition_key.json under the 'model-\<modelname>' directory. The keys are the task names and the values are json objects with EV numbers as keys (formatted as strings) and the condition names as values. (Note: The EV files, *_ev-00\<N>, are always padded with leading zeros so that there are 3 digits.)
    - Example condition_key.json:
         ```
         {

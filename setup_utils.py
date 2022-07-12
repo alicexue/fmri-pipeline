@@ -288,19 +288,24 @@ def get_possible_confounds(studyid, basedir):
         else:  # no sessions
             funcdir = os.path.join(basedir, studyid, 'fmriprep', 'sub-' + spef_run.sub, 'func')
             fileprefix = 'sub-' + spef_run.sub + '_task-' + spef_run.task + '_run-' + spef_run.run
-        confounds_filepath = os.path.join(funcdir, fileprefix + '_bold_confounds.tsv')
-        if os.path.exists(confounds_filepath):
-            df = pd.read_csv(confounds_filepath, delim_whitespace=True)
-            possible_confounds = df.columns.tolist()
-            return possible_confounds
-        else:
-            confounds_filepath = os.path.join(funcdir, fileprefix + '_desc-confounds_regressors.tsv')
-            if os.path.exists(confounds_filepath):
+
+        possible_confounds_filepath_stems = [
+            '_bold_confounds.tsv',
+            '_desc-confounds_regressors.tsv',
+            '_desc-confounds_timeseries.tsv'
+        ]
+
+        for stem in possible_confounds_filepath_stems:
+            confounds_filepath = os.path.join(funcdir, fileprefix + stem)
+            try:
                 df = pd.read_csv(confounds_filepath, delim_whitespace=True)
                 possible_confounds = df.columns.tolist()
                 return possible_confounds
+            except FileNotFoundError:
+                continue
         run_objects_count += 1
-    print('Could not find confounds %s' % confounds_filepath)
+    print('Could not find confounds files in %s. Looked for files ending with the following strings:' % funcdir,
+          possible_confounds_filepath_stems)
     return []
 
 
