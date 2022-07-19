@@ -265,6 +265,19 @@ def traverse_specificruns(studyid, basedir, specificruns, hasSessions):
 
 
 """
+Return list of confounds filepaths to search for
+"""
+
+
+def get_possible_confounds_stems():
+    return [
+        '_bold_confounds.tsv',
+        '_desc-confounds_regressors.tsv',
+        '_desc-confounds_timeseries.tsv'
+    ]
+
+
+"""
 Gets list of all possible confounds from a *_bold_confounds.tsv file in fmriprep
 (by iterating through fmriprep until a confounds file is found)
 Returns column names of *_bold_confounds.tsv, the list of all possible confounds
@@ -289,11 +302,7 @@ def get_possible_confounds(studyid, basedir):
             funcdir = os.path.join(basedir, studyid, 'fmriprep', 'sub-' + spef_run.sub, 'func')
             fileprefix = 'sub-' + spef_run.sub + '_task-' + spef_run.task + '_run-' + spef_run.run
 
-        possible_confounds_filepath_stems = [
-            '_bold_confounds.tsv',
-            '_desc-confounds_regressors.tsv',
-            '_desc-confounds_timeseries.tsv'
-        ]
+        possible_confounds_filepath_stems = get_possible_confounds_stems()
 
         for stem in possible_confounds_filepath_stems:
             confounds_filepath = os.path.join(funcdir, fileprefix + stem)
@@ -369,15 +378,19 @@ def generate_confounds_files(studyid, basedir, specificruns, modelname, hasSessi
                 modeldir = os.path.join(basedir, studyid, 'model', 'level1', 'model-' + modelname,
                                         'sub-' + spef_run.sub, 'task-' + spef_run.task + '_run-' + spef_run.run,
                                         'onsets')
-            confounds_filepath1 = os.path.join(funcdir, fileprefix + '_bold_confounds.tsv')
-            confounds_filepath2 = os.path.join(funcdir, fileprefix + '_desc-confounds_regressors.tsv')
+
+            possible_confounds_filepath_stems = get_possible_confounds_stems()
+
             foundConfounds = False
-            if os.path.exists(confounds_filepath1):
-                confounds_filepath = confounds_filepath1
-                foundConfounds = True
-            elif os.path.exists(confounds_filepath2):
-                confounds_filepath = confounds_filepath2
-                foundConfounds = True
+            for stem in possible_confounds_filepath_stems:
+                potential_confounds_filepath = os.path.join(funcdir, fileprefix + stem)
+                try:
+                    df = pd.read_csv(potential_confounds_filepath, delim_whitespace=True)
+                    foundConfounds = True
+                    confounds_filepath = potential_confounds_filepath
+                except FileNotFoundError:
+                    continue
+
             if foundConfounds:
                 confounds_tsv = pd.read_csv(confounds_filepath, delim_whitespace=True)
                 cf = confounds_tsv.reindex(columns=confounds_list)
@@ -392,7 +405,7 @@ def generate_confounds_files(studyid, basedir, specificruns, modelname, hasSessi
 
         # print warning message for runs without confounds
         if len(runs_without_bold_confounds) > 0:
-            print('WARNING: *_bold_confounds.tsv files were not found for the following runs:')
+            print('WARNING: confounds files were not found for the following runs:')
             for spef_run in runs_without_bold_confounds:
                 if spef_run.ses is not None:
                     print(
