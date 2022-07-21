@@ -8,6 +8,7 @@
 ## Requirements
 
 - Install the packages in requirements.txt. To do this in one fell swoop, use `pip install -r requirements.txt`. Note that on a cluster, you may want to install these packages in a virtual environment.
+- [Install FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation). Note that you may need to modify your .bash_profile (some guidance [here](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation/ShellSetup)).
 
 #### For downloading data from Flywheel:
 - Have your Flywheel API key handy (see your user profile). 
