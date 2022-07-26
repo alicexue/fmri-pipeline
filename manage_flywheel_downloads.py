@@ -119,8 +119,16 @@ if not os.path.exists(studydir):
 else:
     print('\nNote: %s already exists.' % studydir)
 
+print('\nWas fmriprep run on the subject level or session level on Flywheel?')
+print('Enter 1 if you would like to download fmriprep outputs from the analyses run on the SUBJECT level or 2 for'
+      ' the SESSION level.')
+rsp = None
+while rsp != '1' and rsp != '2':
+    rsp = input('Enter 1 or 2: ')
+ses_level_fmriprep = False if rsp == '1' else True
+
 print('Looking for subjects with fmriprep outputs...')
-subs = download_flywheel_fmriprep.get_flywheel_subjects(key, group_id, project_label)
+subs = download_flywheel_fmriprep.get_flywheel_subjects(key, group_id, project_label, ses_level_fmriprep)
 print('\nHere are your subjects with fmriprep outputs:')
 print(subs)
 
@@ -183,16 +191,19 @@ while rsp != 'y' and rsp != '':
     else:
         print('Existing output folders will be overwritten.')
 
-# Ignore session label on flywheel (website) for purposes of downloading data?
-ignoreSessionLabel = False
-rsp = None
-while rsp != 'y' and rsp != 'n':
-    print('\nDo you want to ignore the session labels provided by Flywheel for the purposes of downloading data?')
-    rsp = input(
-        'Enter "y" if the session labels on the Flywheel website do NOT match the session labels in the data. '
-        'Otherwise, enter "n": ')
-    if rsp == 'y':
-        ignoreSessionLabel = True
+if ses_level_fmriprep:
+    # Ignore session label on flywheel (website) for purposes of downloading data?
+    ignoreSessionLabel = False
+    rsp = None
+    while rsp != 'y' and rsp != 'n':
+        print('\nDo you want to ignore the session labels provided by Flywheel for the purposes of downloading data?')
+        rsp = input(
+            'Enter "y" if the session labels on the Flywheel website do NOT match the session labels in the data. '
+            'Otherwise, enter "n": ')
+        if rsp == 'y':
+            ignoreSessionLabel = True
+else:
+    ignoreSessionLabel = True
 
 # Ask which outputs to download
 print('')
@@ -239,7 +250,8 @@ else:
 if downloadFmriprep or downloadFreesurfer or downloadReports:
     download_flywheel_fmriprep.download_flywheel_fmriprep(key, group_id, project_label, studyid, basedir,
                                                           downloadReports, downloadFmriprep, downloadFreesurfer,
-                                                          ignoreSessionLabel, subs, overwriteSubjectOutputs)
+                                                          ignoreSessionLabel, subs, overwriteSubjectOutputs,
+                                                          ses_level_fmriprep)
 # exports raw BIDS (export of raw BIDS should happen after downloading fmriprep output because export_raw_bids looks
 # for subjects in fmriprep folder)
 if exportRawBids:
