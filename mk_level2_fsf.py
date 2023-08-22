@@ -214,7 +214,8 @@ def mk_level2_fsf(a):
             lev1_model_subdir, a.taskname, a.runs[r], subid_ses, a.taskname, a.runs[r])
         if os.path.exists(empty_ev_file):
             evfile = open(empty_ev_file, 'r')
-            empty_evs = [int(x.strip()) for x in evfile.readlines()]
+            # edited to extend pre-existing list with new list (12.08.22 - cvg)
+            empty_evs.extend([int(x.strip()) for x in evfile.readlines()])
             evfile.close()
 
     outfile.write('\n\n### AUTOMATICALLY GENERATED PART###\n\n')
