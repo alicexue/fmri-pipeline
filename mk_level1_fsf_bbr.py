@@ -175,8 +175,20 @@ def mk_level1_fsf_bbr(a):
         sys.exit(-1)
     else:
         print(fmriprep_subdir+'/'+anathead+a.spacetag+anattail)
-        if a.spacetag!='' and os.path.exists(fmriprep_subdir+'/anat/'+anathead+a.spacetag+anattail):
-            initial_highres_file = anathead+a.spacetag+anattail
+        if a.spacetag!='':
+            count = 0
+            anat_spacetag_files = []
+            for file in anat_preproc_files:
+                if a.spacetag in file:
+                    count += 1
+                    anat_spacetag_files.append(file)
+            if len(anat_spacetag_files) == 1:
+                initial_highres_file = anat_spacetag_files[0]
+            else:
+                print("ERROR: Found multiple preprocessed anat files with the specified space tag. Please make sure the "
+                      "directory is structured correctly.")
+                print("Files found:", anat_spacetag_files)
+                sys.exit(-1)
         else:
             print("ERROR: Found multiple preprocessed anat files. Please make sure the directory is structured "
                   "correctly.")
@@ -216,10 +228,22 @@ def mk_level1_fsf_bbr(a):
         print("\tNOTE: Looked for 'preproc' and 'bold' in the file name. (Excluded files with 'brain' in file name).")
         sys.exit(-1)
     else:
-        if a.spacetag!='' and os.path.exists(fmriprep_subdir+'/func/'+funchead+a.spacetag+functail):
-            func_preproc_file = funchead+a.spacetag+functail
+        if a.spacetag!='':
+            count = 0
+            func_spacetag_files = []
+            for file in func_preproc_files:
+                if a.spacetag in file:
+                    count += 1
+                    func_preproc_files.append(file)
+            if len(func_spacetag_files) == 1:
+                func_preproc_file = func_spacetag_files[0]
+            else:
+                print("ERROR: Found multiple preprocessed func files here: %s. Please specify the spacetag in the arguments."
+                  % funcdir)
+                print(func_preproc_files)
+                sys.exit(-1)
         else:
-            print("ERROR: Found multiple preprocessed func files here: %s. Please specify the label in the arguments."
+            print("ERROR: Found multiple preprocessed func files here: %s. Please specify the spacetag in the arguments."
                   % funcdir)
             print(func_preproc_files)
             sys.exit(-1)
