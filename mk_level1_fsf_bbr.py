@@ -234,7 +234,7 @@ def mk_level1_fsf_bbr(a):
             for file in func_preproc_files:
                 if a.spacetag in file:
                     count += 1
-                    func_preproc_files.append(file)
+                    func_spacetag_files.append(file)
             if len(func_spacetag_files) == 1:
                 func_preproc_file = func_spacetag_files[0]
             else:
