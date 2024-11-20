@@ -34,4 +34,8 @@ def get_tr(niftifile):
         the Repetition Time as a floating number
     """
     header_vals = read_nifti_header(niftifile)
-    return float(header_vals['pixdim4'])
+    tr = float(header_vals['pixdim4'])
+    if tr >= 1000:
+        tr = tr / 1000 
+        print("NOTE: TR information in file header appears to be in milliseconds rather than seconds; converting to seconds for compatibility with FSL: %ss" % tr)
+    return tr
