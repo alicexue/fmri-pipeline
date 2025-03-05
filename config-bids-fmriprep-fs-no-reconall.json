@@ -1,0 +1,22 @@
+{
+  "config":
+  {
+  "bids_app_command": "--fs-no-reconall",
+  "debug": false,
+  "gear-FREESURFER_LICENSE": "",
+  "gear-dry-run": false,
+  "gear-expose-all-outputs": false,
+  "gear-intermediate-files": "",
+  "gear-intermediate-folders": "",
+  "gear-keep-fsaverage": false,
+  "gear-post-processing-only": false,
+  "gear-save-intermediate-output": false
+},
+  "input_files":
+  {
+    "freesurfer_license_file": {
+        "container_path": "shohamy/Daniel_Context_fmriprep_2025",
+        "location_name": "license.txt"
+    }
+}
+}

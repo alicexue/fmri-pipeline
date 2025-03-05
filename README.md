@@ -1,18 +1,24 @@
 # fmri-pipeline
 
 ## Overview
-- Neuroimaging data stored on [Flywheel](https://flywheel.io/) - including raw BIDS, fmriprep outputs, freesurfer outputs, and html/svg reports - can be downloaded using manage_flywheel_downloads.py. Fmriprep outputs are saved in [BIDS](https://bids.neuroimaging.io/) format.  
-- Creates *.fsf files (see [FSL FEAT](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FEAT)) for level 1 (individual runs), level 2 (subject), and level 3 (group) analysis of fMRI data. This pipeline assumes that the user is familiar with FSL.
-- Runs FSL's feat on the generated *.fsf files on high performance computing clusters in parallel using [slurm](https://hpc-wiki.info/hpc/SLURM) job arrays. If a cluster is not being used (the pipeline will detect if the sbatch command is unavailable), feat can be run on each .fsf file serially or in parallel using [joblib](https://joblib.readthedocs.io/en/latest/).
+### Package supports the following functions:
+- Downloading neuroimaging data stored on [Flywheel](https://flywheel.io/) - including raw BIDS, fmriprep outputs, 
+  freesurfer outputs, and html/svg reports - can be downloaded using manage_flywheel_downloads.py. Fmriprep outputs are saved in [BIDS](https://bids.neuroimaging.io/) format.  
+- Creating and executing neuroimaging statistical analysis using FSL
+  - Creates *.fsf files (see [FSL FEAT](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FEAT)) for level 1 (individual runs), level 2 (subject), and level 3 (group) analysis of fMRI data. This pipeline assumes that the user is familiar with FSL.
+  - Runs FSL's feat on the generated *.fsf files on high performance computing clusters in parallel using [slurm](https://hpc-wiki.info/hpc/SLURM) job arrays. If a cluster is not being used (the pipeline will detect if the sbatch command is unavailable), feat can be run on each .fsf file serially or in parallel using [joblib](https://joblib.readthedocs.io/en/latest/).
+- Executing and managing neuroimaging jobs (aka, "gears") on [Flywheel](https://flywheel.io/), including 
+  preprocessing steps (e.g., `curate-bids`, `bids-fmriprep`). (Added by Daniel Kimmel, Feb 2025)
 
 ## Requirements
 
 - Install the packages in requirements.txt. To do this in one fell swoop, use `pip install -r requirements.txt`. Note that on a cluster, you may want to install these packages in a virtual environment.
 - [Install FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation). Note that you may need to modify your .bash_profile (some guidance [here](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation/ShellSetup)).
 
-#### For downloading data from Flywheel:
+#### For executing, managing and downloading data from Flywheel:
 - Have your Flywheel API key handy (see your user profile). 
-- To export raw BIDS, you must have [Docker](https://docs.docker.com/get-docker/) installed and running, and the [Flywheel CLI](https://docs.flywheel.io/hc/en-us/articles/360008162214-Installing-the-Flywheel-Command-Line-Interface-CLI-) installed. You will need to log into the CLI with your API key (see your Flywheel user profile - run the command `fw login <API key>`).
+- To export raw BIDS or execute/manage jobs, you must have [Docker](https://docs.docker.com/get-docker/) installed and 
+  running, and the [Flywheel CLI](https://docs.flywheel.io/hc/en-us/articles/360008162214-Installing-the-Flywheel-Command-Line-Interface-CLI-) installed. You will need to log into the CLI with your API key (see your Flywheel user profile - run the command `fw login <API key>`).
 
 #### For running fMRI analyses:
 - directory with fmriprep output named 'fmriprep' (see Directory Structure below)
@@ -75,6 +81,17 @@
 7. If customization of fsf files is desired, create a custom stub file named design_level\<N>_custom.stub under the model directory with feat settings (see design_level1_fsl5.stub for examples). If a setting in the custom file is found in the default stub file, the custom setting will replace the existing setting. If the custom setting is not found in the default stub file, it will be added to the fsf.
 8. To run a level 1 analysis, use run_level1.py, which will create a job array where each job generates a *.fsf file for a single run and calls the feat command on that fsf file. (By default, if the argument specificruns is not specified, fsf's will be created for all runs.) It may be useful to open one or two *.fsf files using the Feat_gui (locally, not on a cluster) to check that everything has loaded properly, and that the design matrix is as specified.
 9. Level 2 and level 3 scripts (run_level2.py, run_level3.py) are run similarly. Use the -h option to see explanations of the parameters.
+
+#### For executing and managing Flywheel jobs:
+1. Configure and execute desired analysis gear on [Flywheel](https://flywheel.io/) using GUI. Copy job ID. 
+2. Run `copy_job/copy_job.py` (supplying job ID) from command line to generate python script for executing job through 
+   SDK. See `copy_job/README.md` for details.
+3. Copy and, if necessary, modify relevant portions of new python script (e.g., `config` and `input_files`) and 
+   create or update config file (see `config-bids-fmriprep.json` for example). 
+4. Run `run_flywheel_gear.py` from command line, which will take user through "interview" to setup batch gear 
+   execution (i.e., execute jobs in parallel for each subject).
+5. Run `query_flywheel_gear.py` from command line to query job status and optionally cancel pending/running jobs.   
+
 
 ## Directory Structure
 - Session directories are optional. If there aren't multiple sessions, omit the session label from EV file names.
