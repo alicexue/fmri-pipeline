@@ -205,6 +205,16 @@ if ses_level_fmriprep:
 else:
     ignoreSessionLabel = True
 
+# Ask whether to allow user to select analysis
+rsp = None
+while rsp != 'y' and rsp != '':
+    rsp = input('\nIf there are multiple analyses for a given subject, do you want to select which to download ('
+              'otherwise most recent will be downloaded)? y/[ENTER] ').strip()
+    if rsp == 'y':
+        user_selects_analysis = True
+    else:
+        user_selects_analysis = False
+
 # Ask which outputs to download
 print('')
 downloadReports = False
@@ -252,7 +262,7 @@ if downloadFmriprep or downloadFreesurfer or downloadReports:
     download_flywheel_fmriprep.download_flywheel_fmriprep(key, group_id, project_label, studyid, basedir,
                                                           downloadReports, downloadFmriprep, downloadFreesurfer,
                                                           ignoreSessionLabel, subs, overwriteSubjectOutputs,
-                                                          ses_level_fmriprep, user_selects_analysis=True)
+                                                          ses_level_fmriprep, user_selects_analysis=user_selects_analysis)
 # exports raw BIDS (export of raw BIDS should happen after downloading fmriprep output because export_raw_bids looks
 # for subjects in fmriprep folder)
 if exportRawBids:
