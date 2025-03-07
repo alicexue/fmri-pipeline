@@ -170,4 +170,4 @@ basedir
 - During level 3 analyses, subjects are by default pulled from the fmriprep folder (I should probably modify this at some point in the future so that it pulls the subjects specified in model_params.json). However, you can specify which subjects to include using the `--subs` argument of run_level3.py.
 
 ## Miscellaneous notes
-- TR is obtained by reading the header of the Nifti file (preproc func file)
+- TR is obtained by reading the header of the Nifti file (preproc func file); get_tr() in nifti_utils.py attempts to detect whether output is in seconds or milliseconds
