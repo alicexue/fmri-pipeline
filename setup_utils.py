@@ -452,7 +452,7 @@ def generate_confounds_files(studyid, basedir, specificruns, modelname, hasSessi
                                        '_run-' + spef_run.run)
                 else:
                     _spef_run_desc = 'sub-' + spef_run.sub + '_task-' + spef_run.task + '_run-' + spef_run.run
-                print(f'\t{_spef_run_desc}: {', '.join(_d['missing_confounds'])}')
+                print('\t' + _spef_run_desc + ': ' + ', '.join(_d['missing_confounds']))
 
 """
 Creates empty condition_key.json if not found
