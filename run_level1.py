@@ -55,6 +55,10 @@ def parse_command_line(argv):
                         quotes around the JSON object and double quotes within. """
                         )
 
+    parser.add_argument('--omit_missing_confounds', dest='omit_missing_confounds', action='store_true',
+                        default=False, help='Omit missing confound regressors from confounds.tsv. Otherwise, '
+                                            'will include as column of zeros.')
+
     args = parser.parse_args(argv)
     return args
 
@@ -82,6 +86,7 @@ def main(argv=None):
     sys_args_specificruns = args.specificruns
     nofeat = args.nofeat
     outdir = args.outdir
+    omit_missing_confounds = args.omit_missing_confounds
 
     # double checks with user that all files have been set
     modeldir = os.path.join(basedir, studyid, 'model', 'level1', 'model-%s' % modelname)
@@ -107,7 +112,8 @@ def main(argv=None):
     else:
         specificruns = sys_args_specificruns
 
-    setup_utils.generate_confounds_files(studyid, basedir, specificruns, modelname, hasSessions)
+    setup_utils.generate_confounds_files(studyid, basedir, specificruns, modelname, hasSessions,
+                                         omit_missing_confounds=omit_missing_confounds)
 
     # get the list of jobs to run
     existing_feat_files, jobs = get_level1_jobs.get_level1_jobs(studyid, basedir, modelname, specificruns,

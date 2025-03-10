@@ -355,7 +355,20 @@ Auto-generates confounds files in onset directories based on list of confounds i
 """
 
 
-def generate_confounds_files(studyid, basedir, specificruns, modelname, hasSessions):
+def generate_confounds_files(studyid, basedir, specificruns, modelname, hasSessions, omit_missing_confounds=False):
+    '''
+
+    :param studyid:
+    :param basedir:
+    :param specificruns:
+    :param modelname:
+    :param hasSessions:
+    :param omit_missing_confounds: (bool) When True, will omit missing confounds from generated
+        `..._ev-confounds.tsv` file. When False (Default), missing confounds are included in `..._ev-confounds.tsv`
+        as columns of zeros. This will impact degrees-of-freedom, but may not impact *effective* degrees of freedom
+        used for higher level analyses.
+    :return:
+    '''
     modeldir = os.path.join(basedir, studyid, 'model', 'level1', 'model-%s' % modelname)
     if os.path.exists(modeldir + '/confounds.json'):
         with open(modeldir + '/confounds.json', 'r') as f:
@@ -363,6 +376,7 @@ def generate_confounds_files(studyid, basedir, specificruns, modelname, hasSessi
             confounds_list = confounds_dict['confounds']
         run_objects = traverse_specificruns(studyid, basedir, specificruns, hasSessions)
         runs_without_bold_confounds = []
+        runs_with_missing_confounds = []
         for spef_run in run_objects:
             if spef_run.ses is not None:  # there are sessions
                 funcdir = os.path.join(basedir, studyid, 'fmriprep', 'sub-' + spef_run.sub, 'ses-' + spef_run.ses,
@@ -385,15 +399,28 @@ def generate_confounds_files(studyid, basedir, specificruns, modelname, hasSessi
             for stem in possible_confounds_filepath_stems:
                 potential_confounds_filepath = os.path.join(funcdir, fileprefix + stem)
                 try:
-                    df = pd.read_csv(potential_confounds_filepath, delim_whitespace=True)
+                    # df = pd.read_csv(potential_confounds_filepath, delim_whitespace=True) # deprecated
+                    df = pd.read_csv(potential_confounds_filepath, sep = '\s+')
+                    sep = '\s+'
                     foundConfounds = True
                     confounds_filepath = potential_confounds_filepath
                 except FileNotFoundError:
                     continue
 
             if foundConfounds:
-                confounds_tsv = pd.read_csv(confounds_filepath, delim_whitespace=True)
-                cf = confounds_tsv.reindex(columns=confounds_list)
+                # confounds_tsv = pd.read_csv(confounds_filepath, delim_whitespace=True) # deprecated
+                confounds_tsv = pd.read_csv(confounds_filepath, sep = '\s+')
+                # DK 2025_03_10: added option of removing missing confounds from list
+                if omit_missing_confounds:
+                    _confounds_list = [c for c in confounds_list if c in confounds_tsv.columns]
+                    _missing_confounds = [c for c in confounds_list if c not in confounds_tsv.columns]
+                    # record missing confounds
+                    if _missing_confounds:
+                        runs_with_missing_confounds.append({'spef_run': spef_run, 'missing_confounds':
+                            _missing_confounds})
+                else:
+                    _confounds_list = confounds_list[:]  # copy list
+                cf = confounds_tsv.reindex(columns=_confounds_list)
                 # replace np values with 0's
                 cf = cf.replace({np.nan: 0})
                 output_confounds_filename = fileprefix + '_ev-confounds.tsv'
@@ -414,6 +441,18 @@ def generate_confounds_files(studyid, basedir, specificruns, modelname, hasSessi
                 else:
                     print('\t' + 'sub-' + spef_run.sub + '_task-' + spef_run.task + '_run-' + spef_run.run)
 
+        # print warning message for runs with missing confounds
+        if len(runs_with_missing_confounds) > 0:
+            print('WARNING: the following runs were missing the following confound regressors:')
+            for _d in runs_with_missing_confounds:
+                # extract specific run object for conveneince
+                spef_run = _d['spef_run']
+                if spef_run.ses is not None:
+                    _spef_run_desc = ('sub-' + spef_run.sub + '_ses-' + spef_run.ses + '_task-' + spef_run.task +
+                                       '_run-' + spef_run.run)
+                else:
+                    _spef_run_desc = 'sub-' + spef_run.sub + '_task-' + spef_run.task + '_run-' + spef_run.run
+                print(f'\t{_spef_run_desc}: {', '.join(_d['missing_confounds'])}')
 
 """
 Creates empty condition_key.json if not found
