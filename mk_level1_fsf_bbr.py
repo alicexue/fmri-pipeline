@@ -37,6 +37,7 @@ import argparse
 from collections import OrderedDict
 import inspect
 import json
+import regex as re
 import numpy as N
 import os
 import subprocess as sub
@@ -209,16 +210,17 @@ def mk_level1_fsf_bbr(a):
         if fname.startswith(funchead) and ('preproc' in fname) and ('bold' in fname) and ('brain' not in fname) and (a.spacetag in fname) and \
                 fname.endswith(functail):
             func_preproc_files.append(fname)
-        if a.usebrainmask: # if creating custom brain mask using fslmaths, get the brain mask file from the func dir
-            if fname.startswith(funchead) and fname.endswith('_brainmask.nii.gz'):
-                fmriprep_brainmask=fname
-                i=fname.find('_brainmask.nii.gz')
-                fslmaths_preproc_brainmask=fname[:i]+'_preproc_brain.nii.gz'
-            # for post fmriprep 1.4.0
-            elif fname.startswith(funchead) and fname.endswith('-brain_mask.nii.gz') and (a.spacetag in fname):
-                fmriprep_brainmask=fname
-                i=fname.find('-brain_mask.nii.gz')
-                fslmaths_preproc_brainmask=fname[:i]+'-preproc_brain.nii.gz'
+        # if a.usebrainmask: # if creating custom brain mask using fslmaths, get the brain mask file from the func dir
+        #     # for pre fmriprep 1.4.0
+        #     if fname.startswith(funchead) and fname.endswith('_brainmask.nii.gz'):
+        #         fmriprep_brainmask=fname
+        #         i=fname.find('_brainmask.nii.gz')
+        #         fslmaths_preproc_brainmask=fname[:i]+'_preproc_brain.nii.gz'
+        #     # for post fmriprep 1.4.0
+        #     elif fname.startswith(funchead) and fname.endswith('-brain_mask.nii.gz') and (a.spacetag in fname):
+        #         fmriprep_brainmask=fname
+        #         i=fname.find('-brain_mask.nii.gz')
+        #         fslmaths_preproc_brainmask=fname[:i]+'-preproc_brain.nii.gz'
     # find initial_high_res_file in func_preproc_files found above
     if len(func_preproc_files) == 1:
         func_preproc_file = func_preproc_files[0]
@@ -247,14 +249,54 @@ def mk_level1_fsf_bbr(a):
                   % funcdir)
             print(func_preproc_files)
             sys.exit(-1)
-    if a.usebrainmask and fslmaths_preproc_brainmask=="":
-        print("ERROR: usebrainmask is true, but brain mask was not found in %s" % funcdir)
-        sys.exit(-1)
 
     if "MNI152NLin2009cAsym" not in func_preproc_file and not a.doreg:
         print("\nWARNING: It appears that your preprocessed functional file %s is not in MNI152NLin2009cAsym space. "
               "You may want to do registration."%(func_preproc_file))
 
+    # DK 2025_03_10: separate finding brainmask so that we can use space of func_preproc_file to select which
+    # brainmask file to use, since post fmriprep 1.4.0 there are multiple masks (e.g., native space,
+    # MNI152NLin2009cAsym)
+    if a.usebrainmask: # if creating custom brain mask using fslmaths, get the brain mask file from the func dir
+        # if provided, use space from `spacetag` input arg, otherwise infer space from func_preproc_file
+        if a.spacetag:
+            brainmask_space = func_preproc_file
+        else:
+            # parse func_preproc_file into name-value strings and take "value" where "name" == "space"
+            brainmask_space = [nv.split('-')[1] for nv in re.split(r'_(?=[^_]+-)', func_preproc_file) if nv.split('-')[0] ==
+                               'space']
+            if len(brainmask_space) == 1:
+                brainmask_space = brainmask_space[0]
+            elif len(brainmask_space) == 0:
+                print("ERROR: 'space' tag not found in preprocessed functional file filename: %s" % funcdir)
+                sys.exit(-1)
+            else:
+                print("ERROR: Multiple 'space' tags found in preprocessed functional file filename: %s" % funcdir)
+                sys.exit(-1)
+
+        num_masks_found = 0
+        # loop through files again
+        for fname in funcdircontent:
+            # for pre fmriprep 1.4.0
+            if fname.startswith(funchead) and fname.endswith('_brainmask.nii.gz'):
+                num_masks_found += 1
+                fmriprep_brainmask=fname
+                i=fname.find('_brainmask.nii.gz')
+                fslmaths_preproc_brainmask=fname[:i]+'_preproc_brain.nii.gz'
+            # for post fmriprep 1.4.0
+            elif fname.startswith(funchead) and fname.endswith('-brain_mask.nii.gz') and (brainmask_space in fname):
+                num_masks_found += 1
+                fmriprep_brainmask=fname
+                i=fname.find('-brain_mask.nii.gz')
+                fslmaths_preproc_brainmask=fname[:i]+'-preproc_brain.nii.gz'
+
+        # check for 1 and only 1 matching mask
+        if num_masks_found > 1:
+            print("ERROR: more than one brain mask found in %s" % funcdir)
+            sys.exit(-1)
+        elif num_masks_found==0 or fslmaths_preproc_brainmask == "":
+            print("ERROR: usebrainmask is true, but brain mask was not found in %s" % funcdir)
+            sys.exit(-1)
 
     # not tested yet
     print('PROCESSING:',fmriprep_subdir)
@@ -592,6 +634,7 @@ def mk_level1_fsf_bbr(a):
                             os.path.join(funcdir,fmriprep_brainmask),os.path.join(funcdir,fslmaths_preproc_brainmask)]
             print(func_preproc_file, fmriprep_brainmask)
             print("Applying fslmath's mas, creating the following file: %s"%(fslmaths_preproc_brainmask))
+            print("\t" + " ".join(fslmathsargs))
             sub.call(fslmathsargs)
         featargs = ["feat",outfilename]
         print("Calling", ' '.join(featargs))
