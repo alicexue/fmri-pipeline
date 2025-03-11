@@ -400,8 +400,7 @@ def generate_confounds_files(studyid, basedir, specificruns, modelname, hasSessi
                 potential_confounds_filepath = os.path.join(funcdir, fileprefix + stem)
                 try:
                     # df = pd.read_csv(potential_confounds_filepath, delim_whitespace=True) # deprecated
-                    df = pd.read_csv(potential_confounds_filepath, sep = '\s+')
-                    sep = '\s+'
+                    df = pd.read_csv(potential_confounds_filepath, sep = r'\s+')
                     foundConfounds = True
                     confounds_filepath = potential_confounds_filepath
                 except FileNotFoundError:
@@ -409,7 +408,7 @@ def generate_confounds_files(studyid, basedir, specificruns, modelname, hasSessi
 
             if foundConfounds:
                 # confounds_tsv = pd.read_csv(confounds_filepath, delim_whitespace=True) # deprecated
-                confounds_tsv = pd.read_csv(confounds_filepath, sep = '\s+')
+                confounds_tsv = pd.read_csv(confounds_filepath, sep = r'\s+')
                 # DK 2025_03_10: added option of removing missing confounds from list
                 if omit_missing_confounds:
                     _confounds_list = [c for c in confounds_list if c in confounds_tsv.columns]
