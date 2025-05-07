@@ -636,6 +636,13 @@ def mk_level1_fsf_bbr(a):
             print("Applying fslmath's mas, creating the following file: %s"%(fslmaths_preproc_brainmask))
             print("\t" + " ".join(fslmathsargs))
             sub.call(fslmathsargs)
+
+        # set temp dir
+        sub.call('echo "TMPDIR is:" $TMPDIR')
+        sub.call('echo "Setting TMPDIR to /local"')
+        sub.call('export TMPDIR=/local')
+        sub.call('echo "TMPDIR is:" $TMPDIR')
+
         featargs = ["feat",outfilename]
         print("Calling", ' '.join(featargs))
         sub.call(featargs)
