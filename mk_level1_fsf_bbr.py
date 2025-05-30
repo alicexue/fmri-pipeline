@@ -637,13 +637,14 @@ def mk_level1_fsf_bbr(a):
             print("\t" + " ".join(fslmathsargs))
             sub.call(fslmathsargs)
 
-        # set FEAT temp dir
-        _tmpdir = os.environ['TMPDIR']
-        print("TMPDIR is: %s"%_tmpdir)
-        _tmpdir = "/local"
-        print("Setting TMPDIR to: %s" % _tmpdir)
-        os.environ['TMPDIR'] = _tmpdir
-        print("TMPDIR is now: %s" % _tmpdir)
+        # set FEAT temp dir (if TMPDIR is available in environment)
+        if 'TMPDIR' in os.environ:
+            _tmpdir = os.environ['TMPDIR']
+            print("TMPDIR is: %s"%_tmpdir)
+            _tmpdir = "/local"
+            print("Setting TMPDIR to: %s" % _tmpdir)
+            os.environ['TMPDIR'] = _tmpdir
+            print("TMPDIR is now: %s" % _tmpdir)
 
         # run FEAT
         featargs = ["feat",outfilename]
